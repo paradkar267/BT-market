@@ -53,6 +53,79 @@ const extractZipAsync = (zip, targetPath) => {
   });
 };
 
+// Helper to flatten directory if index.html is nested
+const flattenDirectory = (srcDir) => {
+  const findIndexHtml = (dir) => {
+    const files = fs.readdirSync(dir);
+    for (const file of files) {
+      const fullPath = path.join(dir, file);
+      const stat = fs.statSync(fullPath);
+      if (stat.isDirectory()) {
+        if (file === 'node_modules' || file === '.git') continue;
+        const found = findIndexHtml(fullPath);
+        if (found) return found;
+      } else if (file.toLowerCase() === 'index.html') {
+        return dir;
+      }
+    }
+    return null;
+  };
+
+  const indexHtmlDir = findIndexHtml(srcDir);
+  if (indexHtmlDir && indexHtmlDir !== srcDir) {
+    console.log(`Flattening preview files: moving contents of ${indexHtmlDir} to ${srcDir}`);
+    
+    // Move all items from indexHtmlDir to srcDir
+    const moveContents = (fromDir, toDir) => {
+      const items = fs.readdirSync(fromDir);
+      for (const item of items) {
+        const srcPath = path.join(fromDir, item);
+        const destPath = path.join(toDir, item);
+        if (fs.existsSync(destPath)) {
+          const srcStat = fs.statSync(srcPath);
+          const destStat = fs.statSync(destPath);
+          if (srcStat.isDirectory() && destStat.isDirectory()) {
+            moveContents(srcPath, destPath);
+            try {
+              fs.rmdirSync(srcPath);
+            } catch (e) {
+              console.error(`Failed to remove empty source directory ${srcPath}:`, e);
+            }
+          } else {
+            try {
+              if (destStat.isDirectory()) {
+                fs.rmdirSync(destPath, { recursive: true });
+              } else {
+                fs.unlinkSync(destPath);
+              }
+              fs.renameSync(srcPath, destPath);
+            } catch (err) {
+              console.error(`Error resolving conflict for ${item}:`, err);
+            }
+          }
+        } else {
+          fs.renameSync(srcPath, destPath);
+        }
+      }
+    };
+
+    moveContents(indexHtmlDir, srcDir);
+    
+    // Clean up empty nested directories starting from indexHtmlDir up to srcDir
+    let currentDir = indexHtmlDir;
+    while (currentDir !== srcDir && currentDir.startsWith(srcDir)) {
+      try {
+        if (fs.readdirSync(currentDir).length === 0) {
+          fs.rmdirSync(currentDir);
+        }
+      } catch (e) {
+        console.error(`Failed to clean up directory ${currentDir}:`, e);
+      }
+      currentDir = path.dirname(currentDir);
+    }
+  }
+};
+
 router.get('/stats', requireAdmin, async (req, res) => {
   try {
     const { data: purchases } = await supabaseAdmin.from('purchases').select('*');
@@ -108,6 +181,8 @@ router.post('/upload-template', requireAdmin, upload.single('file'), async (req,
       try {
         const zip = new AdmZip(file.path);
         await extractZipAsync(zip, extractPath);
+        // Flatten the extracted zip contents if nested (e.g. nested inside a folder)
+        flattenDirectory(extractPath);
         // Clean up the uploaded file from disk after successful extraction
         fs.unlinkSync(file.path);
       } catch (unzipErr) {
@@ -141,7 +216,8 @@ router.post('/upload-template', requireAdmin, upload.single('file'), async (req,
         keywords: parsedKeywords,
         author: 'Nexus Themes',
         sales: 0,
-        rating: 5.0
+        rating: 5.0,
+        previewUrl: `/previews/${slug}/index.html`
       }).select().single();
 
     if (dbError) throw dbError;
