@@ -9,13 +9,14 @@ import { toast } from 'sonner';
 import { Logo } from './components/ui/Logo';
 
 export default function MyTemplatesPage() {
-  const { purchasedTemplates } = useCart();
+  const { purchasedTemplates, loadPurchasedTemplates } = useCart();
   const [downloading, setDownloading] = useState({});
   const location = useLocation();
   const navigate = useNavigate();
 
   useEffect(() => {
     window.scrollTo(0, 0);
+    loadPurchasedTemplates();
     
     if (location.state?.showConfetti) {
       const duration = 3 * 1000;
@@ -36,7 +37,7 @@ export default function MyTemplatesPage() {
       // Clear the state so it doesn't run again on refresh
       navigate('.', { replace: true, state: {} });
     }
-  }, [location, navigate]);
+  }, [location, navigate, loadPurchasedTemplates]);
 
 
 

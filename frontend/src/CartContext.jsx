@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import { useAuth } from './AuthContext';
 import { supabase } from './lib/supabase';
@@ -25,16 +25,38 @@ export const CartProvider = ({ children }) => {
 
   const isLoggedIn = !!user;
 
-  // Load purchases from User Metadata
-  useEffect(() => {
-    if (user && templates.length > 0) {
-      const purchasedIds = user.user_metadata?.purchased_templates || [];
-      const fetchedTemplates = templates.filter(t => purchasedIds.includes(t.id));
-      setPurchasedTemplates(fetchedTemplates);
-    } else if (!user) {
+  // Robustly load purchases from both User Metadata and Purchases DB table
+  const loadPurchasedTemplates = useCallback(async () => {
+    if (!user || templates.length === 0) {
       setPurchasedTemplates([]);
+      return;
+    }
+
+    try {
+      // 1. Get IDs from user_metadata
+      const metadataIds = (user.user_metadata?.purchased_templates || []).map(id => String(id));
+
+      // 2. Get IDs from purchases database table
+      const { data: dbPurchases } = await supabase
+        .from('purchases')
+        .select('template_id')
+        .eq('user_id', user.id);
+
+      const dbIds = (dbPurchases || []).map(p => String(p.template_id));
+
+      // Combine both sources
+      const allPurchasedIds = [...new Set([...metadataIds, ...dbIds])];
+
+      const fetchedTemplates = templates.filter(t => allPurchasedIds.includes(String(t.id)));
+      setPurchasedTemplates(fetchedTemplates);
+    } catch (err) {
+      console.error("Error loading purchased templates:", err);
     }
   }, [user, templates]);
+
+  useEffect(() => {
+    loadPurchasedTemplates();
+  }, [loadPurchasedTemplates]);
 
   // Clear cart on logout
   useEffect(() => {
@@ -160,7 +182,7 @@ export const CartProvider = ({ children }) => {
   const cartTotal = cartItems.reduce((sum, item) => sum + parseFloat(item.price), 0);
 
   return (
-    <CartContext.Provider value={{ cartItems, purchasedTemplates, addToCart, removeFromCart, checkout, cartTotal, isLoggedIn, hasPlayedIntro, setHasPlayedIntro, removePurchasedTemplate }}>
+    <CartContext.Provider value={{ cartItems, purchasedTemplates, addToCart, removeFromCart, checkout, cartTotal, isLoggedIn, hasPlayedIntro, setHasPlayedIntro, removePurchasedTemplate, loadPurchasedTemplates }}>
       {children}
     </CartContext.Provider>
   );

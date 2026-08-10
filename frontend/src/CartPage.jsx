@@ -12,7 +12,7 @@ import { supabase } from './lib/supabase';
 import { Logo } from './components/ui/Logo';
 
 export default function CartPage() {
-  const { cartItems, removeFromCart, checkout, cartTotal, isLoggedIn } = useCart();
+  const { cartItems, removeFromCart, checkout, cartTotal, isLoggedIn, loadPurchasedTemplates } = useCart();
   const { formatPrice, convertPrice, currency } = useCurrency();
   const { theme } = useTheme();
   const { user } = useAuth();
@@ -171,6 +171,10 @@ export default function CartPage() {
         const errorData = await verificationResponse.json();
         throw new Error(errorData.error || 'Payment verification failed');
       }
+
+      // Refresh auth user data and purchased templates list
+      await supabase.auth.getUser();
+      await loadPurchasedTemplates();
 
       // 2. Call backend to send email receipt (Non-blocking)
       fetch(`/api/send-receipt`, {
