@@ -1,0 +1,6 @@
+{
+  "name": "JourneyScape",
+  "description": "A travel and tour booking application with handpicked getaways, iconic destinations, package details, and interactive trip planning.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
