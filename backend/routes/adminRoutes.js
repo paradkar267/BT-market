@@ -121,7 +121,12 @@ const flattenDirectory = (srcDir) => {
       } catch (e) {
         console.error(`Failed to clean up directory ${currentDir}:`, e);
       }
-  // Helper to fix absolute asset paths in HTML/JS/CSS files for live previews
+      currentDir = path.dirname(currentDir);
+    }
+  }
+};
+
+// Helper to fix absolute asset paths in HTML/JS/CSS files for live previews
 const processPreviewPaths = (dir, slug) => {
   if (!fs.existsSync(dir)) return;
   const prefix = `/previews/${slug}`;
