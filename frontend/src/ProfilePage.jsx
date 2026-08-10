@@ -32,7 +32,6 @@ export default function ProfilePage() {
   const [notifEmail, setNotifEmail] = useState(true);
   const [notifOffers, setNotifOffers] = useState(false);
   const [notifOrders, setNotifOrders] = useState(true);
-  const [twoFactor, setTwoFactor] = useState(false);
   
   // Edit Profile States
   const [name, setName] = useState(profile?.full_name || '');
@@ -80,10 +79,7 @@ export default function ProfilePage() {
     }
   };
 
-  const handlePasswordChange = (e) => {
-    e.preventDefault();
-    toast.success("Password change link sent to email.");
-  };
+
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const handleDeleteAccount = () => setShowDeleteConfirm(true);
@@ -179,28 +175,7 @@ export default function ProfilePage() {
             </div>
 
 
-            {/* Section 5: Security */}
-            <div className="bg-white dark:bg-gray-900/50 border border-gray-200 dark:border-white/10 rounded-3xl p-8 shadow-sm">
-              <h3 className="text-xl font-bold mb-6 flex items-center gap-2"><Lock className="w-5 h-5 text-gray-400" /> Security</h3>
-              <div className="space-y-6">
-                 <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-black rounded-2xl border border-gray-100 dark:border-gray-900">
-                    <div>
-                      <p className="font-bold">Two-Factor Authentication (2FA)</p>
-                      <p className="text-sm text-gray-500">Add an extra layer of security to your account.</p>
-                    </div>
-                    <Toggle enabled={twoFactor} onChange={setTwoFactor} />
-                 </div>
-                 
-                 <form onSubmit={handlePasswordChange} className="p-6 bg-gray-50 dark:bg-black rounded-2xl border border-gray-100 dark:border-gray-900 space-y-4">
-                    <p className="font-bold mb-2">Change Password</p>
-                    <input type="password" placeholder="Current Password" className="w-full px-4 py-3 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 outline-none" />
-                    <input type="password" placeholder="New Password" className="w-full px-4 py-3 rounded-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 outline-none" />
-                    <button type="submit" className="px-6 py-2 bg-black dark:bg-white text-white dark:text-black font-bold rounded-xl text-sm mt-2 hover:opacity-80 transition-opacity">
-                      Update Password
-                    </button>
-                 </form>
-              </div>
-            </div>
+
 
             {/* Section 6: Danger Zone */}
             <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 rounded-3xl p-8 shadow-sm">
