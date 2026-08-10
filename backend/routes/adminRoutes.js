@@ -4,8 +4,12 @@ import AdmZip from 'adm-zip';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import { exec } from 'child_process';
+import util from 'util';
 import { supabaseAdmin } from '../config/supabase.js';
 import { requireAdmin } from '../middlewares/authMiddleware.js';
+
+const execPromise = util.promisify(exec);
 
 const router = express.Router();
 const __filename = fileURLToPath(import.meta.url);
@@ -165,6 +169,89 @@ const processPreviewPaths = (dir, slug) => {
   processDir(dir);
 };
 
+// Helper to detect if extracted dir is a React/Vite source project and build it automatically if needed
+const ensurePreviewBuild = async (extractPath, slug) => {
+  if (!fs.existsSync(extractPath)) return;
+  const indexPath = path.join(extractPath, 'index.html');
+  const pkgPath = path.join(extractPath, 'package.json');
+  
+  let isReactVite = fs.existsSync(pkgPath);
+  if (fs.existsSync(indexPath)) {
+    const content = fs.readFileSync(indexPath, 'utf8');
+    if (content.includes('.tsx') || content.includes('.jsx') || content.includes('main.tsx') || content.includes('main.jsx')) {
+      isReactVite = true;
+    }
+  }
+
+  if (isReactVite) {
+    console.log(`Detected React/Vite template source project for "${slug}". Building production static bundle...`);
+    try {
+      if (fs.existsSync(indexPath)) {
+        let indexContent = fs.readFileSync(indexPath, 'utf8');
+        indexContent = indexContent.replace(new RegExp(`/previews/${slug}/src/`, 'g'), '/src/');
+        fs.writeFileSync(indexPath, indexContent, 'utf8');
+      }
+
+      const viteConfigTs = path.join(extractPath, 'vite.config.ts');
+      const viteConfigJs = path.join(extractPath, 'vite.config.js');
+      const targetViteConfig = fs.existsSync(viteConfigTs) ? viteConfigTs : (fs.existsSync(viteConfigJs) ? viteConfigJs : null);
+      
+      if (targetViteConfig) {
+        let vContent = fs.readFileSync(targetViteConfig, 'utf8');
+        if (!vContent.includes("base:")) {
+          vContent = vContent.replace(/return\s*\{/, `return {\n    base: './',`);
+          if (!vContent.includes("base: './'")) {
+            vContent = vContent.replace(/defineConfig\(\{/, `defineConfig({\n  base: './',`);
+          }
+          fs.writeFileSync(targetViteConfig, vContent, 'utf8');
+        }
+      }
+
+      await execPromise(`npm install --legacy-peer-deps`, { cwd: extractPath });
+      await execPromise(`npx vite build --base=./`, { cwd: extractPath });
+
+      const distDir = path.join(extractPath, 'dist');
+      if (fs.existsSync(distDir)) {
+        const distFiles = fs.readdirSync(distDir);
+        for (const file of distFiles) {
+          const srcP = path.join(distDir, file);
+          const destP = path.join(extractPath, file);
+          if (fs.existsSync(destP)) {
+            if (fs.statSync(destP).isDirectory()) {
+              fs.rmdirSync(destP, { recursive: true });
+            } else {
+              fs.unlinkSync(destP);
+            }
+          }
+          fs.renameSync(srcP, destP);
+        }
+        try { fs.rmdirSync(distDir); } catch(e) {}
+      }
+
+      const itemsToClean = ['src', 'node_modules', 'package.json', 'package-lock.json', 'tsconfig.json', 'vite.config.ts', 'vite.config.js', 'bun.lock', '.git', '.env'];
+      for (const item of itemsToClean) {
+        const itemP = path.join(extractPath, item);
+        if (fs.existsSync(itemP)) {
+          try {
+            if (fs.statSync(itemP).isDirectory()) {
+              fs.rmdirSync(itemP, { recursive: true });
+            } else {
+              fs.unlinkSync(itemP);
+            }
+          } catch(e) {}
+        }
+      }
+      console.log(`Successfully built & sanitized React/Vite preview for "${slug}"!`);
+    } catch (buildErr) {
+      console.error(`Failed to build React/Vite template for "${slug}":`, buildErr.message);
+      processPreviewPaths(extractPath, slug);
+    }
+  } else {
+    // Standard static HTML template
+    processPreviewPaths(extractPath, slug);
+  }
+};
+
 router.get('/stats', requireAdmin, async (req, res) => {
   try {
     const { data: purchases } = await supabaseAdmin.from('purchases').select('*');
@@ -211,7 +298,7 @@ router.post('/upload-template', requireAdmin, upload.single('file'), async (req,
 
     if (uploadError) throw uploadError;
 
-    // Unzip, flatten, and fix paths synchronously for live preview
+    // Unzip, flatten, auto-build if React/Vite, and fix paths synchronously for live preview
     const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
     const extractPath = path.resolve(__dirname, '../../frontend/public/previews', slug);
     
@@ -223,8 +310,8 @@ router.post('/upload-template', requireAdmin, upload.single('file'), async (req,
       await extractZipAsync(zip, extractPath);
       // Flatten the extracted zip contents if nested
       flattenDirectory(extractPath);
-      // Rewrite absolute asset paths in HTML/JS/CSS files
-      processPreviewPaths(extractPath, slug);
+      // Automatically detect & build React/Vite source or process static HTML paths
+      await ensurePreviewBuild(extractPath, slug);
       // Clean up the uploaded file from disk after successful extraction
       if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
     } catch (unzipErr) {
