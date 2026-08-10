@@ -152,9 +152,8 @@ export const CartProvider = ({ children }) => {
     // Trigger a custom event to tell useTemplates to refetch globally across components
     window.dispatchEvent(new Event('templates_updated'));
     
-    // Update local state
-    const newPurchasedObjects = templates.filter(t => finalIds.includes(t.id));
-    setPurchasedTemplates(newPurchasedObjects);
+    // Update local state by re-fetching purchased templates from DB & Auth metadata
+    await loadPurchasedTemplates(user.id);
     setCartItems([]);
   };
 
