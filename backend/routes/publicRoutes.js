@@ -2,6 +2,13 @@ import express from 'express';
 import { supabaseAdmin } from '../config/supabase.js';
 import { requireAuth } from '../middlewares/authMiddleware.js';
 import { sendReceiptEmail, sendContactEmail } from '../services/emailService.js';
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.resolve(__dirname, '../../.env.local') });
 
 const router = express.Router();
 
