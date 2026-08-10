@@ -241,6 +241,7 @@ const ensurePreviewBuild = async (extractPath, slug) => {
           } catch(e) {}
         }
       }
+      processPreviewPaths(extractPath, slug);
       console.log(`Successfully built & sanitized React/Vite preview for "${slug}"!`);
     } catch (buildErr) {
       console.error(`Failed to build React/Vite template for "${slug}":`, buildErr.message);
