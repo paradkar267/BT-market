@@ -68,8 +68,23 @@ export default function TemplatesPage() {
       // Tech filter
       const matchesTech = selectedTechs.length === 0 || selectedTechs.includes(t.category);
       
-      // Tag filter (business categories)
-      const matchesTag = !selectedTag || t.tag === selectedTag;
+      // Tag / Business Category filter (smart matching)
+      let matchesTag = true;
+      if (selectedTag) {
+        const tagLower = selectedTag.toLowerCase();
+        const tagWords = tagLower.split(/[\s&,-]+/).filter(w => w.length > 2);
+        
+        const titleL = (t.title || '').toLowerCase();
+        const descL = (t.description || '').toLowerCase();
+        const catL = (t.category || '').toLowerCase();
+        const tTagL = (t.tag || '').toLowerCase();
+        const kwL = (t.keywords || []).map(k => String(k).toLowerCase());
+
+        const directMatch = tTagL === tagLower || catL === tagLower || titleL.includes(tagLower) || descL.includes(tagLower) || kwL.some(k => k.includes(tagLower));
+        const wordMatch = tagWords.length > 0 && tagWords.some(w => titleL.includes(w) || tTagL.includes(w) || catL.includes(w) || kwL.some(k => k.includes(w)));
+        
+        matchesTag = directMatch || wordMatch;
+      }
       
       // Price filter (compare in converted currency)
       const convertedPrice = convertPrice(parseFloat(t.price));
@@ -110,6 +125,31 @@ export default function TemplatesPage() {
             placeholder="Search templates..." 
             className={`w-full pl-10 pr-4 py-2.5 border rounded-xl outline-none transition-all text-sm font-medium shadow-sm ${isDark ? 'bg-white/5 border-white/10 text-white focus:border-white/30 placeholder:text-gray-500' : 'bg-white border-gray-200 text-black focus:border-black placeholder:text-gray-400'}`}
           />
+        </div>
+      </div>
+
+      {/* Categories / Industry */}
+      <div>
+        <h3 className="text-sm font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">Categories</h3>
+        <div className="space-y-1 max-h-[220px] overflow-y-auto pr-2" style={{ scrollbarWidth: 'thin' }}>
+          <button
+            onClick={() => setSelectedTag("")}
+            className={`w-full text-left px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${!selectedTag ? (isDark ? 'bg-white text-black' : 'bg-black text-white') : (isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-black')}`}
+          >
+            All Categories
+          </button>
+          {[
+            "Agency", "Beauty & Cosmetics", "Business", "Corporate", "E-commerce",
+            "Electronics", "Fashion & Clothing", "Medical & Healthcare", "Real Estate", "SaaS & Tech"
+          ].map(cat => (
+            <button
+              key={cat}
+              onClick={() => setSelectedTag(selectedTag === cat ? "" : cat)}
+              className={`w-full text-left px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${selectedTag === cat ? (isDark ? 'bg-white/20 text-white font-bold' : 'bg-gray-200 text-black font-bold') : (isDark ? 'text-gray-400 hover:text-white hover:bg-white/5' : 'text-gray-600 hover:text-black hover:bg-gray-100')}`}
+            >
+              {cat}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -291,6 +331,43 @@ export default function TemplatesPage() {
                 </select>
               </div>
             </div>
+
+            {/* Active Filters Pill Bar */}
+            {(selectedTag || selectedTechs.length > 0 || searchQuery) && (
+              <div className="flex flex-wrap items-center gap-2 mb-6 p-3 rounded-2xl bg-gray-100/50 dark:bg-white/5 border border-black/5 dark:border-white/10">
+                <span className="text-xs font-bold uppercase text-gray-500 dark:text-gray-400">Active Filters:</span>
+                {selectedTag && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-black text-white dark:bg-white dark:text-black shadow-sm">
+                    Category: {selectedTag}
+                    <button onClick={() => setSelectedTag('')} className="hover:opacity-75">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </span>
+                )}
+                {selectedTechs.map(tech => (
+                  <span key={tech} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/30">
+                    Tech: {tech}
+                    <button onClick={() => toggleTech(tech)} className="hover:opacity-75">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </span>
+                ))}
+                {searchQuery && (
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-purple-500/20 text-purple-600 dark:text-purple-400 border border-purple-500/30">
+                    Search: "{searchQuery}"
+                    <button onClick={() => setSearchQuery('')} className="hover:opacity-75">
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </span>
+                )}
+                <button 
+                  onClick={() => { setSelectedTag(''); setSelectedTechs([]); setSearchQuery(''); setPriceRange('all'); }}
+                  className="text-xs font-bold text-red-500 hover:underline ml-2"
+                >
+                  Clear All
+                </button>
+              </div>
+            )}
             
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
                {loading ? (
