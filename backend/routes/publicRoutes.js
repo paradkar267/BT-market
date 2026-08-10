@@ -43,6 +43,12 @@ router.post('/verify-payment', requireAuth, async (req, res) => {
   const { paymentId, cartItems } = req.body;
   const user = req.user;
 
+  console.log('verify-payment request received:', {
+    paymentId,
+    razorpayKey: process.env.RAZORPAY_KEY || process.env.VITE_RAZORPAY_TEST_KEY,
+    hasSecret: !!(process.env.RAZORPAY_SECRET || process.env.VITE_RAZORPAY_TEST_SECRET)
+  });
+
   if (!paymentId || !cartItems || !cartItems.length) {
     return res.status(400).json({ error: 'Missing payment information or cart is empty' });
   }
