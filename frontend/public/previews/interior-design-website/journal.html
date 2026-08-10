@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Journal & Field Notes — The Atelier</title>
+  <meta name="description" content="Insights, material studies, and design philosophy from the studio team at The Atelier.">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar--transparent navbar--dark" aria-label="Main navigation">
+    <a href="index.html" class="navbar__logo">The Atelier</a>
+    <div class="navbar__nav">
+      <a href="about.html" class="navbar__link">Studio</a>
+      <a href="services.html" class="navbar__link">Services</a>
+      <a href="portfolio.html" class="navbar__link">Portfolio</a>
+      <a href="journal.html" class="navbar__link navbar__link--active">Journal</a>
+      <a href="contact.html" class="navbar__cta btn btn--primary btn--sm">Start a Conversation</a>
+    </div>
+    <button class="navbar__toggle" aria-label="Open menu" aria-expanded="false">
+      <span class="navbar__toggle-bar"></span>
+      <span class="navbar__toggle-bar"></span>
+      <span class="navbar__toggle-bar"></span>
+    </button>
+  </nav>
+
+  <!-- Mobile Menu -->
+  <div class="mobile-menu" aria-label="Mobile navigation">
+    <a href="index.html" class="mobile-menu__link">Home</a>
+    <a href="about.html" class="mobile-menu__link">Studio</a>
+    <a href="services.html" class="mobile-menu__link">Services</a>
+    <a href="portfolio.html" class="mobile-menu__link">Portfolio</a>
+    <a href="journal.html" class="mobile-menu__link">Journal</a>
+    <a href="contact.html" class="mobile-menu__link">Contact</a>
+    <div class="mobile-menu__footer">
+      <a href="https://instagram.com">Instagram</a>
+      <a href="https://pinterest.com">Pinterest</a>
+    </div>
+  </div>
+
+  <main>
+    <!-- Page Hero -->
+    <header class="page-hero reveal">
+      <div class="page-hero__content">
+        <p class="caption page-hero__eyebrow">Studio Journal</p>
+        <h1 class="page-hero__title">Field notes on design, materials & quiet living.</h1>
+        <p class="page-hero__subtitle">Essays on spatial geometry, material patinas, and the art of unhurried interior design.</p>
+      </div>
+    </header>
+
+    <!-- Featured Post -->
+    <section class="section section--canvas reveal">
+      <div class="container">
+        <a href="article-detail.html" style="text-decoration: none; color: inherit; display: block;">
+          <div class="grid grid--asymmetric" style="align-items: center; gap: var(--space-8);">
+            <div class="img-hover-wrap" style="aspect-ratio: 16/10;">
+              <img src="images/portfolio-living-alt.jpg" alt="Roman Clay plaster wall detail" style="width:100%; height:100%; object-fit:cover;">
+            </div>
+            <div>
+              <p class="caption" style="color: var(--accent-secondary); margin-bottom: var(--space-2);">Featured Essay · July 2026</p>
+              <h2 class="heading-1" style="margin-bottom: var(--space-4);">The Art of Plaster: Why We Solicit Texture Over Paint</h2>
+              <p class="body-l color-ink-soft" style="margin-bottom: var(--space-5);">Why wet-troweled lime plaster creates a depth of atmosphere that flat acrylic latex paint can never replicate — and how it transforms ambient room light throughout the day.</p>
+              <span class="btn btn--tertiary">Read Full Essay &rarr;</span>
+            </div>
+          </div>
+        </a>
+      </div>
+    </section>
+
+    <!-- Journal Grid -->
+    <section class="section section--canvas-deep reveal">
+      <div class="container">
+        <div style="margin-bottom: var(--space-7);">
+          <p class="caption">Recent Writing</p>
+          <h2 class="heading-2">Latest Insights</h2>
+        </div>
+
+        <div class="grid" style="grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: var(--space-6);">
+          
+          <!-- Article Card 1 -->
+          <article class="project-card">
+            <a href="article-detail.html">
+              <div class="project-card__image aspect-3-2">
+                <img src="images/portfolio-kitchen.jpg" alt="Walnut and stone kitchen detailing">
+              </div>
+              <p class="caption" style="margin-bottom: 6px; color: var(--accent-secondary);">Material Study · May 2026</p>
+              <h3 class="project-card__title">Designing Kitchens for the Next Quarter-Century</h3>
+              <p class="body-m color-ink-soft" style="margin-top: 8px;">Avoiding trendy cabinet finishes in favor of solid walnut, hand-honed travertine, and patinated unlacquered brass.</p>
+            </a>
+          </article>
+
+          <!-- Article Card 2 -->
+          <article class="project-card">
+            <a href="article-detail.html">
+              <div class="project-card__image aspect-3-2">
+                <img src="images/portfolio-bedroom.jpg" alt="Serene linen bedroom">
+              </div>
+              <p class="caption" style="margin-bottom: 6px; color: var(--accent-secondary);">Spatial Psychology · April 2026</p>
+              <h3 class="project-card__title">Sanctuary Bedrooms: Acoustic and Sensory Design</h3>
+              <p class="body-m color-ink-soft" style="margin-top: 8px;">How acoustic wall treatments, wool drapery, and low-temperature indirect lighting optimize rest.</p>
+            </a>
+          </article>
+
+          <!-- Article Card 3 -->
+          <article class="project-card">
+            <a href="article-detail.html">
+              <div class="project-card__image aspect-3-2">
+                <img src="images/portfolio-study.jpg" alt="Custom walnut bookcase">
+              </div>
+              <p class="caption" style="margin-bottom: 6px; color: var(--accent-secondary);">Craft & Sourcing · March 2026</p>
+              <h3 class="project-card__title">The Case for Architectural Millwork</h3>
+              <p class="body-m color-ink-soft" style="margin-top: 8px;">Why built-in joinery adds permanent architectural weight to apartments that lack traditional moulding.</p>
+            </a>
+          </article>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- Closing CTA Banner -->
+    <section class="section section--ink cta-banner reveal">
+      <div class="container">
+        <h2 class="cta-banner__title">Subscribe to Field Notes.</h2>
+        <p class="cta-banner__subtitle">A quarterly digest of studio essays, material discoveries, and interior inspiration.</p>
+        <form class="newsletter" style="margin: var(--space-6) auto 0; max-width: 480px;">
+          <input type="email" class="newsletter__input" placeholder="Enter your email address" aria-label="Email for field notes">
+          <button type="submit" class="btn btn--ghost">Subscribe</button>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer__top">
+      <div class="footer__brand">
+        <a href="index.html" class="footer__logo">The Atelier</a>
+        <p class="footer__brand-text">Crafting interiors that feel like they were always there. A full-service interior design studio based in New York.</p>
+        <div class="footer__social">
+          <a href="#" class="footer__social-link">Instagram</a>
+          <a href="#" class="footer__social-link">Pinterest</a>
+          <a href="#" class="footer__social-link">LinkedIn</a>
+        </div>
+      </div>
+      <div>
+        <h4 class="footer__column-title">Navigation</h4>
+        <div class="footer__links">
+          <a href="about.html" class="footer__link">Studio</a>
+          <a href="services.html" class="footer__link">Services</a>
+          <a href="portfolio.html" class="footer__link">Portfolio</a>
+          <a href="process.html" class="footer__link">Process</a>
+          <a href="journal.html" class="footer__link">Journal</a>
+          <a href="contact.html" class="footer__link">Contact</a>
+        </div>
+      </div>
+      <div>
+        <h4 class="footer__column-title">Resources</h4>
+        <div class="footer__links">
+          <a href="faq.html" class="footer__link">FAQ</a>
+          <a href="press.html" class="footer__link">Press</a>
+          <a href="testimonials.html" class="footer__link">Testimonials</a>
+          <a href="team.html" class="footer__link">Our Team</a>
+          <a href="styleguide.html" class="footer__link">Design System</a>
+        </div>
+      </div>
+      <div>
+        <h4 class="footer__column-title">Stay Updated</h4>
+        <p style="font-size:14px; color:rgba(255,255,255,0.5); margin-bottom:16px;">Inspiration and updates, delivered quarterly.</p>
+        <form class="newsletter">
+          <input type="email" class="newsletter__input" placeholder="Your email" aria-label="Email for newsletter">
+          <button type="submit" class="btn btn--ghost btn--sm">Join</button>
+        </form>
+      </div>
+    </div>
+    <div class="footer__bottom">
+      <div class="footer__legal">
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="privacy.html">Terms of Service</a>
+      </div>
+      <p class="footer__copyright">&copy; 2026 The Atelier. All rights reserved.</p>
+    </div>
+    <div class="footer__wordmark">The Atelier</div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/components.js"></script>
+</body>
+</html>

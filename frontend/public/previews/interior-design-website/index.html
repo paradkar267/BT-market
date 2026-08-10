@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Atelier — Interior Design Studio, New York</title>
+  <meta name="description" content="Crafting interiors that feel like they were always there. A full-service interior design studio based in New York.">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar--transparent navbar--dark" aria-label="Main navigation">
+    <a href="index.html" class="navbar__logo">The Atelier</a>
+    <div class="navbar__nav">
+      <a href="about.html" class="navbar__link">Studio</a>
+      <a href="services.html" class="navbar__link">Services</a>
+      <a href="portfolio.html" class="navbar__link">Portfolio</a>
+      <a href="process.html" class="navbar__link">Process</a>
+      <a href="contact.html" class="navbar__cta btn btn--primary btn--sm">Start a Conversation</a>
+    </div>
+    <button class="navbar__toggle" aria-label="Open menu" aria-expanded="false">
+      <span class="navbar__toggle-bar"></span>
+      <span class="navbar__toggle-bar"></span>
+      <span class="navbar__toggle-bar"></span>
+    </button>
+  </nav>
+
+  <!-- Mobile Menu -->
+  <div class="mobile-menu" aria-label="Mobile navigation">
+    <a href="index.html" class="mobile-menu__link">Home</a>
+    <a href="about.html" class="mobile-menu__link">Studio</a>
+    <a href="services.html" class="mobile-menu__link">Services</a>
+    <a href="portfolio.html" class="mobile-menu__link">Portfolio</a>
+    <a href="process.html" class="mobile-menu__link">Process</a>
+    <a href="team.html" class="mobile-menu__link">Team</a>
+    <a href="contact.html" class="mobile-menu__link">Contact</a>
+    <div class="mobile-menu__footer">
+      <a href="https://instagram.com">Instagram</a>
+      <a href="https://pinterest.com">Pinterest</a>
+    </div>
+  </div>
+
+  <main>
+    <!-- 1. Hero -->
+    <header class="hero page-hero reveal">
+      <div class="hero__media hero__media--animate page-hero__bg">
+        <img src="images/hero-main.jpg" alt="Luxury living room interior" style="width:100%; height:100%; object-fit:cover;">
+      </div>
+      <div class="hero__overlay"></div>
+      <div class="hero__content page-hero__content">
+        <div class="container">
+          <p class="hero__eyebrow page-hero__eyebrow caption">Interior Design Studio — New York</p>
+          <h1 class="hero__title page-hero__title display-xl">Interiors that feel like they were always there.</h1>
+          <div class="hero__actions">
+            <a href="portfolio.html" class="btn btn--ghost">Explore Our Work</a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- 2. Portfolio Teaser -->
+    <section class="section section--canvas-deep reveal">
+      <div class="container">
+        <div style="margin-bottom: var(--space-6); text-align: center;">
+          <p class="caption">Portfolio</p>
+          <h2 class="heading-2">Featured Projects</h2>
+        </div>
+        <div class="portfolio-grid">
+          <a href="project-detail.html" class="project-card">
+            <div class="project-card__image">
+              <img src="images/portfolio-kitchen.jpg" alt="The Waverly Residence Kitchen">
+            </div>
+            <h3 class="project-card__title">The Waverly Residence</h3>
+            <p class="project-card__meta">Kitchen — Tribeca</p>
+          </a>
+          <a href="project-detail.html" class="project-card">
+            <div class="project-card__image">
+              <img src="images/portfolio-bedroom.jpg" alt="Gramercy Park Townhouse Master Suite">
+            </div>
+            <h3 class="project-card__title">Gramercy Park Townhouse</h3>
+            <p class="project-card__meta">Master Suite — Manhattan</p>
+          </a>
+          <a href="project-detail.html" class="project-card">
+            <div class="project-card__image">
+              <img src="images/portfolio-dining.jpg" alt="Hudson Valley Retreat Dining Room">
+            </div>
+            <h3 class="project-card__title">Hudson Valley Retreat</h3>
+            <p class="project-card__meta">Dining Room — Upstate NY</p>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. Philosophy Split -->
+    <section class="section section--canvas reveal">
+      <div class="container">
+        <div class="split-section">
+          <div class="split-section__content">
+            <p class="split-section__eyebrow caption">Our Philosophy</p>
+            <h2 class="split-section__title heading-2">Spaces shaped by how you actually live.</h2>
+            <p class="split-section__text body-l">We believe the best interiors don't follow trends — they follow the rhythms of your daily life. Every material chosen, every detail considered, every space designed to feel inevitable rather than imposed.</p>
+            <a href="about.html" class="btn btn--tertiary" style="margin-top:1.5rem; display:inline-block;">About Our Studio &rarr;</a>
+          </div>
+          <div class="split-section__image">
+            <img src="images/portfolio-living-alt.jpg" alt="Living room interior showcasing our design philosophy">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. Process Preview -->
+    <section class="section section--canvas-deep reveal">
+      <div class="container">
+        <div style="margin-bottom:3rem; text-align:center;">
+          <p class="caption">How We Work</p>
+          <h2 class="heading-2">A clear path from vision to reality.</h2>
+        </div>
+        <div class="process-steps process-steps--4 process-steps--horizontal">
+          <div class="process-step">
+            <div class="process-step__number">01</div>
+            <div class="process-step__content">
+              <h3 class="process-step__title">Discovery</h3>
+              <p class="process-step__desc">Understanding your lifestyle and vision.</p>
+            </div>
+          </div>
+          <div class="process-step">
+            <div class="process-step__number">02</div>
+            <div class="process-step__content">
+              <h3 class="process-step__title">Design</h3>
+              <p class="process-step__desc">Crafting the tailored design concept.</p>
+            </div>
+          </div>
+          <div class="process-step">
+            <div class="process-step__number">03</div>
+            <div class="process-step__content">
+              <h3 class="process-step__title">Sourcing</h3>
+              <p class="process-step__desc">Curating materials and furnishings.</p>
+            </div>
+          </div>
+          <div class="process-step">
+            <div class="process-step__number">04</div>
+            <div class="process-step__content">
+              <h3 class="process-step__title">Installation</h3>
+              <p class="process-step__desc">Bringing the vision to life seamlessly.</p>
+            </div>
+          </div>
+        </div>
+        <div style="text-align:center; margin-top:3rem;">
+          <a href="process.html" class="btn btn--secondary">See Full Process</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. Press Logo Strip -->
+    <section class="section section--canvas reveal">
+      <div class="container">
+        <p class="caption" style="text-align:center; margin-bottom:2rem;">As Seen In</p>
+        <div class="press-strip" style="display:flex; justify-content:center; gap:3rem; flex-wrap:wrap; opacity:0.6;">
+          <span class="press-strip__logo heading-3">Architectural Digest</span>
+          <span class="press-strip__logo heading-3">Elle Decor</span>
+          <span class="press-strip__logo heading-3">Dwell</span>
+          <span class="press-strip__logo heading-3">House &amp; Garden</span>
+          <span class="press-strip__logo heading-3">Wallpaper*</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. Testimonial Spotlight -->
+    <section class="section section--ink reveal">
+      <div class="container">
+        <div class="grid grid--55-45" style="align-items: center; gap: var(--space-9);">
+          <div>
+            <span class="caption" style="color: var(--accent-secondary); margin-bottom: var(--space-4); display: block;">Client Perspective</span>
+            <div style="font-family: var(--font-display); font-size: 64px; line-height: 0.8; color: var(--accent-secondary); margin-bottom: var(--space-3);">&ldquo;</div>
+            <blockquote class="testimonial__quote" style="font-family: var(--font-display); font-size: clamp(22px, 3vw, 34px); line-height: 1.35; color: var(--paper); font-style: italic; margin-bottom: var(--space-6); font-weight: 300;">
+              They understood what we wanted before we could articulate it ourselves. Our home has never felt more like us.
+            </blockquote>
+            <div>
+              <p class="testimonial__author" style="color: var(--paper); font-family: var(--font-body); font-weight: 500; font-size: var(--text-body-l); margin-bottom: 4px;">Sarah &amp; James Mitchell</p>
+              <p class="testimonial__project caption" style="color: var(--accent-secondary);">The Waverly Residence, Tribeca &bull; Full-Home Interior</p>
+            </div>
+          </div>
+          <div style="position: relative;">
+            <div style="overflow: hidden; border-radius: 8px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); aspect-ratio: 4 / 3;">
+              <img src="images/portfolio-living-alt.jpg" alt="The Waverly Residence, Tribeca" style="width: 100%; height: 100%; object-fit: cover; display: block;">
+            </div>
+            <div style="position: absolute; bottom: -16px; left: -16px; background: rgba(239, 238, 233, 0.95); backdrop-filter: blur(8px); padding: 10px 18px; border-radius: 4px; box-shadow: 0 10px 25px rgba(0,0,0,0.25);">
+              <span class="caption" style="color: var(--ink); font-weight: 500;">Tribeca, NYC &bull; Completed 2025</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. Closing CTA -->
+    <section class="section section--ink cta-banner reveal" style="text-align:center; padding:6rem 0;">
+      <div class="container">
+        <h2 class="cta-banner__title heading-2">Ready to start the conversation?</h2>
+        <p class="cta-banner__subtitle body-l" style="margin:1.5rem 0 2.5rem; opacity:0.8;">Every project begins with a simple hello.</p>
+        <a href="contact.html" class="btn btn--ghost">Start a Conversation</a>
+      </div>
+    </section>
+  </main>
+
+  <!-- Sticky CTA -->
+  <div class="sticky-cta">
+    <a href="contact.html" class="btn btn--primary" style="width:100%;">Start a Conversation</a>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer__top">
+      <div class="footer__brand">
+        <a href="index.html" class="footer__logo">The Atelier</a>
+        <p class="footer__brand-text">Crafting interiors that feel like they were always there. A full-service interior design studio based in New York.</p>
+        <div class="footer__social">
+          <a href="#" class="footer__social-link">Instagram</a>
+          <a href="#" class="footer__social-link">Pinterest</a>
+          <a href="#" class="footer__social-link">LinkedIn</a>
+        </div>
+      </div>
+      <div>
+        <h4 class="footer__column-title">Navigation</h4>
+        <div class="footer__links">
+          <a href="about.html" class="footer__link">Studio</a>
+          <a href="services.html" class="footer__link">Services</a>
+          <a href="portfolio.html" class="footer__link">Portfolio</a>
+          <a href="process.html" class="footer__link">Process</a>
+          <a href="contact.html" class="footer__link">Contact</a>
+        </div>
+      </div>
+      <div>
+        <h4 class="footer__column-title">Resources</h4>
+        <div class="footer__links">
+          <a href="faq.html" class="footer__link">FAQ</a>
+          <a href="press.html" class="footer__link">Press</a>
+          <a href="testimonials.html" class="footer__link">Testimonials</a>
+          <a href="team.html" class="footer__link">Our Team</a>
+        </div>
+      </div>
+      <div>
+        <h4 class="footer__column-title">Stay Updated</h4>
+        <p style="font-size:14px; color:rgba(255,255,255,0.5); margin-bottom:16px;">Inspiration and updates, delivered quarterly.</p>
+        <form class="newsletter">
+          <input type="email" class="newsletter__input" placeholder="Your email" aria-label="Email for newsletter">
+          <button type="submit" class="btn btn--ghost btn--sm">Join</button>
+        </form>
+      </div>
+    </div>
+    <div class="footer__bottom">
+      <div class="footer__legal">
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="privacy.html">Terms of Service</a>
+      </div>
+      <p class="footer__copyright">&copy; 2026 The Atelier. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/components.js"></script>
+</body>
+</html>

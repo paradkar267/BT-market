@@ -1,0 +1,6 @@
+{
+  "name": "VERDANT & CO. — Plant Atelier & Landscape House",
+  "description": "A modern plant atelier and landscape design house crafting bespoke gardens, curated outdoor living collections, and rare botanical interiors.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

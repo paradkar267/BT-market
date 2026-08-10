@@ -1,0 +1,394 @@
+/* ==========================================================================
+   THE ATELIER — Base Styles
+   Reset, fonts, typography, grid system, utilities
+   ========================================================================== */
+
+/* -----------------------------------------------------------------------
+   FONT IMPORTS
+   Fraunces (display serif) + General Sans (body grotesk)
+   ----------------------------------------------------------------------- */
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,100..900;1,9..144,100..900&display=swap');
+@import url('https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600,700&display=swap');
+
+/* -----------------------------------------------------------------------
+   RESET
+   ----------------------------------------------------------------------- */
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font-body);
+  font-size: var(--text-body-m);
+  line-height: var(--lh-body-m);
+  color: var(--ink);
+  background-color: var(--canvas);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+img,
+picture,
+video,
+canvas,
+svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+input,
+button,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+
+a {
+  color: var(--accent-primary);
+  text-decoration: none;
+  transition: color var(--duration-fast) var(--ease-material);
+}
+
+a:hover {
+  color: var(--accent-primary-hover);
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: 400;
+  color: var(--ink);
+  text-wrap: balance;
+  overflow-wrap: break-word;
+  word-break: break-word;
+}
+
+p, span, a, li, blockquote {
+  overflow-wrap: break-word;
+}
+
+/* Remove default focus outline, add custom */
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 3px;
+}
+
+/* -----------------------------------------------------------------------
+   TYPOGRAPHY
+   ----------------------------------------------------------------------- */
+.display-xl {
+  font-family: var(--font-display);
+  font-size: clamp(38px, 8vw, var(--text-display-xl));
+  line-height: var(--lh-display-xl);
+  font-weight: 300;
+  letter-spacing: -0.02em;
+}
+
+.display-l {
+  font-family: var(--font-display);
+  font-size: clamp(32px, 6vw, var(--text-display-l));
+  line-height: var(--lh-display-l);
+  font-weight: 300;
+  letter-spacing: -0.01em;
+}
+
+.heading-1 {
+  font-family: var(--font-display);
+  font-size: clamp(26px, 4.5vw, var(--text-heading-1));
+  line-height: var(--lh-heading-1);
+  font-weight: 400;
+}
+
+.heading-2 {
+  font-family: var(--font-display);
+  font-size: clamp(22px, 3.5vw, var(--text-heading-2));
+  line-height: var(--lh-heading-2);
+  font-weight: 400;
+}
+
+.heading-3 {
+  font-family: var(--font-display);
+  font-size: clamp(18px, 2.5vw, var(--text-heading-3));
+  line-height: var(--lh-heading-3);
+  font-weight: 500;
+}
+
+.body-l {
+  font-size: var(--text-body-l);
+  line-height: var(--lh-body-l);
+}
+
+.body-m {
+  font-size: var(--text-body-m);
+  line-height: var(--lh-body-m);
+}
+
+.caption {
+  font-size: var(--text-caption);
+  line-height: var(--lh-caption);
+  letter-spacing: var(--ls-caption);
+  text-transform: uppercase;
+  font-weight: 500;
+  color: var(--ink-soft);
+}
+
+/* -----------------------------------------------------------------------
+   LAYOUT — Containers
+   ----------------------------------------------------------------------- */
+.container {
+  width: 100%;
+  max-width: var(--container-content);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--margin-mobile);
+  padding-right: var(--margin-mobile);
+}
+
+.container--narrow {
+  max-width: var(--container-reading);
+}
+
+.container--wide {
+  max-width: var(--container-outer);
+}
+
+/* -----------------------------------------------------------------------
+   GRID SYSTEM — 12-column CSS Grid
+   ----------------------------------------------------------------------- */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--grid-gutter-mobile);
+}
+
+.grid--12 {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: var(--grid-gutter);
+}
+
+.grid--asymmetric {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--grid-gutter);
+}
+
+.grid--55-45 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--grid-gutter);
+}
+
+.grid--45-55 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--grid-gutter);
+}
+
+@media (min-width: 768px) {
+  .grid--asymmetric {
+    grid-template-columns: 7fr 5fr;
+  }
+  .grid--55-45 {
+    grid-template-columns: 55fr 45fr;
+  }
+  .grid--45-55 {
+    grid-template-columns: 45fr 55fr;
+  }
+}
+
+/* Column spans */
+.col-1  { grid-column: span 1; }
+.col-2  { grid-column: span 2; }
+.col-3  { grid-column: span 3; }
+.col-4  { grid-column: span 4; }
+.col-5  { grid-column: span 5; }
+.col-6  { grid-column: span 6; }
+.col-7  { grid-column: span 7; }
+.col-8  { grid-column: span 8; }
+.col-9  { grid-column: span 9; }
+.col-10 { grid-column: span 10; }
+.col-11 { grid-column: span 11; }
+.col-12 { grid-column: span 12; }
+
+/* -----------------------------------------------------------------------
+   SECTIONS — Spacing & Backgrounds
+   ----------------------------------------------------------------------- */
+.section {
+  padding-top: var(--section-gap-mobile);
+  padding-bottom: var(--section-gap-mobile);
+}
+
+.section--canvas {
+  background-color: var(--canvas);
+}
+
+.section--canvas-deep {
+  background-color: var(--canvas-deep);
+}
+
+.section--ink {
+  background-color: var(--ink);
+  color: var(--paper);
+}
+
+.section--ink .caption {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.section--ink h1,
+.section--ink h2,
+.section--ink h3,
+.section--ink h4 {
+  color: var(--paper);
+}
+
+.section--ink p {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.section--fullbleed {
+  padding: 0;
+}
+
+/* -----------------------------------------------------------------------
+   UTILITIES
+   ----------------------------------------------------------------------- */
+.text-center { text-align: center; }
+.text-left   { text-align: left; }
+.text-right  { text-align: right; }
+
+.color-ink      { color: var(--ink); }
+.color-ink-soft { color: var(--ink-soft); }
+.color-paper    { color: var(--paper); }
+.color-accent   { color: var(--accent-primary); }
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Scroll reveal — elements start hidden, JS adds .is-revealed */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity var(--duration-reveal) var(--ease-material),
+              transform var(--duration-reveal) var(--ease-material);
+}
+
+.reveal.is-revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Stagger children */
+.reveal-stagger > .reveal:nth-child(1) { transition-delay: 0ms; }
+.reveal-stagger > .reveal:nth-child(2) { transition-delay: 100ms; }
+.reveal-stagger > .reveal:nth-child(3) { transition-delay: 200ms; }
+.reveal-stagger > .reveal:nth-child(4) { transition-delay: 300ms; }
+.reveal-stagger > .reveal:nth-child(5) { transition-delay: 400ms; }
+.reveal-stagger > .reveal:nth-child(6) { transition-delay: 500ms; }
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Image wrapper for hover scale */
+.img-hover-wrap {
+  overflow: hidden;
+  border-radius: var(--radius-img);
+}
+
+.img-hover-wrap img {
+  transition: transform 5s cubic-bezier(0.25, 0.1, 0.25, 1);
+  will-change: transform;
+}
+
+.img-hover-wrap:hover img {
+  transform: scale(1.05);
+}
+
+/* Aspect ratio boxes */
+.aspect-4-5 {
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+}
+
+.aspect-3-2 {
+  aspect-ratio: 3 / 2;
+  object-fit: cover;
+}
+
+.aspect-16-9 {
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+
+.aspect-1-1 {
+  aspect-ratio: 1 / 1;
+  object-fit: cover;
+}
+
+/* Separator */
+.separator {
+  width: 60px;
+  height: 1px;
+  background-color: var(--accent-secondary);
+  border: none;
+}
+
+.separator--center {
+  margin-left: auto;
+  margin-right: auto;
+}

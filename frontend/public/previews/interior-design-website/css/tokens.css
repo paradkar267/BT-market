@@ -1,0 +1,126 @@
+/* ==========================================================================
+   THE ATELIER — Design Tokens
+   "Quiet Materiality" Design System
+   ========================================================================== */
+
+:root {
+  /* -----------------------------------------------------------------------
+     CORE NEUTRALS (Fixed across every client build)
+     ----------------------------------------------------------------------- */
+  --canvas:       #EFEEE9;   /* Limestone — primary background */
+  --canvas-deep:  #E6E2D8;   /* Travertine — alternating section bg */
+  --paper:        #FFFFFF;   /* Paper — cards, forms, contrast surfaces */
+  --ink:          #201F1C;   /* Wet Charcoal — primary text, dark sections */
+  --ink-soft:     #6B6862;   /* Stone Grey — secondary text, captions */
+  --hairline:     #DAD6CC;   /* Borders, dividers, table rules */
+  --success:      #4A5D45;   /* Moss — form success */
+  --error:        #8C3B2E;   /* Clay Red — form error */
+
+  /* -----------------------------------------------------------------------
+     ACCENT THEME: Verdigris (Flagship Default)
+     Old-money, botanical, quiet luxury
+     ----------------------------------------------------------------------- */
+  --accent-primary:    #1F3327;  /* Bottle Green — CTAs, links, focus */
+  --accent-secondary:  #A98D5B;  /* Aged Brass — dividers, hover underlines, marks */
+
+  /* Accent hover/active derivatives */
+  --accent-primary-hover:  #172a1f;  /* 8% darker */
+  --accent-primary-light:  rgba(31, 51, 39, 0.08);
+  --accent-secondary-light: rgba(169, 141, 91, 0.15);
+
+  /* -----------------------------------------------------------------------
+     TYPOGRAPHY SCALE (Desktop — mobile overrides in responsive.css)
+     Modular ~1.333 ratio
+     ----------------------------------------------------------------------- */
+  --font-display: 'Fraunces', 'Georgia', 'Times New Roman', serif;
+  --font-body:    'General Sans', 'Helvetica Neue', 'Arial', sans-serif;
+
+  /* Display */
+  --text-display-xl:       96px;
+  --lh-display-xl:         1.0;
+  --text-display-l:        64px;
+  --lh-display-l:          1.05;
+
+  /* Headings */
+  --text-heading-1:        44px;
+  --lh-heading-1:          1.1;
+  --text-heading-2:        28px;
+  --lh-heading-2:          1.2;
+  --text-heading-3:        20px;
+  --lh-heading-3:          1.3;
+
+  /* Body */
+  --text-body-l:           19px;
+  --lh-body-l:             1.6;
+  --text-body-m:           16px;
+  --lh-body-m:             1.6;
+
+  /* Caption */
+  --text-caption:          13px;
+  --lh-caption:            1.4;
+  --ls-caption:            0.08em;
+
+  /* -----------------------------------------------------------------------
+     SPACING SYSTEM (8px base unit)
+     ----------------------------------------------------------------------- */
+  --space-1:   4px;
+  --space-2:   8px;
+  --space-3:   12px;
+  --space-4:   16px;
+  --space-5:   24px;
+  --space-6:   32px;
+  --space-7:   48px;
+  --space-8:   64px;
+  --space-9:   96px;
+  --space-10:  128px;
+  --space-11:  160px;
+
+  /* Section vertical rhythm */
+  --section-gap-mobile:  48px;
+  --section-gap-tablet:  80px;
+  --section-gap-desktop: 110px;
+
+  /* -----------------------------------------------------------------------
+     BORDER RADIUS — Architectural Mood (Default)
+     ----------------------------------------------------------------------- */
+  --radius-btn:   4px;
+  --radius-card:  2px;
+  --radius-img:   0px;
+  --radius-input: 0px;
+
+  /* -----------------------------------------------------------------------
+     SHADOWS / ELEVATION
+     ----------------------------------------------------------------------- */
+  --shadow-xs:  0 1px 2px rgba(32, 31, 28, 0.04);
+  --shadow-sm:  0 2px 8px rgba(32, 31, 28, 0.06);
+  --shadow-md:  0 8px 24px rgba(32, 31, 28, 0.08);
+  --shadow-lg:  0 24px 64px rgba(32, 31, 28, 0.14);
+
+  /* -----------------------------------------------------------------------
+     CONTAINER / LAYOUT
+     ----------------------------------------------------------------------- */
+  --container-outer:    1440px;
+  --container-content:  1320px;
+  --container-reading:  720px;
+  --margin-desktop:     80px;
+  --margin-tablet:      40px;
+  --margin-mobile:      24px;
+  --grid-gutter:        24px;
+  --grid-gutter-mobile: 16px;
+  --grid-columns:       12;
+
+  /* -----------------------------------------------------------------------
+     NAVIGATION
+     ----------------------------------------------------------------------- */
+  --nav-height:         80px;
+  --nav-height-mobile:  64px;
+
+  /* -----------------------------------------------------------------------
+     TRANSITIONS
+     ----------------------------------------------------------------------- */
+  --ease-material:  cubic-bezier(0.25, 0.1, 0.25, 1.0);
+  --duration-fast:  200ms;
+  --duration-base:  300ms;
+  --duration-slow:  500ms;
+  --duration-reveal: 600ms;
+}

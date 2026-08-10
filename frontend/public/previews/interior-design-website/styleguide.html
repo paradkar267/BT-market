@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Design System & Style Guide — The Atelier</title>
+  <meta name="description" content="Living component showcase and design token documentation for The Atelier website system ('Quiet Materiality').">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/responsive.css">
+  <style>
+    .swatch {
+      height: 80px;
+      border-radius: var(--radius-card);
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 12px;
+      border: 1px solid var(--hairline);
+      font-size: 12px;
+      font-family: var(--font-body);
+    }
+    .sg-section {
+      padding: var(--space-8) 0;
+      border-bottom: 1px solid var(--hairline);
+    }
+  </style>
+</head>
+<body style="background-color: var(--canvas);">
+
+  <!-- Navbar -->
+  <nav class="navbar navbar--transparent navbar--dark" aria-label="Main navigation">
+    <a href="index.html" class="navbar__logo">The Atelier</a>
+    <div class="navbar__nav">
+      <a href="about.html" class="navbar__link">Studio</a>
+      <a href="services.html" class="navbar__link">Services</a>
+      <a href="portfolio.html" class="navbar__link">Portfolio</a>
+      <a href="styleguide.html" class="navbar__link navbar__link--active">Design System</a>
+      <a href="contact.html" class="navbar__cta btn btn--primary btn--sm">Start a Conversation</a>
+    </div>
+    <button class="navbar__toggle" aria-label="Open menu" aria-expanded="false">
+      <span class="navbar__toggle-bar"></span>
+      <span class="navbar__toggle-bar"></span>
+      <span class="navbar__toggle-bar"></span>
+    </button>
+  </nav>
+
+  <!-- Mobile Menu -->
+  <div class="mobile-menu" aria-label="Mobile navigation">
+    <a href="index.html" class="mobile-menu__link">Home</a>
+    <a href="about.html" class="mobile-menu__link">Studio</a>
+    <a href="services.html" class="mobile-menu__link">Services</a>
+    <a href="portfolio.html" class="mobile-menu__link">Portfolio</a>
+    <a href="styleguide.html" class="mobile-menu__link">Style Guide</a>
+    <a href="contact.html" class="mobile-menu__link">Contact</a>
+    <div class="mobile-menu__footer">
+      <a href="https://instagram.com">Instagram</a>
+      <a href="https://pinterest.com">Pinterest</a>
+    </div>
+  </div>
+
+  <main>
+    <!-- Header -->
+    <header class="page-hero">
+      <div class="page-hero__content">
+        <p class="caption page-hero__eyebrow" style="color: var(--accent-secondary);">Phase 12 — Component Consolidation</p>
+        <h1 class="page-hero__title">The Atelier System Showcase</h1>
+        <p class="page-hero__subtitle">System Name: "Quiet Materiality" · Fixed structural shell with swappable identity tokens.</p>
+      </div>
+    </header>
+
+    <div class="container" style="padding-top: var(--space-7); padding-bottom: var(--space-10);">
+
+      <!-- 1. COLOR TOKENS -->
+      <section class="sg-section">
+        <h2 class="heading-1" style="margin-bottom: var(--space-4);">1. Color Palette Tokens</h2>
+        <p class="body-m color-ink-soft" style="margin-bottom: var(--space-6);">Core neutrals drawn from plaster, travertine, limestone, and charcoal.</p>
+        
+        <h3 class="heading-3" style="margin-bottom: var(--space-3);">Core Neutrals</h3>
+        <div class="grid" style="grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; margin-bottom: var(--space-6);">
+          <div class="swatch" style="background: var(--canvas); color: var(--ink);">
+            <strong>--canvas</strong>
+            <span>#EFEEE9 (Limestone)</span>
+          </div>
+          <div class="swatch" style="background: var(--canvas-deep); color: var(--ink);">
+            <strong>--canvas-deep</strong>
+            <span>#E6E2D8 (Travertine)</span>
+          </div>
+          <div class="swatch" style="background: var(--paper); color: var(--ink);">
+            <strong>--paper</strong>
+            <span>#FFFFFF (Paper)</span>
+          </div>
+          <div class="swatch" style="background: var(--ink); color: var(--paper);">
+            <strong>--ink</strong>
+            <span>#201F1C (Charcoal)</span>
+          </div>
+          <div class="swatch" style="background: var(--ink-soft); color: var(--paper);">
+            <strong>--ink-soft</strong>
+            <span>#6B6862 (Stone Grey)</span>
+          </div>
+          <div class="swatch" style="background: var(--hairline); color: var(--ink);">
+            <strong>--hairline</strong>
+            <span>#DAD6CC (Hairline)</span>
+          </div>
+        </div>
+
+        <h3 class="heading-3" style="margin-bottom: var(--space-3);">Active Accent Theme (Verdigris)</h3>
+        <div class="grid" style="grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px;">
+          <div class="swatch" style="background: var(--accent-primary); color: var(--paper);">
+            <strong>--accent-primary</strong>
+            <span>#1F3327 (Bottle Green)</span>
+          </div>
+          <div class="swatch" style="background: var(--accent-secondary); color: var(--ink);">
+            <strong>--accent-secondary</strong>
+            <span>#A98D5B (Aged Brass)</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 2. TYPOGRAPHY SCALE -->
+      <section class="sg-section">
+        <h2 class="heading-1" style="margin-bottom: var(--space-4);">2. Typography Modular Scale</h2>
+        <p class="body-m color-ink-soft" style="margin-bottom: var(--space-6);">Fraunces (serif display) + General Sans (grotesk body).</p>
+
+        <div style="display: flex; flex-direction: column; gap: var(--space-5);">
+          <div>
+            <span class="caption">display-xl (96px)</span>
+            <p class="display-xl">Quiet Luxury</p>
+          </div>
+          <div>
+            <span class="caption">display-l (64px)</span>
+            <p class="display-l">Material Honesty</p>
+          </div>
+          <div>
+            <span class="caption">heading-1 (44px)</span>
+            <h1 class="heading-1">Architectural Interior Design</h1>
+          </div>
+          <div>
+            <span class="caption">heading-2 (28px)</span>
+            <h2 class="heading-2">The Waverly Loft Residence</h2>
+          </div>
+          <div>
+            <span class="caption">heading-3 (20px)</span>
+            <h3 class="heading-3">Material Selection & Procurement</h3>
+          </div>
+          <div>
+            <span class="caption">body-l (19px)</span>
+            <p class="body-l">From initial concept through final installation, we offer a complete range of interior design services.</p>
+          </div>
+          <div>
+            <span class="caption">body-m (16px)</span>
+            <p class="body-m">Default body copy set with high contrast against stone limestone backgrounds for optimal legibility.</p>
+          </div>
+          <div>
+            <span class="caption">caption (13px upper tracked)</span>
+            <p class="caption">Project Meta · Tribeca, Manhattan · 2026</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. BUTTON VARIANTS -->
+      <section class="sg-section">
+        <h2 class="heading-1" style="margin-bottom: var(--space-4);">3. Button Anatomy & Variants</h2>
+        <div style="display: flex; flex-wrap: wrap; gap: var(--space-4); align-items: center; margin-bottom: var(--space-6);">
+          <a href="#" class="btn btn--primary">Primary Action</a>
+          <a href="#" class="btn btn--secondary">Secondary Action</a>
+          <a href="#" class="btn btn--tertiary">Tertiary Link &rarr;</a>
+          <div style="background: var(--ink); padding: 16px; border-radius: var(--radius-card); display: inline-block;">
+            <a href="#" class="btn btn--ghost">Ghost Button</a>
+          </div>
+          <button class="btn btn--primary btn--disabled" disabled>Disabled State</button>
+        </div>
+      </section>
+
+      <!-- 4. FORM STYLES -->
+      <section class="sg-section">
+        <h2 class="heading-1" style="margin-bottom: var(--space-4);">4. Form Controls (Underline Style)</h2>
+        <div style="max-width: 500px;">
+          <div class="form-group">
+            <label class="form-label">Full Name</label>
+            <input type="text" class="form-input" placeholder="Eleanor Voss">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Project Type</label>
+            <select class="form-input form-select">
+              <option>Full-Service Interior Design</option>
+              <option>Kitchen & Bath Renovation</option>
+            </select>
+          </div>
+          <div class="form-group form-group--error">
+            <label class="form-label">Email Address (Error State)</label>
+            <input type="email" class="form-input" value="invalid-email">
+            <span class="form-error">⚠ Please enter a valid email address</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. INTERACTIVE COMPONENTS -->
+      <section class="sg-section">
+        <h2 class="heading-1" style="margin-bottom: var(--space-6);">5. Interactive Components</h2>
+
+        <!-- Before After Slider -->
+        <div style="margin-bottom: var(--space-8);">
+          <h3 class="heading-2" style="margin-bottom: var(--space-4);">Before / After Renovation Slider</h3>
+          <div class="ba-slider" style="max-width: 800px; aspect-ratio: 16/10;">
+            <div class="ba-slider__before">
+              <img src="images/portfolio-kitchen.jpg" alt="Before renovation">
+              <span class="ba-slider__label ba-slider__label--before">Before</span>
+            </div>
+            <div class="ba-slider__after">
+              <img src="images/portfolio-living-alt.jpg" alt="After renovation">
+              <span class="ba-slider__label ba-slider__label--after">After</span>
+            </div>
+            <div class="ba-slider__handle">
+              <div class="ba-slider__handle-circle"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- FAQ Accordion -->
+        <div style="margin-bottom: var(--space-8);">
+          <h3 class="heading-2" style="margin-bottom: var(--space-4);">FAQ Accordion Component</h3>
+          <div class="accordion" style="max-width: 800px;">
+            <div class="accordion__item">
+              <button class="accordion__trigger">
+                <span>How are project budgets managed?</span>
+                <span class="accordion__icon"></span>
+              </button>
+              <div class="accordion__panel">
+                <div class="accordion__panel-inner">
+                  Project budgets are established during the initial concept phase with fixed-fee proposals and zero markup on trade vendor purchases.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filter Chips -->
+        <div>
+          <h3 class="heading-2" style="margin-bottom: var(--space-4);">Portfolio Filter Bar</h3>
+          <div class="filter-bar" style="border: none;">
+            <button class="filter-chip is-active">All Projects</button>
+            <button class="filter-chip">Residential</button>
+            <button class="filter-chip">Kitchen & Bath</button>
+            <button class="filter-chip">Commercial</button>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer__top">
+      <div class="footer__brand">
+        <a href="index.html" class="footer__logo">The Atelier</a>
+        <p class="footer__brand-text">Crafting interiors that feel like they were always there.</p>
+      </div>
+      <div>
+        <h4 class="footer__column-title">System Links</h4>
+        <div class="footer__links">
+          <a href="index.html" class="footer__link">Homepage</a>
+          <a href="about.html" class="footer__link">Studio</a>
+          <a href="services.html" class="footer__link">Services</a>
+          <a href="portfolio.html" class="footer__link">Portfolio</a>
+          <a href="styleguide.html" class="footer__link">Style Guide</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer__wordmark">The Atelier</div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/components.js"></script>
+</body>
+</html>

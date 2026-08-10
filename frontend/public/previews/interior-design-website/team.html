@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Team — The Atelier</title>
+  <meta name="description" content="Meet the team behind every detail at The Atelier.">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar navbar--transparent navbar--dark" aria-label="Main navigation">
+    <a href="index.html" class="navbar__logo">The Atelier</a>
+    <div class="navbar__nav">
+      <a href="about.html" class="navbar__link">Studio</a>
+      <a href="services.html" class="navbar__link">Services</a>
+      <a href="portfolio.html" class="navbar__link">Portfolio</a>
+      <a href="process.html" class="navbar__link">Process</a>
+      <a href="contact.html" class="navbar__cta btn btn--primary btn--sm">Start a Conversation</a>
+    </div>
+    <button class="navbar__toggle" aria-label="Open menu" aria-expanded="false">
+      <span class="navbar__toggle-bar"></span>
+      <span class="navbar__toggle-bar"></span>
+      <span class="navbar__toggle-bar"></span>
+    </button>
+  </nav>
+
+  <!-- Mobile Menu -->
+  <div class="mobile-menu" aria-label="Mobile navigation">
+    <a href="index.html" class="mobile-menu__link">Home</a>
+    <a href="about.html" class="mobile-menu__link">Studio</a>
+    <a href="services.html" class="mobile-menu__link">Services</a>
+    <a href="portfolio.html" class="mobile-menu__link">Portfolio</a>
+    <a href="process.html" class="mobile-menu__link">Process</a>
+    <a href="team.html" class="mobile-menu__link">Team</a>
+    <a href="contact.html" class="mobile-menu__link">Contact</a>
+    <div class="mobile-menu__footer">
+      <a href="https://instagram.com">Instagram</a>
+      <a href="https://pinterest.com">Pinterest</a>
+    </div>
+  </div>
+
+  <main>
+    <!-- Page Hero -->
+    <header class="page-hero section--ink reveal">
+      <div class="container">
+        <div class="grid grid--55-45" style="align-items: flex-end; gap: var(--space-8);">
+          <div>
+            <p class="caption" style="color: var(--accent-secondary); margin-bottom: var(--space-3);">Our People</p>
+            <h1 class="page-hero__title display-l" style="color: var(--paper); text-wrap: balance;">The team behind<br>every detail.</h1>
+          </div>
+          <div class="page-hero__info">
+            <p class="body-l" style="color: rgba(255,255,255,0.8); line-height: 1.6; margin-bottom: var(--space-4);">We are a small, deliberately structured studio. Every client works directly with senior designers — never handed off to junior staff — ensuring uncompromised craft and attention.</p>
+            <div style="display: flex; gap: var(--space-3); flex-wrap: wrap;">
+              <span class="caption" style="background: rgba(255,255,255,0.08); color: var(--accent-secondary); padding: 6px 14px; border-radius: 2px;">Direct Principal Access</span>
+              <span class="caption" style="background: rgba(255,255,255,0.08); color: var(--accent-secondary); padding: 6px 14px; border-radius: 2px;">Dedicated Project Lead</span>
+              <span class="caption" style="background: rgba(255,255,255,0.08); color: var(--accent-secondary); padding: 6px 14px; border-radius: 2px;">Bespoke Craft</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Team Grid -->
+    <section class="section section--canvas reveal">
+      <div class="container">
+        <div class="team-grid">
+          <div class="team-card">
+            <div class="team-card__portrait">
+              <img src="images/team-1.jpg" alt="Eleanor Voss" style="width: 100%; height: auto; display: block;">
+              <div class="team-card__bio-overlay">
+                <p class="team-card__bio-text">RISD graduate, 20+ years in architecture and design. Leads concept and client relationships.</p>
+              </div>
+            </div>
+            <h3 class="team-card__name heading-3">Eleanor Voss</h3>
+            <p class="team-card__role body-m">Founder & Principal</p>
+          </div>
+          <div class="team-card">
+            <div class="team-card__portrait">
+              <img src="images/team-2.jpg" alt="Marcus Chen" style="width: 100%; height: auto; display: block;">
+              <div class="team-card__bio-overlay">
+                <p class="team-card__bio-text">Parsons-trained, specializing in material innovation and spatial planning.</p>
+              </div>
+            </div>
+            <h3 class="team-card__name heading-3">Marcus Chen</h3>
+            <p class="team-card__role body-m">Senior Designer</p>
+          </div>
+          <div class="team-card">
+            <div class="team-card__portrait">
+              <img src="images/team-3.jpg" alt="Isabelle Laurent" style="width: 100%; height: auto; display: block;">
+              <div class="team-card__bio-overlay">
+                <p class="team-card__bio-text">12 years in luxury project management. Keeps every detail on time and on budget.</p>
+              </div>
+            </div>
+            <h3 class="team-card__name heading-3">Isabelle Laurent</h3>
+            <p class="team-card__role body-m">Project Director</p>
+          </div>
+          <div class="team-card">
+            <div class="team-card__portrait">
+              <img src="images/team-4.jpg" alt="James Okafor" style="width: 100%; height: auto; display: block;">
+              <div class="team-card__bio-overlay">
+                <p class="team-card__bio-text">Pratt Institute, bringing fresh perspective to material selection and 3D visualization.</p>
+              </div>
+            </div>
+            <h3 class="team-card__name heading-3">James Okafor</h3>
+            <p class="team-card__role body-m">Junior Designer</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Join Us -->
+    <section class="section section--canvas-deep reveal">
+      <div class="container container--narrow text-center">
+        <h2 class="heading-2" style="margin-bottom: var(--spacing-m);">Join the studio.</h2>
+        <p class="body-l" style="margin-bottom: var(--spacing-l);">We're always interested in meeting talented designers who share our values. If you believe in material honesty, client-first thinking, and the quiet power of restraint, we'd love to hear from you.</p>
+        <a href="contact.html" class="btn btn--secondary">Send Your Portfolio</a>
+      </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="section section--ink cta-banner reveal">
+      <div class="container text-center">
+        <h2 class="cta-banner__title heading-2">Ready to work with us?</h2>
+        <a href="contact.html" class="btn btn--ghost" style="margin-top: var(--spacing-l);">Start a Conversation</a>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer__top container">
+      <div class="footer__brand">
+        <a href="index.html" class="footer__logo">The Atelier</a>
+        <p class="footer__brand-text">Crafting interiors that feel like they were always there. A full-service interior design studio based in New York.</p>
+        <div class="footer__social">
+          <a href="#" class="footer__social-link">Instagram</a>
+          <a href="#" class="footer__social-link">Pinterest</a>
+          <a href="#" class="footer__social-link">LinkedIn</a>
+        </div>
+      </div>
+      <div>
+        <h4 class="footer__column-title">Navigation</h4>
+        <div class="footer__links">
+          <a href="about.html" class="footer__link">Studio</a>
+          <a href="services.html" class="footer__link">Services</a>
+          <a href="portfolio.html" class="footer__link">Portfolio</a>
+          <a href="process.html" class="footer__link">Process</a>
+          <a href="contact.html" class="footer__link">Contact</a>
+        </div>
+      </div>
+      <div>
+        <h4 class="footer__column-title">Resources</h4>
+        <div class="footer__links">
+          <a href="faq.html" class="footer__link">FAQ</a>
+          <a href="press.html" class="footer__link">Press</a>
+          <a href="testimonials.html" class="footer__link">Testimonials</a>
+          <a href="team.html" class="footer__link">Our Team</a>
+        </div>
+      </div>
+      <div>
+        <h4 class="footer__column-title">Stay Updated</h4>
+        <p style="font-size:14px; color:rgba(255,255,255,0.5); margin-bottom:16px;">Inspiration and updates, delivered quarterly.</p>
+        <form class="newsletter">
+          <input type="email" class="newsletter__input" placeholder="Your email" aria-label="Email for newsletter">
+          <button type="submit" class="btn btn--ghost btn--sm">Join</button>
+        </form>
+      </div>
+    </div>
+    <div class="footer__bottom container">
+      <div class="footer__legal">
+        <a href="privacy.html">Privacy Policy</a>
+        <a href="privacy.html">Terms of Service</a>
+      </div>
+      <p class="footer__copyright">&copy; 2026 The Atelier. All rights reserved.</p>
+    </div>
+    <div class="footer__wordmark">The Atelier</div>
+  </footer>
+
+  <script src="js/main.js"></script>
+  <script src="js/components.js"></script>
+</body>
+</html>
