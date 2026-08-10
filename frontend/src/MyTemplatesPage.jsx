@@ -70,7 +70,13 @@ export default function MyTemplatesPage() {
         body: JSON.stringify({ templateId })
       });
 
-      const data = await response.json();
+      let data = {};
+      try {
+        const text = await response.text();
+        data = text ? JSON.parse(text) : {};
+      } catch (e) {
+        data = { error: `Server returned status ${response.status}` };
+      }
       
       clearInterval(progressInterval);
 
