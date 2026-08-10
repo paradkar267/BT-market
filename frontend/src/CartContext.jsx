@@ -36,6 +36,14 @@ export const CartProvider = ({ children }) => {
     }
   }, [user, templates]);
 
+  // Clear cart on logout
+  useEffect(() => {
+    if (!user) {
+      setCartItems([]);
+      localStorage.removeItem('bt_cart');
+    }
+  }, [user]);
+
   // Sync cart with localStorage and across tabs
   useEffect(() => {
     localStorage.setItem('bt_cart', JSON.stringify(cartItems));

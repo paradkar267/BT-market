@@ -204,6 +204,7 @@ export function AuthProvider({ children }) {
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
       toast.success("Successfully logged out");
+      window.location.href = '/';
     } catch (err) {
       toast.error(err.message || "Failed to log out");
     }
