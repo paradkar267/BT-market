@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from './AuthContext';
 import { useTemplates } from './useTemplates';
 import { useCurrency } from './CurrencyContext';
@@ -18,6 +18,8 @@ import {
 } from 'lucide-react';
 import { Logo } from './components/ui/Logo';
 import { Link, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import { ConfirmModal } from './components/ui/ConfirmModal';
 
 export default function AdminDashboard() {
   const { session, user } = useAuth();
@@ -31,7 +33,12 @@ export default function AdminDashboard() {
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [uploadError, setUploadError] = useState('');
 
-  // Form state
+  // Edit modal state
+  const [editingTemplate, setEditingTemplate] = useState(null);
+  const [editForm, setEditForm] = useState({});
+  const [editLoading, setEditLoading] = useState(false);
+
+  // Form state (for upload)
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -52,52 +59,66 @@ export default function AdminDashboard() {
     }
   }, [session, isAdmin, navigate]);
 
-  const handlePriceUpdate = async (templateId, currentPrice) => {
-    const newPrice = window.prompt(`Enter new price for this template:`, currentPrice);
-    if (!newPrice || isNaN(newPrice) || newPrice === currentPrice) return;
+  // Open edit modal pre-filled
+  const handleEditTemplate = (template) => {
+    setEditForm({
+      title: template.title || '',
+      description: template.description || '',
+      price: template.price || '',
+      category: template.category || 'React',
+      tag: template.tag || '',
+      keywords: Array.isArray(template.keywords) ? template.keywords.join(', ') : (template.keywords || ''),
+      image: template.image || '',
+    });
+    setEditingTemplate(template);
+  };
 
+  // Save full edit
+  const handleSaveEdit = async () => {
+    setEditLoading(true);
     try {
       const { data: { session: currentSession } } = await supabase.auth.getSession();
       const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://bt-templates.onrender.com';
-      const res = await fetch(`${backendUrl}/api/admin/update-price`, {
-        method: 'POST',
+      const res = await fetch(`${backendUrl}/api/admin/template/${editingTemplate.id}`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${currentSession?.access_token}`
         },
-        body: JSON.stringify({ templateId, newPrice })
+        body: JSON.stringify(editForm)
       });
-      if (!res.ok) throw new Error('Failed to update price');
-      alert('Price updated successfully!');
+      if (!res.ok) throw new Error('Failed to update template');
+      toast.success('Template updated successfully!');
+      setEditingTemplate(null);
       refetch();
     } catch (error) {
       console.error(error);
-      alert('Error updating price');
+      toast.error('Error updating template');
+    } finally {
+      setEditLoading(false);
     }
   };
 
-  const handleDeleteTemplate = async (templateId) => {
-    if (!window.confirm('Are you sure you want to delete this template completely? This will remove the original code, preview files, and database records forever.')) {
-      return;
-    }
-
+  const [deleteTemplateId, setDeleteTemplateId] = useState(null);
+  const handleDeleteTemplate = (templateId) => setDeleteTemplateId(templateId);
+  const confirmDeleteTemplate = useCallback(async () => {
     try {
       const { data: { session: currentSession } } = await supabase.auth.getSession();
       const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://bt-templates.onrender.com';
-      const res = await fetch(`${backendUrl}/api/admin/template/${templateId}?t=${Date.now()}`, {
+      const res = await fetch(`${backendUrl}/api/admin/template/${deleteTemplateId}?t=${Date.now()}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${currentSession?.access_token}`
         }
       });
       if (!res.ok) throw new Error('Failed to delete template');
-      alert('Template deleted successfully!');
+      toast.success('Template deleted successfully!');
       refetch();
     } catch (error) {
       console.error(error);
-      alert('Error deleting template');
+      toast.error('Error deleting template');
     }
-  };
+  }, [deleteTemplateId, refetch]);
 
   const handleUpload = async (e) => {
     e.preventDefault();
@@ -147,6 +168,9 @@ export default function AdminDashboard() {
       setUploadLoading(false);
     }
   };
+
+  // Reusable input styles
+  const inputCls = "w-full bg-gray-50 dark:bg-black border border-gray-200 dark:border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-shadow text-sm";
 
   if (!isAdmin) return null;
 
@@ -216,14 +240,14 @@ export default function AdminDashboard() {
                         <td className="px-6 py-4 text-right">
                           <div className="flex justify-end gap-2">
                             <button
-                              onClick={() => handlePriceUpdate(t.id, t.price)}
-                              className="px-3 py-1 bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 rounded-md text-sm font-bold transition-colors"
+                              onClick={() => handleEditTemplate(t)}
+                              className="px-3 py-1.5 bg-indigo-50 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-lg text-sm font-bold transition-colors"
                             >
-                              Edit Price
+                              Edit
                             </button>
                             <button
                               onClick={() => handleDeleteTemplate(t.id)}
-                              className="px-3 py-1 bg-red-100 dark:bg-red-500/10 hover:bg-red-200 dark:hover:bg-red-500/20 text-red-600 dark:text-red-400 rounded-md text-sm font-bold transition-colors"
+                              className="px-3 py-1.5 bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 text-red-600 dark:text-red-400 rounded-lg text-sm font-bold transition-colors"
                             >
                               Delete
                             </button>
@@ -237,6 +261,98 @@ export default function AdminDashboard() {
             </div>
           </div>
         )}
+
+      {/* ── Edit Template Modal ── */}
+      {editingTemplate && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" onClick={() => setEditingTemplate(null)}>
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+          <div
+            className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-[#111111] rounded-2xl shadow-2xl border border-gray-200 dark:border-white/10"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="sticky top-0 bg-white dark:bg-[#111111] border-b border-gray-200 dark:border-white/10 px-8 py-5 flex items-center justify-between z-10">
+              <h2 className="text-xl font-black">Edit Template</h2>
+              <button onClick={() => setEditingTemplate(null)} className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 transition-colors cursor-pointer">
+                <AlertCircle className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-8 space-y-5">
+              {/* Preview */}
+              {editForm.image && (
+                <div className="rounded-xl overflow-hidden border border-gray-200 dark:border-white/10 h-40 bg-gray-100 dark:bg-white/5">
+                  <img src={editForm.image} alt="Preview" className="w-full h-full object-cover" />
+                </div>
+              )}
+
+              <div>
+                <label className="block text-sm font-bold mb-2">Title</label>
+                <input type="text" value={editForm.title} onChange={e => setEditForm({ ...editForm, title: e.target.value })} className={inputCls} />
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold mb-2">Description</label>
+                <textarea value={editForm.description} onChange={e => setEditForm({ ...editForm, description: e.target.value })} rows="3" className={inputCls} />
+              </div>
+
+              <div className="grid grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-sm font-bold mb-2">Price (₹)</label>
+                  <input type="number" value={editForm.price} onChange={e => setEditForm({ ...editForm, price: e.target.value })} className={inputCls} />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold mb-2">Category</label>
+                  <select value={editForm.category} onChange={e => setEditForm({ ...editForm, category: e.target.value })} className={inputCls}>
+                    <option value="React">React</option>
+                    <option value="Vue">Vue</option>
+                    <option value="Next.js">Next.js</option>
+                    <option value="Svelte">Svelte</option>
+                    <option value="HTML">HTML</option>
+                    <option value="Tailwind">Tailwind</option>
+                    <option value="Webflow">Webflow</option>
+                    <option value="Framer">Framer</option>
+                    <option value="Figma">Figma</option>
+                    <option value="React Native">React Native</option>
+                    <option value="Shopify">Shopify</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-sm font-bold mb-2">Tag</label>
+                  <input type="text" value={editForm.tag} onChange={e => setEditForm({ ...editForm, tag: e.target.value })} className={inputCls} placeholder="e.g. SaaS, Dashboard" />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold mb-2">Keywords (comma separated)</label>
+                  <input type="text" value={editForm.keywords} onChange={e => setEditForm({ ...editForm, keywords: e.target.value })} className={inputCls} placeholder="react, admin, dark" />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-bold mb-2">Cover Image URL</label>
+                <input type="url" value={editForm.image} onChange={e => setEditForm({ ...editForm, image: e.target.value })} className={inputCls} placeholder="https://..." />
+              </div>
+
+              <div className="flex gap-3 pt-4">
+                <button
+                  onClick={() => setEditingTemplate(null)}
+                  className="flex-1 py-3 bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/15 rounded-xl font-bold transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveEdit}
+                  disabled={editLoading}
+                  className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold flex items-center justify-center gap-2 transition-colors disabled:opacity-50 cursor-pointer"
+                >
+                  {editLoading ? <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</> : 'Save Changes'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
         {activeTab === 'upload' && (
           <div className="max-w-3xl mx-auto animate-fade-in-up">
@@ -336,6 +452,15 @@ export default function AdminDashboard() {
           </div>
         )}
       </div>
+
+      <ConfirmModal
+        open={!!deleteTemplateId}
+        onClose={() => setDeleteTemplateId(null)}
+        onConfirm={confirmDeleteTemplate}
+        title="Delete Template"
+        message="Are you sure you want to delete this template completely? This will remove the original code, preview files, and database records forever."
+        confirmText="Delete Forever"
+      />
     </div>
   );
 }

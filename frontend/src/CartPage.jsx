@@ -8,6 +8,7 @@ import { useCurrency } from './CurrencyContext';
 import UserMenu from './UserMenu';
 import { useTheme } from './ThemeContext';
 import { useAuth } from './AuthContext';
+import { supabase } from './lib/supabase';
 import { Logo } from './components/ui/Logo';
 
 export default function CartPage() {
@@ -150,37 +151,64 @@ export default function CartPage() {
     setIsProcessing(true);
     const orderId = paymentId || 'mock_' + Math.random().toString(36).substr(2, 9);
     
-    // Call backend to send email receipt (Non-blocking)
-    fetch(`/api/send-receipt`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        to: user?.email || 'customer@example.com',
-        frontendUrl: window.location.origin,
-        orderDetails: {
-          items: cartItems,
-          total: cartTotal.toFixed(2),
-          orderId: orderId
-        }
-      })
-    }).then(response => {
-      if (!response.ok) {
-        toast.error("Receipt email could not be sent, but purchase was successful.", { duration: 4000 });
+    try {
+      // 1. Verify Payment and Grant Access Securely via Backend
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const verificationResponse = await fetch('/api/verify-payment', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token}`
+        },
+        body: JSON.stringify({
+          paymentId: orderId, // using orderId as fallback mock paymentId
+          cartItems: cartItems
+        })
+      });
+
+      if (!verificationResponse.ok) {
+        const errorData = await verificationResponse.json();
+        throw new Error(errorData.error || 'Payment verification failed');
       }
-    }).catch(e => {
-      console.error("Email API failed:", e);
-      toast.error("Receipt email could not be sent, but purchase was successful.", { duration: 4000 });
-    });
 
-    await checkout(orderId);
-    
-    setIsProcessing(false);
-    
-    generateInvoicePDF(orderId);
+      // 2. Call backend to send email receipt (Non-blocking)
+      fetch(`/api/send-receipt`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: user?.email || 'customer@example.com',
+          frontendUrl: window.location.origin,
+          orderDetails: {
+            items: cartItems,
+            total: cartTotal.toFixed(2),
+            orderId: orderId
+          }
+        })
+      }).then(response => {
+        if (!response.ok) {
+          toast.error("Receipt email could not be sent, but purchase was successful.", { duration: 4000 });
+        }
+      }).catch(e => {
+        console.error("Email API failed:", e);
+      });
 
-    toast.success("Purchase successful! Receipt sent to your email. (Check spam folder if not found)", { duration: 6000 });
-    
-    navigate('/my-templates', { state: { showConfetti: true } });
+      // 3. Complete checkout (clear cart frontend)
+      await checkout(orderId);
+      
+      setIsProcessing(false);
+      
+      generateInvoicePDF(orderId);
+
+      toast.success("Purchase successful! Receipt sent to your email. (Check spam folder if not found)", { duration: 6000 });
+      
+      navigate('/my-templates', { state: { showConfetti: true } });
+
+    } catch (error) {
+      console.error("Payment verification error:", error);
+      setIsProcessing(false);
+      toast.error(error.message || "Something went wrong verifying your purchase. Please contact support.");
+    }
   };
 
   const handleCheckout = async () => {

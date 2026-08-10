@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
+import { ConfirmModal } from './components/ui/ConfirmModal';
 import { Star, MessageSquare, Edit2, Trash2 } from 'lucide-react';
 import { supabase } from './lib/supabase';
 import { useAuth } from './AuthContext';
@@ -23,11 +24,37 @@ export function ReviewsSection({ templateId }) {
   const [filter, setFilter] = useState('all');
 
   const hasPurchased = purchasedTemplates.some(t => t.id === templateId);
-  
-  const handleDeleteReview = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this review?")) return;
+
+  const fetchReviews = async () => {
     try {
-      const { error } = await supabase.from('reviews').delete().eq('id', id).eq('user_id', user.id);
+      const { data, error } = await supabase
+        .from('reviews')
+        .select('*')
+        .eq('template_id', templateId)
+        .order('created_at', { ascending: false });
+        
+      if (error) {
+        console.error("Error fetching reviews:", error.message);
+        setReviews([]);
+      } else {
+        setReviews(data || []);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchReviews();
+  }, [templateId]);
+
+  const [deleteReviewId, setDeleteReviewId] = useState(null);
+  const handleDeleteReview = (id) => setDeleteReviewId(id);
+  const confirmDeleteReview = useCallback(async () => {
+    try {
+      const { error } = await supabase.from('reviews').delete().eq('id', deleteReviewId).eq('user_id', user.id);
       if (error) throw error;
       toast.success("Review deleted successfully!");
       fetchReviews();
@@ -35,7 +62,7 @@ export function ReviewsSection({ templateId }) {
       toast.error("Failed to delete review.");
       console.error(err);
     }
-  };
+  }, [deleteReviewId, user]);
 
   const handleUpdateReview = async (e, id) => {
     e.preventDefault();
@@ -65,31 +92,6 @@ export function ReviewsSection({ templateId }) {
     setEditComment(review.comment);
   };
 
-  const fetchReviews = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('reviews')
-        .select('*')
-        .eq('template_id', templateId)
-        .order('created_at', { ascending: false });
-        
-      if (error) {
-        // If the table doesn't exist yet, just ignore to avoid crashing UI before the user runs the SQL
-        console.error("Error fetching reviews:", error.message);
-        setReviews([]);
-      } else {
-        setReviews(data || []);
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchReviews();
-  }, [templateId]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -134,6 +136,7 @@ export function ReviewsSection({ templateId }) {
   });
 
   return (
+    <>
     <div className="w-full max-w-[1200px] mx-auto px-8 md:px-16 mt-16 mb-24">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div className="flex items-center gap-3">
@@ -304,5 +307,15 @@ export function ReviewsSection({ templateId }) {
         </div>
       </div>
     </div>
+
+      <ConfirmModal
+        open={!!deleteReviewId}
+        onClose={() => setDeleteReviewId(null)}
+        onConfirm={confirmDeleteReview}
+        title="Delete Review"
+        message="Are you sure you want to delete this review? This cannot be undone."
+        confirmText="Delete"
+      />
+    </>
   );
 }

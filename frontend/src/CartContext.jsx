@@ -112,40 +112,12 @@ export const CartProvider = ({ children }) => {
       return;
     }
 
-    const existingIds = user.user_metadata?.purchased_templates || [];
-    const finalIds = [...new Set([...existingIds, ...newPurchaseIds])];
-    
-    // Save to Supabase User Metadata (works without creating custom tables)
-    const { error: metadataError } = await supabase.auth.updateUser({
-      data: { 
-        purchased_templates: finalIds
-      }
-    });
-      
-    if (metadataError) {
-      console.error("Purchase metadata error:", metadataError);
-      toast.error("Failed to save purchase. Please try again.");
-      return;
-    }
+    // The purchase records and metadata updates are now handled securely by the backend
+    // in the /api/verify-payment route.
 
-    // Insert into the purchases table for Admin Dashboard analytics
-    const purchaseRecords = cartItems.map(item => ({
-      user_id: user.id,
-      template_id: item.id,
-      payment_id: paymentId // Save the Razorpay payment ID here!
-    }));
-
-    const { error: dbError } = await supabase
-      .from('purchases')
-      .insert(purchaseRecords);
-
-    if (dbError) {
-       console.error("Database purchase log error:", dbError);
-    }
-    
     // Note: The templates table will be automatically updated to is_sold_out = true 
     // by the Supabase Database Trigger (trigger_mark_template_sold_out) 
-    // immediately after the purchase record is inserted above.
+    // immediately after the purchase record is inserted by the backend.
     
     // Trigger a custom event to tell useTemplates to refetch globally across components
     window.dispatchEvent(new Event('templates_updated'));

@@ -188,82 +188,147 @@ export default function Home({ mountSpline }) {
             </div>
          </div>
 
-         {/* D. VALUE PROPOSITION — Creative Bento Grid */}
-         <div className={`pt-10 md:pt-12 pb-20 md:pb-24 w-full border-y border-black/[0.04] bg-white dark:bg-black relative overflow-hidden`}>
-            <div className="max-w-[1600px] mx-auto px-8 md:px-16 relative z-10">
+         {/* D. VALUE PROPOSITION — Premium Feature Showcase */}
+         <div className="pt-16 md:pt-24 pb-24 md:pb-32 w-full bg-white dark:bg-black relative overflow-hidden">
+            {/* Ambient background orbs */}
+            <div className="absolute top-1/4 -left-32 w-[500px] h-[500px] bg-violet-500/[0.07] rounded-full blur-[120px] pointer-events-none" />
+            <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-cyan-500/[0.05] rounded-full blur-[100px] pointer-events-none" />
+
+            <div className="max-w-[1400px] mx-auto px-6 md:px-16 relative z-10">
                {/* Header */}
-               <div className="mb-16">
-                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-50 dark:bg-gray-900 border border-black/[0.06] mb-6 shadow-sm">
-                     <span className="w-2 h-2 rounded-full bg-violet-500 animate-pulse inline-block"></span>
-                     <span className="text-sm font-bold tracking-wide uppercase text-gray-700">Why Bizleap</span>
+               <motion.div
+                 className="mb-20 md:mb-24"
+                 initial={{ opacity: 0, y: 30 }}
+                 whileInView={{ opacity: 1, y: 0 }}
+                 viewport={{ once: true, margin: '-80px' }}
+                 transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+               >
+                  <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-violet-500/[0.08] dark:bg-violet-500/[0.12] border border-violet-500/20 mb-8">
+                     <span className="relative flex h-2.5 w-2.5">
+                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75"></span>
+                       <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-violet-500"></span>
+                     </span>
+                     <span className="text-sm font-semibold tracking-wide uppercase text-violet-600 dark:text-violet-400">Why Bizleap</span>
                   </div>
-                  <h2 className="text-5xl md:text-7xl font-black tracking-tighter text-gray-900 dark:text-gray-100 leading-none">
-                     Built for<br/><span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-cyan-500">perfectionists.</span>
+                  <h2 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter text-gray-900 dark:text-white leading-[0.9]">
+                     Built for<br/>
+                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 via-fuchsia-500 to-cyan-400">perfectionists.</span>
                   </h2>
+                  <p className="mt-6 text-lg md:text-xl text-gray-500 dark:text-gray-400 max-w-xl font-medium leading-relaxed">
+                     Premium design assets crafted with obsessive attention to detail. Every pixel, every interaction, every component.
+                  </p>
+               </motion.div>
+
+               {/* Feature Cards */}
+               <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6 mb-20 md:mb-28">
+                  {[
+                    {
+                      icon: Layers,
+                      title: 'Pixel Perfect',
+                      desc: 'Every layer is meticulously organized. Components are built with strict design systems to ensure flawless aesthetics at every breakpoint.',
+                      gradient: 'from-violet-600 to-fuchsia-600',
+                      glow: 'violet',
+                      border: 'hover:border-violet-500/40',
+                      iconBg: 'bg-violet-500/10 dark:bg-violet-500/20',
+                    },
+                    {
+                      icon: Zap,
+                      title: 'Production Ready',
+                      desc: 'Stop translating designs to code. Our kits ship with clean, responsive React & Tailwind code — ready to deploy instantly.',
+                      gradient: 'from-cyan-500 to-blue-600',
+                      glow: 'cyan',
+                      border: 'hover:border-cyan-500/40',
+                      iconBg: 'bg-cyan-500/10 dark:bg-cyan-500/20',
+                    },
+                    {
+                      icon: Infinity,
+                      title: 'Lifetime Updates',
+                      desc: 'Pay once, use forever. Future updates, new components, and continuous design upgrades — all included at no extra cost.',
+                      gradient: 'from-pink-500 to-rose-600',
+                      glow: 'pink',
+                      border: 'hover:border-pink-500/40',
+                      iconBg: 'bg-pink-500/10 dark:bg-pink-500/20',
+                    },
+                  ].map((feature, i) => (
+                    <motion.div
+                      key={feature.title}
+                      initial={{ opacity: 0, y: 40 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true, margin: '-60px' }}
+                      transition={{ duration: 0.6, delay: i * 0.15, ease: [0.22, 1, 0.36, 1] }}
+                      className={`group relative p-8 md:p-10 rounded-3xl border border-gray-200/60 dark:border-white/[0.06] ${feature.border} transition-all duration-500 bg-gray-50/50 dark:bg-white/[0.02] hover:bg-white dark:hover:bg-white/[0.04] cursor-default`}
+                    >
+                      {/* Hover glow */}
+                      <div className={`absolute -inset-px rounded-3xl bg-gradient-to-b ${feature.gradient} opacity-0 group-hover:opacity-[0.08] transition-opacity duration-500 pointer-events-none`} />
+                      
+                      {/* Floating glow orb */}
+                      <div className={`absolute top-6 right-6 w-24 h-24 bg-${feature.glow}-500/20 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-all duration-700 group-hover:scale-150 pointer-events-none`} />
+
+                      <div className="relative z-10">
+                        {/* Icon */}
+                        <div className={`w-14 h-14 rounded-2xl ${feature.iconBg} flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-500`}>
+                          <feature.icon className={`w-7 h-7 bg-gradient-to-br ${feature.gradient} bg-clip-text`} style={{ color: feature.glow === 'violet' ? '#8b5cf6' : feature.glow === 'cyan' ? '#06b6d4' : '#ec4899' }} />
+                        </div>
+                        
+                        {/* Content */}
+                        <h3 className="text-xl md:text-2xl font-bold mb-3 text-gray-900 dark:text-white tracking-tight">{feature.title}</h3>
+                        <p className="text-gray-500 dark:text-gray-400 leading-relaxed text-[15px]">{feature.desc}</p>
+                        
+                        {/* Bottom accent line */}
+                        <div className={`mt-8 h-[2px] w-0 group-hover:w-16 bg-gradient-to-r ${feature.gradient} transition-all duration-500 rounded-full`} />
+                      </div>
+                    </motion.div>
+                  ))}
                </div>
 
-               {/* Premium Features Grid */}
-               <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-24">
-                  {/* Feature 1 */}
-                  <div className="group p-8 md:p-10 rounded-[2.5rem] border border-black/5 dark:border-white/5 hover:border-violet-500/30 transition-all duration-500 bg-white/50 dark:bg-[#0a0a0a]/50 backdrop-blur-xl hover:shadow-2xl hover:shadow-violet-500/10 relative overflow-hidden">
-                     <div className="absolute top-0 right-0 w-32 h-32 bg-violet-500/10 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                     <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500/10 to-fuchsia-500/10 dark:from-violet-500/20 dark:to-fuchsia-500/20 flex items-center justify-center mb-8 transform group-hover:scale-110 transition-transform duration-500">
-                        <Layers className="w-7 h-7 text-violet-600 dark:text-violet-400" />
-                     </div>
-                     <h3 className="text-2xl font-black mb-4 text-gray-900 dark:text-gray-100 tracking-tight">Pixel Perfect</h3>
-                     <p className="text-gray-500 dark:text-gray-400 leading-relaxed text-sm md:text-base font-medium">Every layer is meticulously organized. Components are built with strict design systems to ensure flawless aesthetics at every breakpoint.</p>
-                  </div>
-
-                  {/* Feature 2 */}
-                  <div className="group p-8 md:p-10 rounded-[2.5rem] border border-black/5 dark:border-white/5 hover:border-cyan-500/30 transition-all duration-500 bg-white/50 dark:bg-[#0a0a0a]/50 backdrop-blur-xl hover:shadow-2xl hover:shadow-cyan-500/10 relative overflow-hidden">
-                     <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/10 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                     <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan-500/10 to-blue-500/10 dark:from-cyan-500/20 dark:to-blue-500/20 flex items-center justify-center mb-8 transform group-hover:scale-110 transition-transform duration-500">
-                        <Zap className="w-7 h-7 text-cyan-600 dark:text-cyan-400" />
-                     </div>
-                     <h3 className="text-2xl font-black mb-4 text-gray-900 dark:text-gray-100 tracking-tight">Production Ready</h3>
-                     <p className="text-gray-500 dark:text-gray-400 leading-relaxed text-sm md:text-base font-medium">Stop translating designs to code. Our kits ship with clean, responsive React & Tailwind code — ready to deploy instantly.</p>
-                  </div>
-
-                  {/* Feature 3 */}
-                  <div className="group p-8 md:p-10 rounded-[2.5rem] border border-black/5 dark:border-white/5 hover:border-pink-500/30 transition-all duration-500 bg-white/50 dark:bg-[#0a0a0a]/50 backdrop-blur-xl hover:shadow-2xl hover:shadow-pink-500/10 relative overflow-hidden">
-                     <div className="absolute top-0 right-0 w-32 h-32 bg-pink-500/10 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                     <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-pink-500/10 to-rose-500/10 dark:from-pink-500/20 dark:to-rose-500/20 flex items-center justify-center mb-8 transform group-hover:scale-110 transition-transform duration-500">
-                        <Infinity className="w-7 h-7 text-pink-600 dark:text-pink-400" />
-                     </div>
-                     <h3 className="text-2xl font-black mb-4 text-gray-900 dark:text-gray-100 tracking-tight">Lifetime Updates</h3>
-                     <p className="text-gray-500 dark:text-gray-400 leading-relaxed text-sm md:text-base font-medium">Pay once, use forever. Future updates, new components, and continuous design upgrades — all included at no extra cost.</p>
-                  </div>
-               </div>
-
-               {/* Premium Stats Box */}
-               <div className="bg-gradient-to-br from-white to-gray-50 dark:from-[#0a0a0a] dark:to-[#111] p-8 md:p-12 rounded-[2.5rem] border border-black/5 dark:border-white/10 shadow-2xl flex flex-wrap items-center justify-between gap-8 md:gap-6 relative overflow-hidden">
-                  <div className="absolute top-0 right-1/4 w-96 h-96 bg-violet-500/10 rounded-full blur-3xl pointer-events-none mix-blend-screen" />
-                  
-                  <div className="text-center w-[40%] sm:w-auto relative z-10">
-                     <div className="text-4xl md:text-5xl lg:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-br from-gray-900 to-gray-500 dark:from-white dark:to-gray-400 tracking-tighter mb-2">2,400+</div>
-                     <div className="text-xs md:text-sm font-bold text-gray-400 uppercase tracking-widest">Templates</div>
-                  </div>
-                  <div className="hidden sm:block w-px h-16 bg-gradient-to-b from-transparent via-black/10 dark:via-white/10 to-transparent"></div>
-                  
-                  <div className="text-center w-[40%] sm:w-auto relative z-10">
-                     <div className="text-4xl md:text-5xl lg:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-br from-gray-900 to-gray-500 dark:from-white dark:to-gray-400 tracking-tighter mb-2">98%</div>
-                     <div className="text-xs md:text-sm font-bold text-gray-400 uppercase tracking-widest">Satisfaction</div>
-                  </div>
-                  <div className="hidden sm:block w-px h-16 bg-gradient-to-b from-transparent via-black/10 dark:via-white/10 to-transparent"></div>
-                  
-                  <div className="text-center w-[40%] sm:w-auto relative z-10">
-                     <div className="text-4xl md:text-5xl lg:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-br from-gray-900 to-gray-500 dark:from-white dark:to-gray-400 tracking-tighter mb-2">50K+</div>
-                     <div className="text-xs md:text-sm font-bold text-gray-400 uppercase tracking-widest">Creators</div>
-                  </div>
-                  <div className="hidden sm:block w-px h-16 bg-gradient-to-b from-transparent via-black/10 dark:via-white/10 to-transparent"></div>
-                  
-                  <div className="text-center w-[40%] sm:w-auto relative z-10">
-                     <div className="text-4xl md:text-5xl lg:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-br from-gray-900 to-gray-500 dark:from-white dark:to-gray-400 tracking-tighter mb-2">4.9 ★</div>
-                     <div className="text-xs md:text-sm font-bold text-gray-400 uppercase tracking-widest">Avg. Rating</div>
-                  </div>
-               </div>
+               {/* Stats Section */}
+               <motion.div
+                 initial={{ opacity: 0, y: 40 }}
+                 whileInView={{ opacity: 1, y: 0 }}
+                 viewport={{ once: true, margin: '-60px' }}
+                 transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+                 className="relative rounded-3xl overflow-hidden"
+               >
+                 {/* Gradient border effect */}
+                 <div className="absolute inset-0 bg-gradient-to-r from-violet-600 via-fuchsia-500 to-cyan-400 rounded-3xl" />
+                 <div className="absolute inset-[1px] bg-white dark:bg-[#0a0a0a] rounded-[calc(1.5rem-1px)]" />
+                 
+                 {/* Inner glow */}
+                 <div className="absolute inset-0 rounded-3xl overflow-hidden pointer-events-none">
+                   <div className="absolute top-0 left-1/4 w-[500px] h-[200px] bg-violet-500/[0.06] rounded-full blur-[80px]" />
+                   <div className="absolute bottom-0 right-1/4 w-[400px] h-[200px] bg-cyan-500/[0.06] rounded-full blur-[80px]" />
+                 </div>
+                 
+                 <div className="relative z-10 grid grid-cols-2 md:grid-cols-4 gap-px">
+                   {[
+                     { value: '2,400+', label: 'Templates', gradient: 'from-violet-600 to-fuchsia-500' },
+                     { value: '98%', label: 'Satisfaction', gradient: 'from-fuchsia-500 to-pink-500' },
+                     { value: '50K+', label: 'Creators', gradient: 'from-pink-500 to-cyan-500' },
+                     { value: '4.9 ★', label: 'Avg. Rating', gradient: 'from-cyan-500 to-blue-500' },
+                   ].map((stat, i) => (
+                     <motion.div
+                       key={stat.label}
+                       initial={{ opacity: 0, scale: 0.9 }}
+                       whileInView={{ opacity: 1, scale: 1 }}
+                       viewport={{ once: true }}
+                       transition={{ duration: 0.5, delay: 0.1 + i * 0.1 }}
+                       className="group text-center py-10 md:py-14 px-4 relative hover:bg-white/50 dark:hover:bg-white/[0.02] transition-colors duration-300"
+                     >
+                       {/* Divider */}
+                       {i > 0 && <div className="hidden md:block absolute left-0 top-1/2 -translate-y-1/2 w-px h-12 bg-gradient-to-b from-transparent via-gray-300/50 dark:via-white/10 to-transparent" />}
+                       {i === 2 && <div className="md:hidden absolute left-0 top-1/2 -translate-y-1/2 w-px h-12 bg-gradient-to-b from-transparent via-gray-300/50 dark:via-white/10 to-transparent" />}
+                       
+                       <div className={`text-4xl md:text-5xl lg:text-6xl font-black tracking-tighter mb-3 text-transparent bg-clip-text bg-gradient-to-br ${stat.gradient} group-hover:scale-105 transition-transform duration-300 inline-block`}>
+                         {stat.value}
+                       </div>
+                       <div className="text-xs md:text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">{stat.label}</div>
+                     </motion.div>
+                   ))}
+                 </div>
+               </motion.div>
             </div>
          </div>
+
 
 
 

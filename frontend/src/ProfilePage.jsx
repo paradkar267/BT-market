@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
+import { ConfirmModal } from './components/ui/ConfirmModal';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, User as UserIcon, Mail, Settings, Shield, 
@@ -84,11 +85,11 @@ export default function ProfilePage() {
     toast.success("Password change link sent to email.");
   };
 
-  const handleDeleteAccount = () => {
-    if (window.confirm("Are you absolutely sure you want to delete your account? This action cannot be undone.")) {
-      toast.error("Account deletion request submitted to admin.");
-    }
-  };
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const handleDeleteAccount = () => setShowDeleteConfirm(true);
+  const confirmDeleteAccount = useCallback(() => {
+    toast.error("Account deletion request submitted to admin.");
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-black text-black dark:text-white font-sans pb-24 transition-colors duration-500">
@@ -218,6 +219,15 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+
+      <ConfirmModal
+        open={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={confirmDeleteAccount}
+        title="Delete Account"
+        message="Are you absolutely sure you want to delete your account? This action cannot be undone."
+        confirmText="Delete Account"
+      />
     </div>
   );
 }
