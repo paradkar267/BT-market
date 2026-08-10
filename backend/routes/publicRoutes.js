@@ -61,39 +61,41 @@ router.post('/verify-payment', requireAuth, async (req, res) => {
       const razorpaySecret = process.env.RAZORPAY_SECRET || process.env.VITE_RAZORPAY_TEST_SECRET;
 
       if (!razorpayKey || !razorpaySecret) {
-        console.error("Missing RAZORPAY_SECRET in environment variables");
-        return res.status(500).json({ error: 'Server payment configuration is incomplete. Please contact support.' });
-      }
-
-      // Fetch payment details from Razorpay using Basic Auth
-      const authHeader = 'Basic ' + Buffer.from(`${razorpayKey}:${razorpaySecret}`).toString('base64');
-      const response = await fetch(`https://api.razorpay.com/v1/payments/${paymentId}`, {
-        method: 'GET',
-        headers: {
-          'Authorization': authHeader
+        if (!razorpaySecret && razorpayKey && razorpayKey.startsWith('rzp_test_')) {
+          console.warn(`Missing RAZORPAY_SECRET. Bypassing payment verification because razorpayKey "${razorpayKey}" is in test/sandbox mode.`);
+        } else {
+          console.error("Missing RAZORPAY_SECRET in environment variables");
+          return res.status(500).json({ error: 'Server payment configuration is incomplete. Please contact support.' });
         }
-      });
+      } else {
+        // Fetch payment details from Razorpay using Basic Auth
+        const authHeader = 'Basic ' + Buffer.from(`${razorpayKey}:${razorpaySecret}`).toString('base64');
+        const response = await fetch(`https://api.razorpay.com/v1/payments/${paymentId}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': authHeader
+          }
+        });
 
-      if (!response.ok) {
-        console.error("Failed to fetch Razorpay payment:", await response.text());
-        return res.status(400).json({ error: 'Invalid Payment ID' });
-      }
+        if (!response.ok) {
+          console.error("Failed to fetch Razorpay payment:", await response.text());
+          return res.status(400).json({ error: 'Invalid Payment ID' });
+        }
 
-      const paymentDetails = await response.json();
+        const paymentDetails = await response.json();
 
-      // Check if payment was captured or authorized
-      if (paymentDetails.status !== 'captured' && paymentDetails.status !== 'authorized') {
-        return res.status(400).json({ error: 'Payment was not successful' });
-      }
+        // Check if payment was captured or authorized
+        if (paymentDetails.status !== 'captured' && paymentDetails.status !== 'authorized') {
+          return res.status(400).json({ error: 'Payment was not successful' });
+        }
 
-      // Check amount (Razorpay amount is in paise/cents)
-      const expectedAmountInPaise = Math.round(cartTotal * 100);
-      
-      // We allow a small tolerance (e.g. currency conversion differences if any, but usually it should be exact)
-      if (paymentDetails.amount < expectedAmountInPaise - 100) { // allowing 1 Rupee/Unit difference just in case
-         console.warn(`Payment amount mismatch: Expected ${expectedAmountInPaise}, Got ${paymentDetails.amount}`);
-         // return res.status(400).json({ error: 'Payment amount does not match cart total' }); 
-         // Optional: enforce strictly depending on business logic
+        // Check amount (Razorpay amount is in paise/cents)
+        const expectedAmountInPaise = Math.round(cartTotal * 100);
+        
+        // We allow a small tolerance (e.g. currency conversion differences if any, but usually it should be exact)
+        if (paymentDetails.amount < expectedAmountInPaise - 100) { // allowing 1 Rupee/Unit difference just in case
+           console.warn(`Payment amount mismatch: Expected ${expectedAmountInPaise}, Got ${paymentDetails.amount}`);
+        }
       }
     }
 
