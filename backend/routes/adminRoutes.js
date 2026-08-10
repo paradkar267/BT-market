@@ -121,9 +121,43 @@ const flattenDirectory = (srcDir) => {
       } catch (e) {
         console.error(`Failed to clean up directory ${currentDir}:`, e);
       }
-      currentDir = path.dirname(currentDir);
+  // Helper to fix absolute asset paths in HTML/JS/CSS files for live previews
+const processPreviewPaths = (dir, slug) => {
+  if (!fs.existsSync(dir)) return;
+  const prefix = `/previews/${slug}`;
+  const replacements = [
+    { from: /src="\/(?!previews\/)([^"]*)"/g, to: `src="${prefix}/$1"` },
+    { from: /src='\/(?!previews\/)([^']*)'/g, to: `src='${prefix}/$1'` },
+    { from: /href="\/(?!previews\/)([^"]*)"/g, to: `href="${prefix}/$1"` },
+    { from: /href='\/(?!previews\/)([^']*)'/g, to: `href='${prefix}/$1'` },
+    { from: /url\("\/(?!previews\/)([^"]*)"\)/g, to: `url("${prefix}/$1")` },
+    { from: /url\('\/(?!previews\/)([^']*)'\)/g, to: `url('${prefix}/$1')` },
+    { from: /url\(\/(?!previews\/)([^\)'"]*)\)/g, to: `url(${prefix}/$1)` }
+  ];
+
+  const processDir = (currentDir) => {
+    const files = fs.readdirSync(currentDir);
+    for (const file of files) {
+      const fullPath = path.join(currentDir, file);
+      if (fs.statSync(fullPath).isDirectory()) {
+        processDir(fullPath);
+      } else if (fullPath.endsWith('.html') || fullPath.endsWith('.js') || fullPath.endsWith('.css')) {
+        let content = fs.readFileSync(fullPath, 'utf8');
+        let changed = false;
+        for (const { from, to } of replacements) {
+          if (from.test(content)) {
+            content = content.replace(from, to);
+            changed = true;
+          }
+        }
+        if (changed) {
+          fs.writeFileSync(fullPath, content, 'utf8');
+        }
+      }
     }
-  }
+  };
+
+  processDir(dir);
 };
 
 router.get('/stats', requireAdmin, async (req, res) => {
@@ -172,25 +206,26 @@ router.post('/upload-template', requireAdmin, upload.single('file'), async (req,
 
     if (uploadError) throw uploadError;
 
-    // Asynchronously unzip to frontend public directory for live preview
+    // Unzip, flatten, and fix paths synchronously for live preview
     const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
     const extractPath = path.resolve(__dirname, '../../frontend/public/previews', slug);
     
-    // We do this in the background, not blocking the response
-    setImmediate(async () => {
-      try {
-        const zip = new AdmZip(file.path);
-        await extractZipAsync(zip, extractPath);
-        // Flatten the extracted zip contents if nested (e.g. nested inside a folder)
-        flattenDirectory(extractPath);
-        // Clean up the uploaded file from disk after successful extraction
-        fs.unlinkSync(file.path);
-      } catch (unzipErr) {
-        console.error('Failed to extract zip for preview:', unzipErr);
-        // Clean up the uploaded file on error too
-        if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+    try {
+      if (!fs.existsSync(extractPath)) {
+        fs.mkdirSync(extractPath, { recursive: true });
       }
-    });
+      const zip = new AdmZip(file.path);
+      await extractZipAsync(zip, extractPath);
+      // Flatten the extracted zip contents if nested
+      flattenDirectory(extractPath);
+      // Rewrite absolute asset paths in HTML/JS/CSS files
+      processPreviewPaths(extractPath, slug);
+      // Clean up the uploaded file from disk after successful extraction
+      if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+    } catch (unzipErr) {
+      console.error('Failed to extract zip for preview:', unzipErr);
+      if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+    }
 
     // Parse keywords safely
     let parsedKeywords = [];
