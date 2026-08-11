@@ -255,13 +255,18 @@ const ensurePreviewBuild = async (extractPath, slug) => {
 
 router.get('/stats', requireAdmin, async (req, res) => {
   try {
-    const { data: purchases } = await supabaseAdmin.from('purchases').select('*');
+    const { data: purchases } = await supabaseAdmin.from('purchases').select('template_id');
     const { data: usersData } = await supabaseAdmin.auth.admin.listUsers();
+    const { data: templates } = await supabaseAdmin.from('templates').select('id, price');
 
     const actualUserCount = usersData?.users?.length || 0;
     let totalRevenue = 0;
-    if (purchases) {
-      totalRevenue = purchases.reduce((acc, curr) => acc + (parseFloat(curr.price) || 0), 0);
+    if (purchases && templates) {
+      const priceMap = {};
+      templates.forEach(t => {
+        priceMap[t.id] = parseFloat(t.price) || 0;
+      });
+      totalRevenue = purchases.reduce((acc, curr) => acc + (priceMap[curr.template_id] || 0), 0);
     }
 
     res.json({
