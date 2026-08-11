@@ -69,7 +69,10 @@ export default function PreviewPage() {
   };
 
   // Find the template
-  const template = templates.find(t => t.id === parseInt(id));
+  let template = templates.find(t => t.id === parseInt(id));
+  if (template) {
+    template = { ...template, is_sold_out: false };
+  }
   
   // Set background to dark for the whole page & block devtool access / contextmenu
   useEffect(() => {

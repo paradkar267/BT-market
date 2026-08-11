@@ -88,11 +88,6 @@ export const CartProvider = ({ children }) => {
 
   const addToCart = (product) => {
     requireAuth(() => {
-      if (product.is_sold_out) {
-        toast.error(`${product.title} is sold out!`);
-        return;
-      }
-      
       if (cartItems.find(item => item.id === product.id)) {
         toast.error(`${product.title} is already in your cart!`);
         return;
@@ -133,7 +128,7 @@ export const CartProvider = ({ children }) => {
       return;
     }
     
-    const soldOutItems = checkTemplates.filter(t => t.is_sold_out);
+    const soldOutItems = [];
     if (soldOutItems.length > 0) {
       toast.error(`Sorry, ${soldOutItems[0].title} was just purchased by someone else!`);
       // Remove sold out items from cart

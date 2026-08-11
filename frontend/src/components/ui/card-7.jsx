@@ -8,9 +8,10 @@ import { useCurrency } from "../../CurrencyContext";
 
 export function InteractiveProductCard({
   className = "",
-  template,
+  template: propTemplate,
   ...props
 }) {
+  const template = { ...propTemplate, is_sold_out: false };
   const navigate = useNavigate();
   const { requireAuth } = useAuth();
   const { addToCart, cartItems, purchasedTemplates } = useCart();

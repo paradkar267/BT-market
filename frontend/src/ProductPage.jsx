@@ -44,7 +44,10 @@ export default function ProductPage() {
     );
   }
 
-  const template = templates.find(t => t.id === parseInt(id));
+  let template = templates.find(t => t.id === parseInt(id));
+  if (template) {
+    template = { ...template, is_sold_out: false };
+  }
 
   const inCart = template ? cartItems.some(item => item.id === template.id) : false;
   const isOwned = template ? purchasedTemplates?.some(item => item.id === template.id) : false;
