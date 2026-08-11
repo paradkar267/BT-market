@@ -23,10 +23,7 @@ export function useTemplates() {
         const slug = t.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
         const previewUrl = t.previewUrl || `/previews/${slug}/index.html`;
 
-        let category = t.category;
-        if (t.id === 1 || t.id === 2) category = 'HTML';
-
-        return { ...t, price: currentPrice.toString(), previewUrl, category, is_sold_out: false };
+        return { ...t, price: currentPrice.toString(), previewUrl };
       }) || [];
       
       setTemplates(adjustedData);

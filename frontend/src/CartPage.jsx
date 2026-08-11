@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Trash2, Lock, ShieldCheck, User, ShoppingCart, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
-import confetti from 'canvas-confetti';
+
 import { useCart } from './CartContext';
 import { useCurrency } from './CurrencyContext';
 import UserMenu from './UserMenu';
@@ -268,9 +268,8 @@ export default function CartPage() {
         await processSuccessfulPayment(response.razorpay_payment_id);
       },
       prefill: {
-        name: 'John Doe',
-        email: 'customer@example.com',
-        contact: '9999999999',
+        name: user?.user_metadata?.full_name || '',
+        email: user?.email || '',
       },
       theme: {
         color: isDark ? '#000000' : '#111827',

@@ -4,7 +4,7 @@ import { ShoppingBag, X } from 'lucide-react';
 import { useTheme } from '../../ThemeContext';
 import { useAuth } from '../../AuthContext';
 import { supabase } from '../../lib/supabase';
-import { marketplaceTemplates } from '../../data';
+import { useTemplates } from '../../useTemplates';
 
 export function SocialProofToast() {
   const { isAdmin } = useAuth();
@@ -14,6 +14,7 @@ export function SocialProofToast() {
   const timerRef = useRef(null);
   const { theme } = useTheme();
   const isDark = theme === 'dark';
+  const { templates: marketplaceTemplates } = useTemplates();
 
   useEffect(() => {
     if (!isAdmin) return;

@@ -256,9 +256,9 @@ const ensurePreviewBuild = async (extractPath, slug) => {
 router.get('/stats', requireAdmin, async (req, res) => {
   try {
     const { data: purchases } = await supabaseAdmin.from('purchases').select('*');
-    const { count: userCount } = await supabaseAdmin.auth.admin.listUsers();
+    const { data: usersData } = await supabaseAdmin.auth.admin.listUsers();
 
-    const actualUserCount = userCount || 0;
+    const actualUserCount = usersData?.users?.length || 0;
     let totalRevenue = 0;
     if (purchases) {
       totalRevenue = purchases.reduce((acc, curr) => acc + (parseFloat(curr.price) || 0), 0);

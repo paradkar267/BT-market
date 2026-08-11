@@ -133,7 +133,7 @@ export const CartProvider = ({ children }) => {
       return;
     }
     
-    const soldOutItems = checkTemplates.filter(t => t.is_sold_out && false); // HOLD FEATURE
+    const soldOutItems = checkTemplates.filter(t => t.is_sold_out);
     if (soldOutItems.length > 0) {
       toast.error(`Sorry, ${soldOutItems[0].title} was just purchased by someone else!`);
       // Remove sold out items from cart
@@ -153,7 +153,7 @@ export const CartProvider = ({ children }) => {
     window.dispatchEvent(new Event('templates_updated'));
     
     // Update local state by re-fetching purchased templates from DB & Auth metadata
-    await loadPurchasedTemplates(user.id);
+    await loadPurchasedTemplates();
     setCartItems([]);
   };
 
@@ -163,14 +163,19 @@ export const CartProvider = ({ children }) => {
     const existingIds = user.user_metadata?.purchased_templates || [];
     const finalIds = existingIds.filter(id => id !== templateId);
     
-    const { error } = await supabase.auth.updateUser({
-      data: { purchased_templates: finalIds }
-    });
+    // Remove from both user_metadata and purchases table
+    const [{ error }, { error: dbError }] = await Promise.all([
+      supabase.auth.updateUser({ data: { purchased_templates: finalIds } }),
+      supabase.from('purchases').delete().eq('user_id', user.id).eq('template_id', templateId)
+    ]);
       
     if (error) {
       console.error("Delete error:", error);
       toast.error("Failed to delete template.");
       return;
+    }
+    if (dbError) {
+      console.warn("Could not remove purchase record:", dbError);
     }
     
     const newPurchasedObjects = templates.filter(t => finalIds.includes(t.id));

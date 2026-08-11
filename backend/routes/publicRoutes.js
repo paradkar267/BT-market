@@ -137,7 +137,8 @@ router.post('/verify-payment', requireAuth, async (req, res) => {
     const purchaseRecords = cartItems.map(item => ({
       user_id: user.id,
       template_id: item.id,
-      payment_id: paymentId
+      payment_id: paymentId,
+      price: parseFloat(item.price) || 0
     }));
 
     const { error: dbError } = await supabaseAdmin

@@ -12,7 +12,6 @@ import { useTemplates } from './useTemplates';
 import { useCurrency } from './CurrencyContext';
 import { Logo } from './components/ui/Logo';
 import { supabase } from './lib/supabase';
-import { marketplaceTemplates as initialTemplates } from './data';
 
 // Data initialized from actual fetching
 const COLORS = ['#8b5cf6', '#3b82f6', '#ec4899', '#10b981'];
