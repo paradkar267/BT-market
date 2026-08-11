@@ -19,14 +19,93 @@ export default function PreviewPage() {
   const [device, setDevice] = useState('desktop'); // 'desktop' | 'tablet' | 'mobile'
   const [iframeLoaded, setIframeLoaded] = useState(false);
 
+  const handleIframeLoad = (e) => {
+    setIframeLoaded(true);
+    try {
+      const iframe = e.target;
+      const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+
+      // 1. Disable Right Click inside iframe
+      iframeDoc.addEventListener('contextmenu', (event) => event.preventDefault());
+
+      // 2. Disable Keyboard Shortcuts inside iframe
+      iframeDoc.addEventListener('keydown', (event) => {
+        // Prevent F12
+        if (event.key === 'F12') {
+          event.preventDefault();
+          return false;
+        }
+        // Prevent Ctrl+Shift+I, Ctrl+Shift+C, Ctrl+Shift+J
+        if (event.ctrlKey && event.shiftKey && (event.key === 'I' || event.key === 'i' || event.key === 'C' || event.key === 'c' || event.key === 'J' || event.key === 'j')) {
+          event.preventDefault();
+          return false;
+        }
+        // Prevent Ctrl+U (View Source)
+        if (event.ctrlKey && (event.key === 'U' || event.key === 'u')) {
+          event.preventDefault();
+          return false;
+        }
+        // Prevent Ctrl+S (Save Page)
+        if (event.ctrlKey && (event.key === 'S' || event.key === 's')) {
+          event.preventDefault();
+          return false;
+        }
+      });
+
+      // 3. Inject CSS to disable user selection inside iframe
+      const style = iframeDoc.createElement('style');
+      style.textContent = `
+        * {
+          -webkit-user-select: none !important;
+          -moz-user-select: none !important;
+          -ms-user-select: none !important;
+          user-select: none !important;
+        }
+      `;
+      iframeDoc.head.appendChild(style);
+    } catch (err) {
+      console.warn("Could not inject restrictions inside iframe (likely cross-origin):", err);
+    }
+  };
+
   // Find the template
   const template = templates.find(t => t.id === parseInt(id));
   
-  // Set background to dark for the whole page
+  // Set background to dark for the whole page & block devtool access / contextmenu
   useEffect(() => {
     document.body.style.backgroundColor = '#000';
+
+    const handleContextMenu = (e) => e.preventDefault();
+    const handleKeyDown = (e) => {
+      // Block F12
+      if (e.key === 'F12') {
+        e.preventDefault();
+        return false;
+      }
+      // Block Ctrl+Shift+I, Ctrl+Shift+C, Ctrl+Shift+J
+      if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.key === 'C' || e.key === 'c' || e.key === 'J' || e.key === 'j')) {
+        e.preventDefault();
+        return false;
+      }
+      // Block Ctrl+U (View Source)
+      if (e.ctrlKey && (e.key === 'U' || e.key === 'u')) {
+        e.preventDefault();
+        return false;
+      }
+      // Block Ctrl+S (Save Page)
+      if (e.ctrlKey && (e.key === 'S' || e.key === 's')) {
+        e.preventDefault();
+        return false;
+      }
+    };
+
+    window.addEventListener('contextmenu', handleContextMenu);
+    window.addEventListener('keydown', handleKeyDown);
+
     return () => {
       document.body.style.backgroundColor = '';
+      window.removeEventListener('contextmenu', handleContextMenu);
+      window.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
 
@@ -213,9 +292,9 @@ export default function PreviewPage() {
             <iframe
               src={previewUrl}
               title={`Preview of ${template.title}`}
-              className="w-full h-full border-0 bg-white relative z-0 flex-1"
+              className="w-full h-full border-0 bg-white relative z-0 flex-1 select-none"
               sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
-              onLoad={() => setIframeLoaded(true)}
+              onLoad={handleIframeLoad}
             />
           ) : (
             <div className="w-full h-full flex flex-col items-center justify-center bg-gray-50 text-center p-8">
