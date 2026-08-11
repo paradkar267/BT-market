@@ -175,6 +175,22 @@ const processPreviewPaths = (dir, slug) => {
   processDir(dir);
 };
 
+// Helper to recursively delete all sourcemap (.map) files
+const removeSourcemaps = (currentDir) => {
+  if (!fs.existsSync(currentDir)) return;
+  const files = fs.readdirSync(currentDir);
+  for (const file of files) {
+    const fullPath = path.join(currentDir, file);
+    if (fs.statSync(fullPath).isDirectory()) {
+      removeSourcemaps(fullPath);
+    } else if (file.endsWith('.map')) {
+      try {
+        fs.unlinkSync(fullPath);
+      } catch (e) {}
+    }
+  }
+};
+
 // Helper to detect if extracted dir is a React/Vite source project and build it automatically if needed
 const ensurePreviewBuild = async (extractPath, slug) => {
   if (!fs.existsSync(extractPath)) return;
@@ -218,43 +234,62 @@ const ensurePreviewBuild = async (extractPath, slug) => {
 
       const distDir = path.join(extractPath, 'dist');
       if (fs.existsSync(distDir)) {
-        const distFiles = fs.readdirSync(distDir);
-        for (const file of distFiles) {
-          const srcP = path.join(distDir, file);
-          const destP = path.join(extractPath, file);
-          if (fs.existsSync(destP)) {
-            if (fs.statSync(destP).isDirectory()) {
-              fs.rmdirSync(destP, { recursive: true });
-            } else {
-              fs.unlinkSync(destP);
-            }
-          }
-          fs.renameSync(srcP, destP);
+        // Move dist files to a temp directory outside extractPath
+        const tempDistDir = path.join(path.dirname(extractPath), slug + '_temp_dist');
+        if (fs.existsSync(tempDistDir)) {
+          fs.rmSync(tempDistDir, { recursive: true, force: true });
         }
-        try { fs.rmdirSync(distDir); } catch(e) {}
+        
+        // Copy the dist folder to the temp location
+        fs.cpSync(distDir, tempDistDir, { recursive: true });
+
+        // Delete the entire extractPath folder containing all source code and files
+        fs.rmSync(extractPath, { recursive: true, force: true });
+
+        // Rename the temp dist folder back to extractPath
+        fs.cpSync(tempDistDir, extractPath, { recursive: true });
+        fs.rmSync(tempDistDir, { recursive: true, force: true });
       }
 
-      const itemsToClean = ['src', 'node_modules', 'package.json', 'package-lock.json', 'tsconfig.json', 'vite.config.ts', 'vite.config.js', 'bun.lock', '.git', '.env'];
-      for (const item of itemsToClean) {
-        const itemP = path.join(extractPath, item);
-        if (fs.existsSync(itemP)) {
-          try {
-            if (fs.statSync(itemP).isDirectory()) {
-              fs.rmdirSync(itemP, { recursive: true });
-            } else {
-              fs.unlinkSync(itemP);
-            }
-          } catch(e) {}
-        }
-      }
+      // Remove any sourcemaps just in case
+      removeSourcemaps(extractPath);
       processPreviewPaths(extractPath, slug);
       console.log(`Successfully built & sanitized React/Vite preview for "${slug}"!`);
     } catch (buildErr) {
       console.error(`Failed to build React/Vite template for "${slug}":`, buildErr.message);
+      // Fallback cleanup if build fails: delete known source folders to prevent code leak
+      const fallbackClean = ['src', 'node_modules', 'package.json', 'package-lock.json', 'tsconfig.json', 'vite.config.ts', 'vite.config.js', 'bun.lock', '.git', '.env'];
+      for (const item of fallbackClean) {
+        const itemP = path.join(extractPath, item);
+        if (fs.existsSync(itemP)) {
+          try {
+            if (fs.statSync(itemP).isDirectory()) {
+              fs.rmSync(itemP, { recursive: true, force: true });
+            } else {
+              fs.unlinkSync(itemP);
+            }
+          } catch (e) {}
+        }
+      }
+      removeSourcemaps(extractPath);
       processPreviewPaths(extractPath, slug);
     }
   } else {
-    // Standard static HTML template
+    // Standard static HTML template - Clean up config/documentation files
+    const filesToClean = ['package.json', 'package-lock.json', 'tsconfig.json', 'bun.lock', '.git', '.env', '.env.example', '.gitignore', 'README.md', 'metadata.json'];
+    for (const file of filesToClean) {
+      const fileP = path.join(extractPath, file);
+      if (fs.existsSync(fileP)) {
+        try {
+          if (fs.statSync(fileP).isDirectory()) {
+            fs.rmSync(fileP, { recursive: true, force: true });
+          } else {
+            fs.unlinkSync(fileP);
+          }
+        } catch (e) {}
+      }
+    }
+    removeSourcemaps(extractPath);
     processPreviewPaths(extractPath, slug);
   }
 };
