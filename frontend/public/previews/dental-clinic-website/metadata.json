@@ -1,0 +1,6 @@
+{
+  "name": "ArogyaDanta — Super Speciality 3D Dental Hospital",
+  "description": "NABH Accredited Super Speciality 3D Dental Hospital providing painless root canals, 3D guided implants, Invisalign aligners, and emergency dental care.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

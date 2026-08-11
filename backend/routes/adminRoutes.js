@@ -102,13 +102,19 @@ const flattenDirectory = (srcDir) => {
               } else {
                 fs.unlinkSync(destPath);
               }
-              fs.renameSync(srcPath, destPath);
+              fs.cpSync(srcPath, destPath, { recursive: true });
+              fs.rmSync(srcPath, { recursive: true, force: true });
             } catch (err) {
               console.error(`Error resolving conflict for ${item}:`, err);
             }
           }
         } else {
-          fs.renameSync(srcPath, destPath);
+          try {
+            fs.cpSync(srcPath, destPath, { recursive: true });
+            fs.rmSync(srcPath, { recursive: true, force: true });
+          } catch (e) {
+            fs.renameSync(srcPath, destPath);
+          }
         }
       }
     };
