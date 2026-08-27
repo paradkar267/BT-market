@@ -126,7 +126,11 @@ export default async function handler(req, res) {
           name: customer.fullName
         },
         amount: priceNum,
-        status: 'Completed'
+        status: p.status || 'completed',
+        refundId: p.refund_id || null,
+        refundedAt: p.refunded_at || null,
+        refundReason: p.refund_reason || null,
+        refundAmount: p.refund_amount || null
       };
     });
 

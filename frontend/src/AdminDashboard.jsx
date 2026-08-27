@@ -105,6 +105,10 @@ export default function AdminDashboard() {
   const [chartCategoryData, setChartCategoryData] = useState([]);
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
   const [exportState, setExportState] = useState({ status: 'idle', type: null });
+  // Refund state
+  const [refundTarget, setRefundTarget] = useState(null); // order to refund
+  const [refundReason, setRefundReason] = useState('');
+  const [refundSubmitting, setRefundSubmitting] = useState(false);
 
   // Coupons State
   const [coupons, setCoupons] = useState([]);
@@ -319,6 +323,35 @@ export default function AdminDashboard() {
       setBannerLoading(false);
     }
   }, []);
+
+  const handleIssueRefund = async () => {
+    if (!refundTarget) return;
+    setRefundSubmitting(true);
+    const toastId = toast.loading(`Processing refund for ${refundTarget.customer.name}...`);
+    try {
+      const { data: { session: s } } = await supabase.auth.getSession();
+      const res = await fetch('/api/admin-refund', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${s?.access_token}` },
+        body: JSON.stringify({
+          purchaseId: refundTarget.id,
+          reason: refundReason || 'Refund issued by admin',
+          frontendUrl: window.location.origin
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Refund failed');
+      toast.success(`✅ Refund processed! Ref: ${data.refundId}`, { id: toastId });
+      setRefundTarget(null);
+      setRefundReason('');
+      // Update local order status instantly
+      setOrders(prev => prev.map(o => o.id === refundTarget.id ? { ...o, status: 'refunded', refundId: data.refundId } : o));
+    } catch (err) {
+      toast.error(err.message || 'Refund failed', { id: toastId });
+    } finally {
+      setRefundSubmitting(false);
+    }
+  };
 
   const handleToggleBannerStatus = async () => {
     const newStatus = !bannerConfig.is_enabled;
@@ -2234,26 +2267,140 @@ export default function AdminDashboard() {
 
                           {/* Status */}
                           <td className="px-6 py-4">
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                              Paid
-                            </span>
+                            {order.status === 'refunded' ? (
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400">
+                                <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                                Refunded
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                                Paid
+                              </span>
+                            )}
                           </td>
 
                           {/* Actions */}
                           <td className="px-6 py-4 text-right">
-                            <button
-                              onClick={() => setSelectedOrder(order)}
-                              className="px-3 py-1.5 bg-gray-100 dark:bg-white/10 hover:bg-indigo-50 dark:hover:bg-indigo-500/20 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg text-xs font-bold transition-colors cursor-pointer"
-                            >
-                              Inspect
-                            </button>
+                            <div className="flex items-center justify-end gap-2">
+                              {order.status !== 'refunded' && (
+                                <button
+                                  onClick={() => { setRefundTarget(order); setRefundReason(''); }}
+                                  className="px-3 py-1.5 bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 text-red-600 dark:text-red-400 rounded-lg text-xs font-bold transition-colors cursor-pointer flex items-center gap-1"
+                                  title="Issue Refund & Revoke License"
+                                >
+                                  <RefreshCw className="w-3.5 h-3.5" /> Refund
+                                </button>
+                              )}
+                              <button
+                                onClick={() => setSelectedOrder(order)}
+                                className="px-3 py-1.5 bg-gray-100 dark:bg-white/10 hover:bg-indigo-50 dark:hover:bg-indigo-500/20 hover:text-indigo-600 dark:hover:text-indigo-400 rounded-lg text-xs font-bold transition-colors cursor-pointer"
+                              >
+                                Inspect
+                              </button>
+                            </div>
                           </td>
                         </tr>
                       ))
                     )}
                   </tbody>
                 </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ══════════════════════════════════════════════
+            REFUND CONFIRMATION MODAL (Global)
+        ══════════════════════════════════════════════ */}
+        {refundTarget && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <div className="bg-white dark:bg-[#111111] rounded-3xl shadow-2xl border border-gray-200 dark:border-white/10 w-full max-w-md animate-fade-in-up">
+              {/* Header */}
+              <div className="p-6 border-b border-gray-100 dark:border-white/10 flex items-start justify-between">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xl">💳</span>
+                    <h3 className="font-black text-lg">Issue Refund</h3>
+                  </div>
+                  <p className="text-xs text-gray-500">This will revoke the customer's download license and initiate a refund.</p>
+                </div>
+                <button onClick={() => setRefundTarget(null)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 transition-colors cursor-pointer">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* Order Summary */}
+              <div className="p-6 space-y-4">
+                <div className="p-4 rounded-2xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-red-600 dark:text-red-400 font-bold uppercase tracking-wider">Customer</span>
+                    <span className="text-sm font-black">{refundTarget.customer.name}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-red-600 dark:text-red-400 font-bold uppercase tracking-wider">Template</span>
+                    <span className="text-sm font-bold truncate max-w-[200px]">{refundTarget.template.title}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-red-600 dark:text-red-400 font-bold uppercase tracking-wider">Refund Amount</span>
+                    <span className="text-base font-black text-red-600 dark:text-red-400">{formatPrice(refundTarget.amount)}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-red-600 dark:text-red-400 font-bold uppercase tracking-wider">Payment ID</span>
+                    <span className="font-mono text-xs">{refundTarget.paymentId}</span>
+                  </div>
+                </div>
+
+                {/* Reason */}
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">Refund Reason</label>
+                  <select
+                    value={refundReason}
+                    onChange={e => setRefundReason(e.target.value)}
+                    className="w-full bg-gray-50 dark:bg-black border border-gray-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500 mb-2"
+                  >
+                    <option value="">— Select a reason —</option>
+                    <option value="Customer request">Customer request</option>
+                    <option value="Accidental purchase">Accidental purchase</option>
+                    <option value="Duplicate payment">Duplicate payment</option>
+                    <option value="Technical issue">Technical issue / product not working</option>
+                    <option value="Not as described">Product not as described</option>
+                    <option value="Goodwill refund">Goodwill refund</option>
+                  </select>
+                  <input
+                    type="text"
+                    value={refundReason}
+                    onChange={e => setRefundReason(e.target.value)}
+                    placeholder="Or type a custom reason..."
+                    className="w-full bg-gray-50 dark:bg-black border border-gray-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                  />
+                </div>
+
+                <p className="text-xs text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl px-3 py-2">
+                  ⚠️ This action <strong>immediately revokes download access</strong> and sends an automated refund confirmation email to the customer.
+                </p>
+              </div>
+
+              {/* Footer Actions */}
+              <div className="p-6 border-t border-gray-100 dark:border-white/10 flex items-center justify-end gap-3">
+                <button
+                  onClick={() => setRefundTarget(null)}
+                  disabled={refundSubmitting}
+                  className="px-5 py-2.5 border border-gray-200 dark:border-white/10 rounded-xl text-sm font-bold hover:bg-gray-50 dark:hover:bg-white/5 transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleIssueRefund}
+                  disabled={refundSubmitting || !refundReason}
+                  className="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-black flex items-center gap-2 transition-colors cursor-pointer disabled:opacity-50 shadow-lg shadow-red-500/20"
+                >
+                  {refundSubmitting ? (
+                    <><Loader2 className="w-4 h-4 animate-spin" /> Processing...</>
+                  ) : (
+                    <><RefreshCw className="w-4 h-4" /> Confirm Refund</>
+                  )}
+                </button>
               </div>
             </div>
           </div>

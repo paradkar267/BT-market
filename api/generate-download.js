@@ -68,6 +68,10 @@ export default async function handler(req, res) {
       return res.status(403).json({ error: 'Access denied: You do not have an active license for this template.' });
     }
 
+    if (purchase.status === 'refunded' || purchase.status === 'revoked') {
+      return res.status(403).json({ error: 'Access revoked: Your license for this template has been refunded or revoked.' });
+    }
+
     // 2. Get file path from mapping table
     let { data: mapping } = await supabaseAdmin
       .from('template_files')
