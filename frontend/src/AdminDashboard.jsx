@@ -1281,7 +1281,7 @@ export default function AdminDashboard() {
     setEditLoading(true);
     try {
       const { data: { session: currentSession } } = await supabase.auth.getSession();
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || '';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3000' : '');
       const targetUrls = [];
       if (backendUrl) targetUrls.push(`${backendUrl}/api/admin/template/${editingTemplate.id}`);
       targetUrls.push(`/api/admin/template/${editingTemplate.id}`);
@@ -1333,7 +1333,7 @@ export default function AdminDashboard() {
     if (!deleteTemplateId) return;
     try {
       const { data: { session: currentSession } } = await supabase.auth.getSession();
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || '';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3000' : '');
       const targetUrls = [];
       if (backendUrl) targetUrls.push(`${backendUrl}/api/admin/template/${deleteTemplateId}`);
       targetUrls.push(`/api/admin/template/${deleteTemplateId}`);
@@ -1385,7 +1385,7 @@ export default function AdminDashboard() {
 
     try {
       const { data: { session: currentSession } } = await supabase.auth.getSession();
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || '';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3000' : '');
       const targetUrls = [];
       if (backendUrl) targetUrls.push(`${backendUrl}/api/admin/templates/${template.id}/buyers`);
       targetUrls.push(`/api/admin/templates/${template.id}/buyers`);
@@ -1435,7 +1435,7 @@ export default function AdminDashboard() {
 
     try {
       const { data: { session: currentSession } } = await supabase.auth.getSession();
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || '';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3000' : '');
       const targetUrls = [];
       if (backendUrl) targetUrls.push(`${backendUrl}/api/admin/broadcast-update`);
       targetUrls.push(`/api/broadcast-update`);
@@ -1530,7 +1530,7 @@ export default function AdminDashboard() {
 
     try {
       const { data: { session: currentSession } } = await supabase.auth.getSession();
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || '';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3000' : '');
       const targetUrls = [];
       if (backendUrl) targetUrls.push(`${backendUrl}/api/admin/upload-template`);
       targetUrls.push('/api/admin/upload-template');
