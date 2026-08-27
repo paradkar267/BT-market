@@ -76,48 +76,11 @@ function devApiPlugin() {
             req.body = await getBody();
             const handler = await loadApi('contact.js');
             return await handler(req, res);
-          } else if (urlPath === '/api/admin-orders' && req.method === 'GET') {
-            const handler = await loadApi('admin-orders.js');
-            return await handler(req, res);
-          } else if (urlPath === '/api/validate-coupon' && req.method === 'POST') {
-            req.body = await getBody();
-            const handler = await loadApi('validate-coupon.js');
-            return await handler(req, res);
-          } else if (urlPath === '/api/admin-coupons') {
-            if (req.method === 'POST' || req.method === 'PATCH') {
+          } else if (urlPath.startsWith('/api/admin') || urlPath === '/api/campaigns') {
+            if (req.method === 'POST' || req.method === 'PATCH' || req.method === 'DELETE') {
               req.body = await getBody();
             }
-            const handler = await loadApi('admin-coupons.js');
-            return await handler(req, res);
-          } else if (urlPath === '/api/broadcast-update' && req.method === 'POST') {
-            req.body = await getBody();
-            const handler = await loadApi('broadcast-update.js');
-            return await handler(req, res);
-          } else if (urlPath === '/api/admin-campaigns' || urlPath === '/api/campaigns') {
-            if (req.method === 'POST' || req.method === 'PATCH') {
-              req.body = await getBody();
-            }
-            const handler = await loadApi('admin-campaigns.js');
-            return await handler(req, res);
-          } else if (urlPath === '/api/admin-customers' || urlPath === '/api/admin/customers') {
-            if (req.method === 'POST' || req.method === 'DELETE') {
-              req.body = await getBody();
-            }
-            const handler = await loadApi('admin-customers.js');
-            return await handler(req, res);
-          } else if (urlPath === '/api/upload-image' && req.method === 'POST') {
-            req.body = await getBody();
-            const handler = await loadApi('upload-image.js');
-            return await handler(req, res);
-          } else if (urlPath === '/api/announcement-banner') {
-            if (req.method === 'POST' || req.method === 'PATCH') {
-              req.body = await getBody();
-            }
-            const handler = await loadApi('announcement-banner.js');
-            return await handler(req, res);
-          } else if (urlPath === '/api/admin-refund' && req.method === 'POST') {
-            req.body = await getBody();
-            const handler = await loadApi('admin-refund.js');
+            const handler = await loadApi('admin.js');
             return await handler(req, res);
           } else if (urlPath === '/api/request-refund' && req.method === 'POST') {
             req.body = await getBody();
