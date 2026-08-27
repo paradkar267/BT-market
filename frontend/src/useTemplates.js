@@ -20,7 +20,7 @@ export function useTemplates() {
         let currentPrice = parseInt(t.price, 10);
         
         const slug = t.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
-        const previewUrl = t.previewUrl || `/previews/${slug}/index.html`;
+        const previewUrl = t.previewUrl || t.preview_url || t.demo_url || t.demoUrl || `/previews/${slug}/index.html`;
 
         return { ...t, price: currentPrice.toString(), previewUrl };
       }) || [];
@@ -49,7 +49,7 @@ export function useTemplates() {
         const adjustedData = data?.map(t => {
           let currentPrice = parseInt(t.price, 10);
           const slug = t.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
-          const previewUrl = t.previewUrl || `/previews/${slug}/index.html`;
+          const previewUrl = t.previewUrl || t.preview_url || t.demo_url || t.demoUrl || `/previews/${slug}/index.html`;
           return { ...t, price: currentPrice.toString(), previewUrl };
         }) || [];
         

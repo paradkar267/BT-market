@@ -1271,6 +1271,7 @@ export default function AdminDashboard() {
       tag: template.tag || '',
       keywords: Array.isArray(template.keywords) ? template.keywords.join(', ') : (template.keywords || ''),
       image: template.image || '',
+      previewUrl: template.previewUrl || template.demo_url || template.preview_url || '',
     });
     setEditingTemplate(template);
   };
@@ -1494,77 +1495,14 @@ export default function AdminDashboard() {
     }
   };
 
-  // Automatic live preview generator triggered upon ZIP selection
-  const handleGeneratePreview = async (file) => {
-    if (!file) return;
-    setPreviewLoading(true);
-    setPreviewError('');
-    setPreviewData(null);
-
-    const formPayload = new FormData();
-    formPayload.append('file', file);
-
-    try {
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || '';
-      const targetUrls = [];
-      if (backendUrl) targetUrls.push(`${backendUrl}/api/admin/generate-preview`);
-      targetUrls.push('/api/admin/generate-preview');
-
-      let response = null;
-      let resultData = null;
-      let errorMsg = 'Preview generation failed';
-
-      for (const url of targetUrls) {
-        try {
-          const res = await fetch(url, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${currentSession?.access_token}`
-            },
-            body: formPayload
-          });
-
-          if (res.ok) {
-            resultData = await res.json();
-            response = res;
-            break;
-          } else {
-            const errJson = await res.json().catch(() => ({}));
-            errorMsg = errJson.error || `Server error (${res.status})`;
-          }
-        } catch {
-          // Try next target URL
-        }
-      }
-
-      if (!response || !resultData || !resultData.success) {
-        throw new Error(errorMsg);
-      }
-
-      setPreviewData(resultData);
-
-      // Auto-populate form metadata if empty
-      setFormData(prev => ({
-        ...prev,
-        title: prev.title || resultData.detectedTitle || file.name.replace(/\.zip$/i, '').replace(/[-_]/g, ' '),
-        category: prev.category === 'React' && resultData.suggestedCategory ? resultData.suggestedCategory : prev.category,
-        tag: prev.tag || (resultData.detectedType ? resultData.detectedType.split(' ')[0] : 'Web'),
-      }));
-
-      toast.success(`Live preview generated successfully (${resultData.detectedType})!`);
-    } catch (err) {
-      console.error("Preview generation error:", err);
-      setPreviewError(err.message || 'Could not generate preview');
-    } finally {
-      setPreviewLoading(false);
-    }
-  };
-
   const handleFileSelect = (file) => {
     if (!file) return;
     setSelectedFile(file);
-    handleGeneratePreview(file);
+    // Auto-populate template title from ZIP filename if currently empty
+    setFormData(prev => ({
+      ...prev,
+      title: prev.title || file.name.replace(/\.zip$/i, '').replace(/[-_]/g, ' ')
+    }));
   };
 
   const handleUpload = async (e) => {
@@ -4837,7 +4775,21 @@ export default function AdminDashboard() {
                       placeholder="Or paste external image URL (https://...)"
                     />
                   </div>
-                )}
+              <div>
+                <label className="block text-sm font-bold mb-2 flex items-center justify-between">
+                  <span>Live Demo URL (ThemeForest Standard)</span>
+                  <span className="text-[10px] text-indigo-500 font-bold">Deploy Link</span>
+                </label>
+                <input
+                  type="url"
+                  value={editForm.previewUrl || ''}
+                  onChange={e => setEditForm({ ...editForm, previewUrl: e.target.value })}
+                  className={inputCls}
+                  placeholder="https://my-template-demo.vercel.app"
+                />
+                <p className="text-[11px] text-gray-400 mt-1">
+                  Deployed live URL. If left empty, existing built preview or screenshot will be shown.
+                </p>
               </div>
 
               <div className="flex gap-3 pt-4">
