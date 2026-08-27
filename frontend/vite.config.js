@@ -119,6 +119,10 @@ function devApiPlugin() {
             req.body = await getBody();
             const handler = await loadApi('admin-refund.js');
             return await handler(req, res);
+          } else if (urlPath === '/api/request-refund' && req.method === 'POST') {
+            req.body = await getBody();
+            const handler = await loadApi('request-refund.js');
+            return await handler(req, res);
           }
         } catch (err) {
           console.error("Dev API Middleware Error:", err);

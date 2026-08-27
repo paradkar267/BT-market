@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import confetti from 'canvas-confetti';
-import { Download, LayoutTemplate, ArrowLeft, Loader2, CheckCircle2, Eye } from 'lucide-react';
+import { Download, LayoutTemplate, ArrowLeft, Loader2, CheckCircle2, Eye, RotateCcw, X } from 'lucide-react';
 import { useCart } from './CartContext';
 import { supabase } from './lib/supabase';
 import UserMenu from './UserMenu';
@@ -13,6 +13,33 @@ export default function MyTemplatesPage() {
   const [downloading, setDownloading] = useState({});
   const location = useLocation();
   const navigate = useNavigate();
+
+  // Refund request state
+  const [refundTarget, setRefundTarget] = useState(null); // template object
+  const [refundReason, setRefundReason] = useState('');
+  const [refundSubmitting, setRefundSubmitting] = useState(false);
+
+  const handleRequestRefund = async () => {
+    if (!refundTarget || !refundReason.trim()) return;
+    setRefundSubmitting(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const res = await fetch('/api/request-refund', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token}` },
+        body: JSON.stringify({ templateId: refundTarget.id, reason: refundReason.trim() })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+      toast.success('Refund request submitted! We\'ll review it within 1–2 business days.');
+      setRefundTarget(null);
+      setRefundReason('');
+    } catch (err) {
+      toast.error(err.message || 'Failed to submit refund request.');
+    } finally {
+      setRefundSubmitting(false);
+    }
+  };
 
   const handleDownload = useCallback(async (templateId, templateTitle) => {
     if (downloading[templateId]) return;
@@ -238,7 +265,16 @@ export default function MyTemplatesPage() {
                           </button>
                         )}
                         
-
+                        {/* Request Refund */}
+                        {!isDownloading && !isDone && (
+                          <button
+                            onClick={() => { setRefundTarget(template); setRefundReason(''); }}
+                            className="px-3 py-4 rounded-xl border border-gray-200 dark:border-white/10 text-gray-400 hover:text-red-500 hover:border-red-300 dark:hover:border-red-500/40 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all cursor-pointer"
+                            title="Request a Refund"
+                          >
+                            <RotateCcw className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
                    </div>
                 </div>
@@ -247,6 +283,79 @@ export default function MyTemplatesPage() {
           </div>
         )}
       </div>
+
+      {/* ── Refund Request Modal ── */}
+      {refundTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="bg-white dark:bg-[#111111] rounded-3xl shadow-2xl border border-gray-200 dark:border-white/10 w-full max-w-md">
+            {/* Header */}
+            <div className="p-6 border-b border-gray-100 dark:border-white/10 flex items-start justify-between">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <RotateCcw className="w-5 h-5 text-red-500" />
+                  <h3 className="font-black text-lg">Request a Refund</h3>
+                </div>
+                <p className="text-xs text-gray-500">For: <strong>{refundTarget.title}</strong></p>
+              </div>
+              <button onClick={() => setRefundTarget(null)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 cursor-pointer">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            {/* Body */}
+            <div className="p-6 space-y-4">
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Tell us why you'd like a refund. Our team reviews all requests within <strong>1–2 business days</strong>.
+              </p>
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">Reason for Refund *</label>
+                <select
+                  value={refundReason}
+                  onChange={e => setRefundReason(e.target.value)}
+                  className="w-full bg-gray-50 dark:bg-black border border-gray-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 mb-2"
+                >
+                  <option value="">— Select a reason —</option>
+                  <option value="Accidental purchase">Accidental purchase</option>
+                  <option value="Not as described">Not as described</option>
+                  <option value="Technical issue">Technical issue / can't open files</option>
+                  <option value="Duplicate purchase">Duplicate purchase</option>
+                  <option value="Changed my mind">Changed my mind</option>
+                </select>
+                <textarea
+                  value={refundReason}
+                  onChange={e => setRefundReason(e.target.value)}
+                  placeholder="Or describe your issue in more detail..."
+                  rows={3}
+                  className="w-full bg-gray-50 dark:bg-black border border-gray-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 resize-none"
+                />
+              </div>
+              <p className="text-xs text-gray-400">
+                By submitting, our support team will be notified and you'll receive a confirmation email.
+              </p>
+            </div>
+            {/* Footer */}
+            <div className="p-6 border-t border-gray-100 dark:border-white/10 flex items-center justify-end gap-3">
+              <button
+                onClick={() => setRefundTarget(null)}
+                disabled={refundSubmitting}
+                className="px-5 py-2.5 border border-gray-200 dark:border-white/10 rounded-xl text-sm font-bold hover:bg-gray-50 dark:hover:bg-white/5 transition-colors cursor-pointer disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleRequestRefund}
+                disabled={refundSubmitting || !refundReason.trim()}
+                className="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-black flex items-center gap-2 transition-colors cursor-pointer disabled:opacity-50"
+              >
+                {refundSubmitting ? (
+                  <><Loader2 className="w-4 h-4 animate-spin" /> Submitting...</>
+                ) : (
+                  <><RotateCcw className="w-4 h-4" /> Submit Request</>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
