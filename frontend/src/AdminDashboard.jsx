@@ -3680,15 +3680,26 @@ export default function AdminDashboard() {
                 {/* Email Mock Container */}
                 <div className={`mx-auto w-full transition-all duration-300 ${campaignPreviewDevice === 'mobile' ? 'max-w-[320px]' : 'max-w-full'}`}>
                   <div className="bg-white text-slate-900 rounded-2xl shadow-xl border border-gray-200 overflow-hidden text-left font-sans">
-                    {/* Header */}
-                    <div className="bg-gradient-to-br from-slate-900 to-indigo-950 p-5 text-white">
-                      <div className="flex items-center justify-between">
-                        <span className="font-black text-base tracking-tight text-white">BIZLEAP</span>
-                        <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-white/20 text-white">
-                          {campaignForm.type?.toUpperCase() || 'ANNOUNCEMENT'}
+                    {/* Clean White Email Header */}
+                    <div className="bg-white p-6 border-b border-gray-100 text-slate-900">
+                      <div className="flex items-center justify-between pb-3 border-b border-gray-100">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-black text-lg tracking-tight text-indigo-600">BIZLEAP</span>
+                          <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Marketplace</span>
+                        </div>
+                        <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                          campaignForm.type === 'sale' ? 'bg-rose-50 text-rose-700 border border-rose-200' :
+                          campaignForm.type === 'vip' ? 'bg-emerald-50 text-emerald-700 border border-emerald-200' :
+                          campaignForm.type === 'update' ? 'bg-amber-50 text-amber-700 border border-amber-200' :
+                          'bg-indigo-50 text-indigo-700 border border-indigo-200'
+                        }`}>
+                          {campaignForm.type === 'launch' ? '🚀 Launch' :
+                           campaignForm.type === 'sale' ? '🔥 50% Sale' :
+                           campaignForm.type === 'vip' ? '🎁 VIP Offer' :
+                           '📢 Update'}
                         </span>
                       </div>
-                      <h4 className="font-black text-base mt-3 leading-snug">
+                      <h4 className="font-black text-lg text-slate-900 mt-4 leading-snug">
                         {campaignForm.headline || 'Your Headline Appears Here'}
                       </h4>
                     </div>

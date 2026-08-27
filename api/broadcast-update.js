@@ -42,27 +42,27 @@ function generateBroadcastHtml({ templateTitle, templateCategory, version, chang
         <td align="center">
           <table cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width: 600px; background-color: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
             
-            <!-- Header -->
+            <!-- Clean White Header -->
             <tr>
-              <td style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%); padding: 32px 32px 28px; text-align: left;">
+              <td style="background-color: #ffffff; padding: 32px 32px 24px; text-align: left; border-bottom: 1px solid #f1f5f9;">
                 <table cellpadding="0" cellspacing="0" border="0" width="100%">
                   <tr>
                     <td>
-                      <span style="color: #ffffff; font-size: 22px; font-weight: 900; letter-spacing: -0.5px;">BIZLEAP</span>
-                      <span style="color: #818cf8; font-size: 12px; font-weight: 600; margin-left: 8px;">Marketplace</span>
+                      <span style="color: #4f46e5; font-size: 22px; font-weight: 900; letter-spacing: -0.5px;">BIZLEAP</span>
+                      <span style="color: #64748b; font-size: 11px; font-weight: 700; margin-left: 6px; text-transform: uppercase; letter-spacing: 1px;">Marketplace</span>
                     </td>
                     <td align="right">
-                      <span style="background-color: rgba(99, 102, 241, 0.2); border: 1px solid rgba(129, 140, 248, 0.3); color: #c7d2fe; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; text-transform: uppercase;">
+                      <span style="background-color: #eef2ff; border: 1px solid #c7d2fe; color: #4338ca; font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 20px; text-transform: uppercase; display: inline-block;">
                         ⚡ Free Lifetime Update
                       </span>
                     </td>
                   </tr>
                 </table>
-                <h1 style="color: #ffffff; font-size: 22px; font-weight: 800; margin: 20px 0 6px; line-height: 1.25;">
+                <h1 style="color: #0f172a; font-size: 22px; font-weight: 900; margin: 20px 0 6px; line-height: 1.25;">
                   New Version Available for Download! 🚀
                 </h1>
-                <p style="color: #94a3b8; font-size: 13px; margin: 0; line-height: 1.5;">
-                  A new version <strong style="color: #38bdf8;">${version}</strong> of <strong>${templateTitle}</strong> is now live on your dashboard.
+                <p style="color: #64748b; font-size: 13px; margin: 0; line-height: 1.5;">
+                  A new version <strong style="color: #4f46e5;">${version}</strong> of <strong>${templateTitle}</strong> is now live on your dashboard.
                 </p>
               </td>
             </tr>

@@ -84,31 +84,31 @@ export function generateCampaignHtml({
   const typeConfigs = {
     launch: {
       badge: '🚀 NEW RELEASE LAUNCH',
-      badgeBg: 'rgba(79, 70, 229, 0.2)',
-      badgeBorder: 'rgba(129, 140, 248, 0.3)',
-      badgeColor: '#c7d2fe',
-      gradient: 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%)'
+      badgeBg: '#eef2ff',
+      badgeBorder: '#c7d2fe',
+      badgeColor: '#4338ca',
+      tagColor: '#4f46e5'
     },
     sale: {
       badge: '🔥 LIMITED TIME FLASH SALE',
-      badgeBg: 'rgba(244, 63, 94, 0.2)',
-      badgeBorder: 'rgba(251, 113, 133, 0.3)',
-      badgeColor: '#fecdd3',
-      gradient: 'linear-gradient(135deg, #4c0519 0%, #881337 50%, #0f172a 100%)'
+      badgeBg: '#fff1f2',
+      badgeBorder: '#fecdd3',
+      badgeColor: '#be123c',
+      tagColor: '#e11d48'
     },
     vip: {
       badge: '🎁 EXCLUSIVE VIP OFFER',
-      badgeBg: 'rgba(16, 185, 129, 0.2)',
-      badgeBorder: 'rgba(52, 211, 153, 0.3)',
-      badgeColor: '#a7f3d0',
-      gradient: 'linear-gradient(135deg, #064e3b 0%, #0f172a 100%)'
+      badgeBg: '#ecfdf5',
+      badgeBorder: '#a7f3d0',
+      badgeColor: '#047857',
+      tagColor: '#059669'
     },
     announcement: {
       badge: '📢 MARKETPLACE ANNOUNCEMENT',
-      badgeBg: 'rgba(245, 158, 11, 0.2)',
-      badgeBorder: 'rgba(251, 191, 36, 0.3)',
-      badgeColor: '#fde68a',
-      gradient: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)'
+      badgeBg: '#fffbeb',
+      badgeBorder: '#fde68a',
+      badgeColor: '#b45309',
+      tagColor: '#d97706'
     }
   };
 
@@ -143,23 +143,23 @@ export function generateCampaignHtml({
         <td align="center">
           <table cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width: 600px; background-color: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.06);">
             
-            <!-- Header Banner -->
+            <!-- Clean White Header Banner -->
             <tr>
-              <td style="background: ${currentType.gradient}; padding: 34px 32px 30px; text-align: left;">
+              <td style="background-color: #ffffff; padding: 32px 32px 24px; text-align: left; border-bottom: 1px solid #f1f5f9;">
                 <table cellpadding="0" cellspacing="0" border="0" width="100%">
                   <tr>
                     <td>
-                      <span style="color: #ffffff; font-size: 22px; font-weight: 900; letter-spacing: -0.5px;">BIZLEAP</span>
-                      <span style="color: #818cf8; font-size: 12px; font-weight: 600; margin-left: 8px;">Marketplace</span>
+                      <span style="color: #4f46e5; font-size: 22px; font-weight: 900; letter-spacing: -0.5px;">BIZLEAP</span>
+                      <span style="color: #64748b; font-size: 11px; font-weight: 700; margin-left: 6px; text-transform: uppercase; letter-spacing: 1px;">Marketplace</span>
                     </td>
                     <td align="right">
-                      <span style="background-color: ${currentType.badgeBg}; border: 1px solid ${currentType.badgeBorder}; color: ${currentType.badgeColor}; font-size: 10.5px; font-weight: 800; padding: 4px 10px; border-radius: 20px; text-transform: uppercase;">
+                      <span style="background-color: ${currentType.badgeBg}; border: 1px solid ${currentType.badgeBorder}; color: ${currentType.badgeColor}; font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 20px; text-transform: uppercase; display: inline-block;">
                         ${currentType.badge}
                       </span>
                     </td>
                   </tr>
                 </table>
-                <h1 style="color: #ffffff; font-size: 24px; font-weight: 900; margin: 24px 0 8px; line-height: 1.25; letter-spacing: -0.5px;">
+                <h1 style="color: #0f172a; font-size: 24px; font-weight: 900; margin: 20px 0 0; line-height: 1.3; letter-spacing: -0.5px;">
                   ${headline || 'Exciting Updates on Bizleap!'}
                 </h1>
               </td>
