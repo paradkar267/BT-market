@@ -3356,9 +3356,22 @@ export default function AdminDashboard() {
                   </h3>
 
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">
-                      Select From Active Store Coupons:
-                    </label>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-500">
+                        Select From Active Store Coupons:
+                      </label>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          await fetchCoupons();
+                          toast.success('Active store coupons synced!');
+                        }}
+                        className="flex items-center gap-1 text-[11px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer"
+                      >
+                        <RefreshCw className={`w-3 h-3 ${couponsLoading ? 'animate-spin' : ''}`} />
+                        <span>Sync Coupons ({coupons.length})</span>
+                      </button>
+                    </div>
                     <select
                       value={bannerConfig.coupon_code}
                       onChange={e => setBannerConfig({ ...bannerConfig, coupon_code: e.target.value })}
@@ -3367,11 +3380,11 @@ export default function AdminDashboard() {
                       <option value="">None (Don't show promo coupon pill)</option>
                       {coupons.map(c => (
                         <option key={c.id} value={c.code}>
-                          {c.code} ({c.discount_type === 'percentage' ? `${c.discount_value}% OFF` : `₹${c.discount_value} FLAT OFF`})
+                          {c.is_active ? '🟢' : '⚪'} {c.code} — {c.discount_type === 'percentage' ? `${c.discount_value}% OFF` : `₹${c.discount_value} FLAT OFF`} {c.usage_limit ? `(Limit: ${c.times_used || 0}/${c.usage_limit})` : '(Unlimited)'}
                         </option>
                       ))}
                       {!coupons.some(c => c.code === bannerConfig.coupon_code) && bannerConfig.coupon_code && (
-                        <option value={bannerConfig.coupon_code}>Custom: {bannerConfig.coupon_code}</option>
+                        <option value={bannerConfig.coupon_code}>Custom Code: {bannerConfig.coupon_code}</option>
                       )}
                     </select>
                   </div>
