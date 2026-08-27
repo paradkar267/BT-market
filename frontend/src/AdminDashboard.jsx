@@ -861,29 +861,61 @@ export default function AdminDashboard() {
       });
 
       const base64Data = await base64Promise;
+      let finalImageUrl = '';
 
-      const res = await fetch('/api/upload-image', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          imageBase64: base64Data,
-          fileName: file.name,
-          mimeType: file.type
-        })
-      });
+      try {
+        const res = await fetch('/api/upload-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            imageBase64: base64Data,
+            fileName: file.name,
+            mimeType: file.type
+          })
+        });
 
-      const data = await res.json();
-      if (!res.ok || !data.url) {
-        throw new Error(data.error || 'Failed to upload image');
+        if (res.ok) {
+          const data = await res.json().catch(() => ({}));
+          if (data?.url) {
+            finalImageUrl = data.url;
+          }
+        }
+      } catch (apiErr) {
+        console.warn('API image upload attempt failed, falling back to direct storage:', apiErr);
+      }
+
+      // Fallback 1: Direct Supabase Storage upload
+      if (!finalImageUrl) {
+        try {
+          const cleanFileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+          const filePath = `covers/${cleanFileName}`;
+          const { error: storageErr } = await supabase.storage
+            .from('template_covers')
+            .upload(filePath, file, { contentType: file.type, upsert: true });
+
+          if (!storageErr) {
+            const { data: { publicUrl } } = supabase.storage
+              .from('template_covers')
+              .getPublicUrl(filePath);
+            if (publicUrl) finalImageUrl = publicUrl;
+          }
+        } catch (storageErr) {
+          console.warn('Direct storage upload failed:', storageErr);
+        }
+      }
+
+      // Fallback 2: Inline Base64 Data URL
+      if (!finalImageUrl) {
+        finalImageUrl = base64Data;
       }
 
       if (target === 'create') {
-        setFormData(prev => ({ ...prev, image: data.url }));
+        setFormData(prev => ({ ...prev, image: finalImageUrl }));
       } else {
-        setEditForm(prev => ({ ...prev, image: data.url }));
+        setEditForm(prev => ({ ...prev, image: finalImageUrl }));
       }
 
-      toast.success('Cover image uploaded successfully!', { id: toastId });
+      toast.success('Cover image selected successfully!', { id: toastId });
     } catch (err) {
       console.error(err);
       toast.error(err.message || 'Image upload failed', { id: toastId });

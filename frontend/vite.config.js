@@ -87,6 +87,10 @@ function devApiPlugin() {
             }
             const handler = await loadApi(urlPath === '/api/announcement-banner' ? 'announcement-banner.js' : 'admin.js');
             return await handler(req, res);
+          } else if (urlPath === '/api/upload-image' && req.method === 'POST') {
+            req.body = await getBody();
+            const handler = await loadApi('upload-image.js');
+            return await handler(req, res);
           } else if (urlPath === '/api/request-refund' && req.method === 'POST') {
             req.body = await getBody();
             const handler = await loadApi('request-refund.js');
