@@ -741,10 +741,10 @@ export default function AdminDashboard() {
     try {
       const { data: { session: currentSession } } = await supabase.auth.getSession();
       const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || '';
+      
       const targetUrls = [];
-      if (backendUrl) targetUrls.push(`${backendUrl}/api/admin/campaigns/send`);
       targetUrls.push('/api/admin-campaigns');
-      targetUrls.push('/api/campaigns/send');
+      if (backendUrl) targetUrls.push(`${backendUrl}/api/admin/campaigns/send`);
 
       const payload = {
         ...campaignForm,
@@ -764,15 +764,15 @@ export default function AdminDashboard() {
             },
             body: JSON.stringify(payload)
           });
+          resData = await res.json().catch(() => ({}));
           if (res.ok) {
             response = res;
-            resData = await res.json();
             break;
-          } else {
-            resData = await res.json().catch(() => ({}));
+          } else if (resData?.error) {
+            throw new Error(resData.error);
           }
-        } catch {
-          // continue fallback
+        } catch (err) {
+          if (err.message && !err.message.includes('fetch')) throw err;
         }
       }
 

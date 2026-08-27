@@ -64,40 +64,40 @@ function devApiPlugin() {
             return await handler(req, res);
           } else if (urlPath === '/api/contact' && req.method === 'POST') {
             req.body = await getBody();
-            const { default: handler } = await import('../api/contact.js');
+            const { default: handler } = await import(`../api/contact.js?t=${Date.now()}`);
             return await handler(req, res);
           } else if (urlPath === '/api/admin-orders' && req.method === 'GET') {
-            const { default: handler } = await import('../api/admin-orders.js');
+            const { default: handler } = await import(`../api/admin-orders.js?t=${Date.now()}`);
             return await handler(req, res);
           } else if (urlPath === '/api/validate-coupon' && req.method === 'POST') {
             req.body = await getBody();
-            const { default: handler } = await import('../api/validate-coupon.js');
+            const { default: handler } = await import(`../api/validate-coupon.js?t=${Date.now()}`);
             return await handler(req, res);
           } else if (urlPath === '/api/admin-coupons') {
             if (req.method === 'POST' || req.method === 'PATCH') {
               req.body = await getBody();
             }
-            const { default: handler } = await import('../api/admin-coupons.js');
+            const { default: handler } = await import(`../api/admin-coupons.js?t=${Date.now()}`);
             return await handler(req, res);
           } else if (urlPath === '/api/broadcast-update' && req.method === 'POST') {
             req.body = await getBody();
-            const { default: handler } = await import('../api/broadcast-update.js');
+            const { default: handler } = await import(`../api/broadcast-update.js?t=${Date.now()}`);
             return await handler(req, res);
           } else if (urlPath === '/api/admin-campaigns' || urlPath === '/api/campaigns') {
             if (req.method === 'POST' || req.method === 'PATCH') {
               req.body = await getBody();
             }
-            const { default: handler } = await import('../api/admin-campaigns.js');
+            const { default: handler } = await import(`../api/admin-campaigns.js?t=${Date.now()}`);
             return await handler(req, res);
           } else if (urlPath === '/api/admin-customers' || urlPath === '/api/admin/customers') {
             if (req.method === 'POST' || req.method === 'DELETE') {
               req.body = await getBody();
             }
-            const { default: handler } = await import('../api/admin-customers.js');
+            const { default: handler } = await import(`../api/admin-customers.js?t=${Date.now()}`);
             return await handler(req, res);
           } else if (urlPath === '/api/upload-image' && req.method === 'POST') {
             req.body = await getBody();
-            const { default: handler } = await import('../api/upload-image.js');
+            const { default: handler } = await import(`../api/upload-image.js?t=${Date.now()}`);
             return await handler(req, res);
           }
         } catch (err) {
