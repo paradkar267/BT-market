@@ -4775,6 +4775,9 @@ export default function AdminDashboard() {
                       placeholder="Or paste external image URL (https://...)"
                     />
                   </div>
+                )}
+              </div>
+
               <div>
                 <label className="block text-sm font-bold mb-2 flex items-center justify-between">
                   <span>Live Demo URL (ThemeForest Standard)</span>
