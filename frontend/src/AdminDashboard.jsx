@@ -320,6 +320,40 @@ export default function AdminDashboard() {
     }
   }, []);
 
+  const handleToggleBannerStatus = async () => {
+    const newStatus = !bannerConfig.is_enabled;
+    setBannerConfig(prev => ({ ...prev, is_enabled: newStatus }));
+
+    try {
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      const payload = {
+        ...bannerConfig,
+        is_enabled: newStatus,
+        end_time: new Date(bannerConfig.end_time).toISOString()
+      };
+
+      const res = await fetch('/api/announcement-banner', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentSession?.access_token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (res.ok) {
+        if (newStatus) {
+          toast.success('🟢 Flash sale banner is now LIVE on store!');
+        } else {
+          toast.info('⚪ Flash sale banner is now DISABLED / HIDDEN on store.');
+        }
+        window.dispatchEvent(new CustomEvent('flash_banner_updated'));
+      }
+    } catch (err) {
+      console.error('Error toggling banner status:', err);
+    }
+  };
+
   const handleSaveBannerSettings = async (e) => {
     if (e) e.preventDefault();
     setBannerSaving(true);
@@ -3106,11 +3140,12 @@ export default function AdminDashboard() {
               <div className="flex items-center gap-3">
                 <button
                   type="button"
-                  onClick={() => setBannerConfig(prev => ({ ...prev, is_enabled: !prev.is_enabled }))}
-                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm transition-all cursor-pointer border ${bannerConfig.is_enabled ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-500/30' : 'bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-white/10'}`}
+                  onClick={handleToggleBannerStatus}
+                  title="1-Click toggle live status on store"
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm transition-all cursor-pointer border ${bannerConfig.is_enabled ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-500/30 shadow-sm' : 'bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-white/10'}`}
                 >
                   {bannerConfig.is_enabled ? (
-                    <><ToggleRight className="w-5 h-5 text-emerald-500" /> Banner Active</>
+                    <><ToggleRight className="w-5 h-5 text-emerald-500 animate-pulse" /> Banner Active</>
                   ) : (
                     <><ToggleLeft className="w-5 h-5 text-gray-400" /> Banner Inactive</>
                   )}

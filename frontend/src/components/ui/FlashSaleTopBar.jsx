@@ -58,7 +58,11 @@ export default function FlashSaleTopBar() {
     fetchBanner();
 
     // Listen for custom event when admin updates settings
-    const handleUpdate = () => fetchBanner();
+    const handleUpdate = () => {
+      setIsDismissed(false);
+      sessionStorage.removeItem('bzlp_flash_banner_dismissed');
+      fetchBanner();
+    };
     window.addEventListener('flash_banner_updated', handleUpdate);
 
     return () => {
