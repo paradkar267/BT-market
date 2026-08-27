@@ -1549,4 +1549,72 @@ router.post('/customers/delete-user', requireAdmin, async (req, res) => {
   }
 });
 
+// 5. GET /announcement-banner (Fetch Flash Sale Banner Config)
+router.get('/announcement-banner', async (req, res) => {
+  try {
+    if (supabaseAdmin) {
+      const { data, error } = await supabaseAdmin
+        .from('store_announcements')
+        .select('*')
+        .eq('id', 'primary_banner')
+        .maybeSingle();
+
+      if (!error && data) {
+        return res.json({ success: true, banner: data });
+      }
+    }
+
+    res.json({
+      success: true,
+      banner: {
+        id: 'primary_banner',
+        is_enabled: true,
+        headline: '🔥 Weekend Mega Flash Sale Ends in:',
+        coupon_code: 'LAUNCH50',
+        discount_badge: '50% OFF',
+        button_text: 'Claim 50% OFF Now →',
+        button_url: '/explore',
+        end_time: new Date(Date.now() + 48 * 3600 * 1000).toISOString(),
+        theme: 'fire',
+        is_dismissible: true
+      }
+    });
+  } catch (err) {
+    console.error('Error fetching announcement banner:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 6. POST /announcement-banner (Update Flash Sale Banner Config)
+router.post('/announcement-banner', requireAdmin, async (req, res) => {
+  try {
+    const updatedRecord = {
+      id: 'primary_banner',
+      is_enabled: req.body.is_enabled !== undefined ? Boolean(req.body.is_enabled) : true,
+      headline: req.body.headline || '🔥 Weekend Mega Flash Sale Ends in:',
+      coupon_code: req.body.coupon_code || 'LAUNCH50',
+      discount_badge: req.body.discount_badge || '50% OFF',
+      button_text: req.body.button_text || 'Claim 50% OFF Now →',
+      button_url: req.body.button_url || '/explore',
+      end_time: req.body.end_time || new Date(Date.now() + 48 * 3600 * 1000).toISOString(),
+      theme: req.body.theme || 'fire',
+      is_dismissible: req.body.is_dismissible !== undefined ? Boolean(req.body.is_dismissible) : true,
+      updated_at: new Date().toISOString()
+    };
+
+    if (supabaseAdmin) {
+      await supabaseAdmin.from('store_announcements').upsert(updatedRecord);
+    }
+
+    res.json({
+      success: true,
+      banner: updatedRecord,
+      message: 'Flash sale banner settings saved successfully!'
+    });
+  } catch (err) {
+    console.error('Error updating announcement banner:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;

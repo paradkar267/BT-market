@@ -54,7 +54,9 @@ import {
   History,
   ShieldCheck,
   UserCheck,
-  UserX
+  UserX,
+  Clock,
+  Palette
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { Logo } from './components/ui/Logo';
@@ -151,7 +153,20 @@ export default function AdminDashboard() {
   const [broadcastChangelog, setBroadcastChangelog] = useState('');
   const [broadcastLoading, setBroadcastLoading] = useState(false);
   const [broadcastBuyers, setBroadcastBuyers] = useState([]);
-  const [broadcastFetchingBuyers, setBroadcastFetchingBuyers] = useState(false);
+  // Flash Sale Top Bar & Announcement State
+  const [bannerConfig, setBannerConfig] = useState({
+    is_enabled: true,
+    headline: '🔥 Weekend Mega Flash Sale Ends in:',
+    coupon_code: 'LAUNCH50',
+    discount_badge: '50% OFF',
+    button_text: 'Claim 50% OFF Now →',
+    button_url: '/explore',
+    end_time: new Date(Date.now() + 48 * 3600 * 1000).toISOString().slice(0, 16),
+    theme: 'fire',
+    is_dismissible: true
+  });
+  const [bannerLoading, setBannerLoading] = useState(false);
+  const [bannerSaving, setBannerSaving] = useState(false);
 
   // Upload state
   const [uploadLoading, setUploadLoading] = useState(false);
@@ -280,16 +295,97 @@ export default function AdminDashboard() {
     }
   }, []);
 
+  // Fetch Announcement Banner Settings
+  const fetchBannerSettings = useCallback(async () => {
+    setBannerLoading(true);
+    try {
+      const res = await fetch(`/api/announcement-banner?t=${Date.now()}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.banner) {
+          const formattedEndTime = data.banner.end_time
+            ? new Date(data.banner.end_time).toISOString().slice(0, 16)
+            : new Date(Date.now() + 48 * 3600 * 1000).toISOString().slice(0, 16);
+          setBannerConfig({
+            ...data.banner,
+            end_time: formattedEndTime
+          });
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load flash sale banner:', err);
+    } finally {
+      setBannerLoading(false);
+    }
+  }, []);
+
+  const handleSaveBannerSettings = async (e) => {
+    if (e) e.preventDefault();
+    setBannerSaving(true);
+    const toastId = toast.loading('Saving flash sale banner settings...');
+
+    try {
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      const payload = {
+        ...bannerConfig,
+        end_time: new Date(bannerConfig.end_time).toISOString()
+      };
+
+      const res = await fetch('/api/announcement-banner', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${currentSession?.access_token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to update banner');
+
+      toast.success(data.message || '⚡ Flash sale top bar updated live on store!', { id: toastId });
+      window.dispatchEvent(new CustomEvent('flash_banner_updated'));
+    } catch (err) {
+      toast.error(err.message || 'Error saving banner settings', { id: toastId });
+    } finally {
+      setBannerSaving(false);
+    }
+  };
+
+  const handleApplyPresetDuration = (hours) => {
+    const targetDate = new Date(Date.now() + hours * 3600 * 1000);
+    setBannerConfig(prev => ({
+      ...prev,
+      end_time: targetDate.toISOString().slice(0, 16)
+    }));
+    toast.info(`Countdown set to expire in +${hours} hours (${targetDate.toLocaleDateString()})`);
+  };
+
+  const handleSetWeekendPreset = () => {
+    const now = new Date();
+    const currentDay = now.getDay();
+    const daysUntilSunday = currentDay === 0 ? 0 : 7 - currentDay;
+    const sundayNight = new Date(now.getFullYear(), now.getMonth(), now.getDate() + daysUntilSunday, 23, 59, 0);
+    setBannerConfig(prev => ({
+      ...prev,
+      end_time: sundayNight.toISOString().slice(0, 16)
+    }));
+    toast.info(`Countdown set to end this Sunday midnight!`);
+  };
+
   useEffect(() => {
     let isMounted = true;
     const timer = setTimeout(() => {
-      if (isMounted) fetchOrdersAndAnalytics();
+      if (isMounted) {
+        fetchOrdersAndAnalytics();
+        fetchBannerSettings();
+      }
     }, 50);
     return () => {
       isMounted = false;
       clearTimeout(timer);
     };
-  }, [fetchOrdersAndAnalytics]);
+  }, [fetchOrdersAndAnalytics, fetchBannerSettings]);
 
   // Fetch Coupons
   const fetchCoupons = useCallback(async () => {
@@ -1552,6 +1648,28 @@ export default function AdminDashboard() {
             <span className="px-1.5 py-0.5 bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-300 text-[10px] rounded-full font-black">
               {campaigns.length}
             </span>
+          </button>
+
+          <button
+            onClick={() => {
+              setActiveTab('flash-sale');
+              fetchBannerSettings();
+              fetchCoupons();
+            }}
+            className={`w-full flex items-center justify-between px-4 py-3 rounded-xl font-bold transition-all cursor-pointer text-sm ${activeTab === 'flash-sale' ? 'bg-black text-white dark:bg-white dark:text-black shadow-md' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-black dark:hover:text-white'}`}
+          >
+            <div className="flex items-center gap-3">
+              <Flame className="w-4 h-4 text-amber-500 animate-pulse" />
+              <span>Flash Sale Top Bar</span>
+            </div>
+            {bannerConfig.is_enabled ? (
+              <span className="flex h-2 w-2 relative">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+              </span>
+            ) : (
+              <span className="w-2 h-2 rounded-full bg-gray-400"></span>
+            )}
           </button>
 
           <button
@@ -2951,6 +3069,429 @@ export default function AdminDashboard() {
                 </table>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* ══════════════════════════════════════════════
+            FLASH SALE TOP BAR & ANNOUNCEMENTS TAB
+        ══════════════════════════════════════════════ */}
+        {activeTab === 'flash-sale' && (
+          <div className="max-w-6xl mx-auto animate-fade-in-up space-y-8">
+            {/* Header with Master Toggle */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="px-2.5 py-1 rounded-full text-xs font-black bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20 uppercase tracking-wider flex items-center gap-1.5">
+                    <Flame className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
+                    High-Conversion Storefront Booster
+                  </span>
+                  {bannerConfig.is_enabled ? (
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+                      Live On Store
+                    </span>
+                  ) : (
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-gray-100 dark:bg-white/10 text-gray-500">
+                      Disabled / Hidden
+                    </span>
+                  )}
+                </div>
+                <h1 className="text-3xl font-black mt-2">Flash Sale Top Bar & Countdown</h1>
+                <p className="text-gray-500 text-sm mt-1">
+                  Control real-time countdown timer, coupon code highlight, and promotional styling floating on top of your marketplace.
+                </p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setBannerConfig(prev => ({ ...prev, is_enabled: !prev.is_enabled }))}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm transition-all cursor-pointer border ${bannerConfig.is_enabled ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-500/30' : 'bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-gray-300 border-gray-200 dark:border-white/10'}`}
+                >
+                  {bannerConfig.is_enabled ? (
+                    <><ToggleRight className="w-5 h-5 text-emerald-500" /> Banner Active</>
+                  ) : (
+                    <><ToggleLeft className="w-5 h-5 text-gray-400" /> Banner Inactive</>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  disabled={bannerSaving}
+                  onClick={handleSaveBannerSettings}
+                  className="flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-amber-500 via-orange-600 to-red-600 hover:from-amber-600 hover:to-red-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-orange-500/20 transition-all hover:scale-[1.02] active:scale-95 cursor-pointer disabled:opacity-50"
+                >
+                  {bannerSaving ? (
+                    <><Loader2 className="w-4 h-4 animate-spin" /> Saving...</>
+                  ) : (
+                    <><CheckCircle2 className="w-4 h-4" /> Save Live Settings</>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* LIVE REAL-TIME PREVIEW CARD */}
+            <div className="p-6 rounded-3xl bg-white dark:bg-[#111111] border border-gray-200 dark:border-white/10 shadow-sm space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-black uppercase tracking-wider text-gray-400 flex items-center gap-2">
+                  <Eye className="w-4 h-4 text-indigo-500" />
+                  Live Storefront Banner Preview
+                </span>
+                <span className="text-xs text-gray-400">Updates in real-time as you customize</span>
+              </div>
+
+              {/* Preview Box */}
+              <div className="rounded-2xl overflow-hidden border border-gray-200 dark:border-white/10 shadow-inner">
+                {bannerConfig.is_enabled ? (
+                  <div className={`w-full py-3 px-4 sm:px-6 transition-all duration-300 ${
+                    bannerConfig.theme === 'cyber' ? 'bg-gradient-to-r from-indigo-800 via-purple-700 to-pink-700 text-white' :
+                    bannerConfig.theme === 'emerald' ? 'bg-gradient-to-r from-emerald-800 via-teal-700 to-cyan-700 text-white' :
+                    bannerConfig.theme === 'sunset' ? 'bg-gradient-to-r from-rose-700 via-orange-600 to-amber-600 text-white' :
+                    'bg-gradient-to-r from-red-700 via-amber-600 to-orange-600 text-white'
+                  }`}>
+                    <div className="flex flex-wrap items-center justify-between gap-3 text-xs sm:text-sm font-medium">
+                      {/* Left: Badge & Headline */}
+                      <div className="flex items-center gap-2.5 flex-wrap">
+                        {bannerConfig.discount_badge && (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider bg-black/30 text-amber-200 border border-amber-300/40">
+                            <Flame className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
+                            {bannerConfig.discount_badge}
+                          </span>
+                        )}
+                        <span className="font-bold text-white drop-shadow-sm">
+                          {bannerConfig.headline || 'Flash Sale Ends in:'}
+                        </span>
+
+                        {/* Real-time Counter Preview */}
+                        <div className="inline-flex items-center gap-1 bg-black/30 backdrop-blur-md px-2.5 py-1 rounded-lg border border-white/20 font-mono font-bold text-white tracking-wider text-xs">
+                          <Clock className="w-3.5 h-3.5 text-amber-300" />
+                          <span className="text-amber-200">02d</span>:
+                          <span>08h</span>:
+                          <span>42m</span>:
+                          <span className="text-amber-300">19s</span>
+                        </div>
+                      </div>
+
+                      {/* Right: Coupon, Button, X */}
+                      <div className="flex items-center gap-2.5 flex-wrap ml-auto">
+                        {bannerConfig.coupon_code && (
+                          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-mono font-black text-xs bg-white text-gray-900 shadow-sm border border-white/60">
+                            <span className="text-[10px] text-gray-500 uppercase font-sans font-bold">Use Code:</span>
+                            <span className="tracking-wider text-orange-600">{bannerConfig.coupon_code}</span>
+                            <Copy className="w-3 h-3 text-gray-400" />
+                          </div>
+                        )}
+
+                        {bannerConfig.button_text && (
+                          <div className="flex items-center gap-1 px-3 py-1 rounded-lg font-bold text-xs bg-black/40 text-white border border-white/30">
+                            <span>{bannerConfig.button_text}</span>
+                            <ArrowRight className="w-3.5 h-3.5" />
+                          </div>
+                        )}
+
+                        {bannerConfig.is_dismissible && (
+                          <div className="p-1 rounded-full text-white/70">
+                            <X className="w-4 h-4" />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-8 text-center bg-gray-50 dark:bg-black/40 text-gray-400 text-sm">
+                    <p className="font-bold">Banner is currently disabled.</p>
+                    <p className="text-xs mt-1">Toggle "Banner Active" above to turn on the top bar for all marketplace visitors.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* CONFIGURATION FORM CARDS GRID */}
+            <form onSubmit={handleSaveBannerSettings} className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+                {/* 1. Headline & Copy Settings */}
+                <div className="p-6 rounded-3xl bg-white dark:bg-[#111111] border border-gray-200 dark:border-white/10 shadow-sm space-y-4">
+                  <h3 className="font-black text-lg flex items-center gap-2">
+                    <Megaphone className="w-5 h-5 text-amber-500" />
+                    1. Promotional Copy & Text
+                  </h3>
+
+                  {/* Headline */}
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">
+                      Banner Headline Text *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={bannerConfig.headline}
+                      onChange={e => setBannerConfig({ ...bannerConfig, headline: e.target.value })}
+                      placeholder="e.g. 🔥 Weekend Mega Flash Sale Ends in:"
+                      className="w-full bg-gray-50 dark:bg-black border border-gray-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    />
+                  </div>
+
+                  {/* Discount Badge */}
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">
+                      Highlight Badge (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={bannerConfig.discount_badge}
+                      onChange={e => setBannerConfig({ ...bannerConfig, discount_badge: e.target.value })}
+                      placeholder="e.g. 50% OFF or ⚡ LIMITED DEAL"
+                      className="w-full bg-gray-50 dark:bg-black border border-gray-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-amber-500"
+                    />
+                  </div>
+
+                  {/* Button Text & Target URL */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">
+                        Button Label
+                      </label>
+                      <input
+                        type="text"
+                        value={bannerConfig.button_text}
+                        onChange={e => setBannerConfig({ ...bannerConfig, button_text: e.target.value })}
+                        placeholder="e.g. Claim 50% OFF Now →"
+                        className="w-full bg-gray-50 dark:bg-black border border-gray-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-amber-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">
+                        Button Link URL
+                      </label>
+                      <input
+                        type="text"
+                        value={bannerConfig.button_url}
+                        onChange={e => setBannerConfig({ ...bannerConfig, button_url: e.target.value })}
+                        placeholder="e.g. /explore or /cart"
+                        className="w-full bg-gray-50 dark:bg-black border border-gray-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-amber-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Countdown Timer & Expiration Presets */}
+                <div className="p-6 rounded-3xl bg-white dark:bg-[#111111] border border-gray-200 dark:border-white/10 shadow-sm space-y-4">
+                  <h3 className="font-black text-lg flex items-center gap-2">
+                    <Clock className="w-5 h-5 text-indigo-500" />
+                    2. Countdown Timer Expiration
+                  </h3>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">
+                      Sale End Date & Time *
+                    </label>
+                    <input
+                      type="datetime-local"
+                      required
+                      value={bannerConfig.end_time}
+                      onChange={e => setBannerConfig({ ...bannerConfig, end_time: e.target.value })}
+                      className="w-full bg-gray-50 dark:bg-black border border-gray-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-sm font-mono font-bold focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    />
+                  </div>
+
+                  {/* 1-Click Quick Presets */}
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">
+                      1-Click Duration Presets:
+                    </label>
+                    <div className="grid grid-cols-3 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => handleApplyPresetDuration(12)}
+                        className="p-2.5 bg-gray-50 dark:bg-white/5 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 hover:text-indigo-600 border border-gray-200 dark:border-white/10 rounded-xl text-xs font-bold transition-all text-center cursor-pointer"
+                      >
+                        +12 Hours
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleApplyPresetDuration(24)}
+                        className="p-2.5 bg-gray-50 dark:bg-white/5 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 hover:text-indigo-600 border border-gray-200 dark:border-white/10 rounded-xl text-xs font-bold transition-all text-center cursor-pointer"
+                      >
+                        +24 Hours
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleApplyPresetDuration(48)}
+                        className="p-2.5 bg-gray-50 dark:bg-white/5 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 hover:text-indigo-600 border border-gray-200 dark:border-white/10 rounded-xl text-xs font-bold transition-all text-center cursor-pointer"
+                      >
+                        +48 Hours
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleApplyPresetDuration(72)}
+                        className="p-2.5 bg-gray-50 dark:bg-white/5 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 hover:text-indigo-600 border border-gray-200 dark:border-white/10 rounded-xl text-xs font-bold transition-all text-center cursor-pointer"
+                      >
+                        +3 Days
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleApplyPresetDuration(168)}
+                        className="p-2.5 bg-gray-50 dark:bg-white/5 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 hover:text-indigo-600 border border-gray-200 dark:border-white/10 rounded-xl text-xs font-bold transition-all text-center cursor-pointer"
+                      >
+                        +7 Days
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleSetWeekendPreset}
+                        className="p-2.5 bg-amber-50 dark:bg-amber-500/10 hover:bg-amber-100 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/20 rounded-xl text-xs font-bold transition-all text-center cursor-pointer"
+                      >
+                        End of Weekend
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. Coupon Promo Code Attachment */}
+                <div className="p-6 rounded-3xl bg-white dark:bg-[#111111] border border-gray-200 dark:border-white/10 shadow-sm space-y-4">
+                  <h3 className="font-black text-lg flex items-center gap-2">
+                    <Tag className="w-5 h-5 text-emerald-500" />
+                    3. Highlight Promo Coupon Code
+                  </h3>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">
+                      Select From Active Store Coupons:
+                    </label>
+                    <select
+                      value={bannerConfig.coupon_code}
+                      onChange={e => setBannerConfig({ ...bannerConfig, coupon_code: e.target.value })}
+                      className="w-full bg-gray-50 dark:bg-black border border-gray-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-sm font-bold focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    >
+                      <option value="">None (Don't show promo coupon pill)</option>
+                      {coupons.map(c => (
+                        <option key={c.id} value={c.code}>
+                          {c.code} ({c.discount_type === 'percentage' ? `${c.discount_value}% OFF` : `₹${c.discount_value} FLAT OFF`})
+                        </option>
+                      ))}
+                      {!coupons.some(c => c.code === bannerConfig.coupon_code) && bannerConfig.coupon_code && (
+                        <option value={bannerConfig.coupon_code}>Custom: {bannerConfig.coupon_code}</option>
+                      )}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">
+                      Or Type Custom Promo Code:
+                    </label>
+                    <input
+                      type="text"
+                      value={bannerConfig.coupon_code}
+                      onChange={e => setBannerConfig({ ...bannerConfig, coupon_code: e.target.value.toUpperCase() })}
+                      placeholder="e.g. LAUNCH50 or SUMMER40"
+                      className="w-full bg-gray-50 dark:bg-black border border-gray-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-sm font-mono font-bold uppercase focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                    />
+                  </div>
+                </div>
+
+                {/* 4. Color Theme & Dismiss Options */}
+                <div className="p-6 rounded-3xl bg-white dark:bg-[#111111] border border-gray-200 dark:border-white/10 shadow-sm space-y-4">
+                  <h3 className="font-black text-lg flex items-center gap-2">
+                    <Palette className="w-5 h-5 text-purple-500" />
+                    4. Visual Color Themes
+                  </h3>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    {/* Fire Theme */}
+                    <button
+                      type="button"
+                      onClick={() => setBannerConfig({ ...bannerConfig, theme: 'fire' })}
+                      className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer ${bannerConfig.theme === 'fire' ? 'ring-2 ring-orange-500 border-transparent shadow-md' : 'border-gray-200 dark:border-white/10 hover:border-gray-300'}`}
+                    >
+                      <div className="h-4 w-full rounded-lg bg-gradient-to-r from-red-600 via-amber-500 to-orange-500 mb-2"></div>
+                      <div className="font-bold text-xs text-gray-900 dark:text-white flex items-center justify-between">
+                        <span>🔥 Hot Fire</span>
+                        {bannerConfig.theme === 'fire' && <Check className="w-3.5 h-3.5 text-orange-500" />}
+                      </div>
+                      <p className="text-[10px] text-gray-400">High urgency sales</p>
+                    </button>
+
+                    {/* Cyber Indigo */}
+                    <button
+                      type="button"
+                      onClick={() => setBannerConfig({ ...bannerConfig, theme: 'cyber' })}
+                      className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer ${bannerConfig.theme === 'cyber' ? 'ring-2 ring-indigo-500 border-transparent shadow-md' : 'border-gray-200 dark:border-white/10 hover:border-gray-300'}`}
+                    >
+                      <div className="h-4 w-full rounded-lg bg-gradient-to-r from-indigo-700 via-purple-600 to-pink-600 mb-2"></div>
+                      <div className="font-bold text-xs text-gray-900 dark:text-white flex items-center justify-between">
+                        <span>⚡ Cyber Indigo</span>
+                        {bannerConfig.theme === 'cyber' && <Check className="w-3.5 h-3.5 text-indigo-500" />}
+                      </div>
+                      <p className="text-[10px] text-gray-400">Tech & product releases</p>
+                    </button>
+
+                    {/* Emerald Luxe */}
+                    <button
+                      type="button"
+                      onClick={() => setBannerConfig({ ...bannerConfig, theme: 'emerald' })}
+                      className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer ${bannerConfig.theme === 'emerald' ? 'ring-2 ring-emerald-500 border-transparent shadow-md' : 'border-gray-200 dark:border-white/10 hover:border-gray-300'}`}
+                    >
+                      <div className="h-4 w-full rounded-lg bg-gradient-to-r from-emerald-700 via-teal-600 to-cyan-600 mb-2"></div>
+                      <div className="font-bold text-xs text-gray-900 dark:text-white flex items-center justify-between">
+                        <span>💎 Emerald Luxe</span>
+                        {bannerConfig.theme === 'emerald' && <Check className="w-3.5 h-3.5 text-emerald-500" />}
+                      </div>
+                      <p className="text-[10px] text-gray-400">VIP perks & rewards</p>
+                    </button>
+
+                    {/* Sunset Glow */}
+                    <button
+                      type="button"
+                      onClick={() => setBannerConfig({ ...bannerConfig, theme: 'sunset' })}
+                      className={`p-3.5 rounded-2xl border text-left transition-all cursor-pointer ${bannerConfig.theme === 'sunset' ? 'ring-2 ring-rose-500 border-transparent shadow-md' : 'border-gray-200 dark:border-white/10 hover:border-gray-300'}`}
+                    >
+                      <div className="h-4 w-full rounded-lg bg-gradient-to-r from-rose-600 via-orange-500 to-amber-500 mb-2"></div>
+                      <div className="font-bold text-xs text-gray-900 dark:text-white flex items-center justify-between">
+                        <span>🌅 Sunset Glow</span>
+                        {bannerConfig.theme === 'sunset' && <Check className="w-3.5 h-3.5 text-rose-500" />}
+                      </div>
+                      <p className="text-[10px] text-gray-400">Warm seasonal promos</p>
+                    </button>
+                  </div>
+
+                  {/* Dismissible Toggle */}
+                  <label className="flex items-center gap-2 text-xs font-bold cursor-pointer pt-2">
+                    <input
+                      type="checkbox"
+                      checked={bannerConfig.is_dismissible}
+                      onChange={e => setBannerConfig({ ...bannerConfig, is_dismissible: e.target.checked })}
+                      className="rounded text-indigo-600 focus:ring-indigo-500 w-4 h-4"
+                    />
+                    <span>Allow visitors to close banner with (✕) for their session</span>
+                  </label>
+                </div>
+
+              </div>
+
+              {/* Bottom Submit Action */}
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-200 dark:border-white/10">
+                <button
+                  type="button"
+                  onClick={fetchBannerSettings}
+                  className="px-5 py-3 rounded-xl font-bold text-sm bg-gray-100 dark:bg-white/5 hover:bg-gray-200 dark:hover:bg-white/10 transition-colors cursor-pointer"
+                >
+                  Discard Changes
+                </button>
+
+                <button
+                  type="submit"
+                  disabled={bannerSaving}
+                  className="px-8 py-3 bg-gradient-to-r from-amber-500 via-orange-600 to-red-600 hover:from-amber-600 hover:to-red-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-orange-500/20 transition-all hover:scale-[1.02] active:scale-95 cursor-pointer disabled:opacity-50 flex items-center gap-2"
+                >
+                  {bannerSaving ? (
+                    <><Loader2 className="w-4 h-4 animate-spin" /> Saving Settings...</>
+                  ) : (
+                    <><CheckCircle2 className="w-4 h-4" /> Save & Activate Live Banner</>
+                  )}
+                </button>
+              </div>
+            </form>
+
           </div>
         )}
 

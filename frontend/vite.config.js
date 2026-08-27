@@ -99,6 +99,12 @@ function devApiPlugin() {
             req.body = await getBody();
             const { default: handler } = await import(`../api/upload-image.js?t=${Date.now()}`);
             return await handler(req, res);
+          } else if (urlPath === '/api/announcement-banner') {
+            if (req.method === 'POST' || req.method === 'PATCH') {
+              req.body = await getBody();
+            }
+            const { default: handler } = await import(`../api/announcement-banner.js?t=${Date.now()}`);
+            return await handler(req, res);
           }
         } catch (err) {
           console.error("Dev API Middleware Error:", err);
