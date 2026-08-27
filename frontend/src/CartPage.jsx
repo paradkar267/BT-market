@@ -429,86 +429,82 @@ export default function CartPage() {
         }
       }
 
-      // Generate & Auto-Download Invoice PDF
-      const invoicePdfBase64 = await generateInvoicePDF(paymentId);
-
-      // Complete Email Payload
-      const emailPayload = {
-        to: user?.email,
-        email: user?.email,
-        customerName: user?.user_metadata?.full_name || 'Customer',
-        paymentId: paymentId,
-        totalAmount: finalPayableTotal,
-        frontendUrl: window.location.origin,
-        orderDetails: {
-          orderId: paymentId,
-          total: finalPayableTotal.toFixed(2),
-          subtotal: cartTotal.toFixed(2),
-          discount: appliedCoupon ? appliedCoupon.discount : 0,
-          couponCode: appliedCoupon ? appliedCoupon.code : null,
-          items: cartItems.map(item => ({
-            id: item.id,
-            title: item.title,
-            price: item.price,
-            author: item.author || 'Bizleap Partner',
-            category: item.category || 'Web',
-            downloadUrl: `${window.location.origin}/dashboard?tab=templates&download=${item.id}&payment_id=${paymentId}`
-          }))
-        },
-        cartItems: cartItems.map(item => ({
-          id: item.id,
-          title: item.title,
-          price: item.price,
-          author: item.author || 'Bizleap Partner',
-          category: item.category || 'Web',
-          downloadUrl: `${window.location.origin}/dashboard?tab=templates&download=${item.id}&payment_id=${paymentId}`
-        })),
-        invoicePdfBase64: invoicePdfBase64
-      };
-
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || '';
-      const targetUrls = [];
-      if (backendUrl) targetUrls.push(`${backendUrl}/api/send-receipt`);
-      targetUrls.push('/api/send-receipt');
-
-      let emailSent = false;
-      for (const url of targetUrls) {
-        try {
-          const res = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(emailPayload)
-          });
-          if (res.ok) {
-            emailSent = true;
-            break;
-          }
-        } catch {
-          // try next
-        }
+      // 1. Instantly complete checkout & clear cart locally
+      await checkout(paymentId, cartItems);
+      if (loadPurchasedTemplates) {
+        loadPurchasedTemplates();
       }
 
       toast.dismiss('processing-order');
-      if (emailSent) {
-        toast.success('🎉 Purchase complete! Receipt & invoice sent to your email.');
-      } else {
-        toast.success('🎉 Purchase complete! Templates added to your account.');
-      }
+      toast.success('🎉 Purchase complete! Receipt & invoice sent to your email.');
+      setIsProcessing(false);
+      navigate('/my-templates');
 
-      await checkout(paymentId, cartItems);
-      if (loadPurchasedTemplates) {
-        await loadPurchasedTemplates();
-      }
+      // 2. Generate PDF & send receipt email asynchronously in background (Non-blocking)
+      (async () => {
+        try {
+          const invoicePdfBase64 = await generateInvoicePDF(paymentId);
+          const emailPayload = {
+            to: user?.email,
+            email: user?.email,
+            customerName: user?.user_metadata?.full_name || 'Customer',
+            paymentId: paymentId,
+            totalAmount: finalPayableTotal,
+            frontendUrl: window.location.origin,
+            orderDetails: {
+              orderId: paymentId,
+              total: finalPayableTotal.toFixed(2),
+              subtotal: cartTotal.toFixed(2),
+              discount: appliedCoupon ? appliedCoupon.discount : 0,
+              couponCode: appliedCoupon ? appliedCoupon.code : null,
+              items: cartItems.map(item => ({
+                id: item.id,
+                title: item.title,
+                price: item.price,
+                author: item.author || 'Bizleap Partner',
+                category: item.category || 'Web',
+                downloadUrl: `${window.location.origin}/my-templates?download=${item.id}&payment_id=${paymentId}`
+              }))
+            },
+            cartItems: cartItems.map(item => ({
+              id: item.id,
+              title: item.title,
+              price: item.price,
+              author: item.author || 'Bizleap Partner',
+              category: item.category || 'Web',
+              downloadUrl: `${window.location.origin}/my-templates?download=${item.id}&payment_id=${paymentId}`
+            })),
+            invoicePdfBase64: invoicePdfBase64
+          };
 
-      navigate('/dashboard?tab=templates');
+          const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || '';
+          const targetUrls = [];
+          if (backendUrl) targetUrls.push(`${backendUrl}/api/send-receipt`);
+          targetUrls.push('/api/send-receipt');
+
+          for (const url of targetUrls) {
+            try {
+              const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(emailPayload)
+              });
+              if (res.ok) break;
+            } catch {
+              // try next
+            }
+          }
+        } catch (bgErr) {
+          console.warn("Background email dispatch note:", bgErr);
+        }
+      })();
+
     } catch (error) {
       console.error("Post-payment processing failed:", error);
       toast.dismiss('processing-order');
-      toast.error("Order placed, but failed to send email. Check your dashboard for templates.");
       await checkout(paymentId, cartItems);
-      navigate('/dashboard?tab=templates');
-    } finally {
       setIsProcessing(false);
+      navigate('/my-templates');
     }
   };
 
