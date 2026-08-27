@@ -532,7 +532,7 @@ router.post('/generate-preview', requireAdmin, upload.single('file'), async (req
 
 router.post('/upload-template', requireAdmin, upload.single('file'), async (req, res) => {
   try {
-    const { title, description, price, category, tag, keywords, image } = req.body;
+    const { title, description, price, category, tag, keywords, image, previewUrl, demo_url } = req.body;
     const file = req.file;
 
     if (!file) {
@@ -600,6 +600,8 @@ router.post('/upload-template', requireAdmin, upload.single('file'), async (req,
       ? Number(maxIdData[0].id) + 1
       : Math.floor(Date.now() % 2000000000);
 
+    const liveDemoUrl = previewUrl || demo_url || req.body.preview_url || `/previews/${slug}/index.html`;
+
     // Insert into templates
     const { data: templateData, error: dbError } = await supabaseAdmin
       .from('templates')
@@ -611,6 +613,8 @@ router.post('/upload-template', requireAdmin, upload.single('file'), async (req,
         category,
         tag,
         image,
+        previewUrl: liveDemoUrl,
+        demo_url: liveDemoUrl,
         keywords: parsedKeywords,
         author: 'Nexus Themes',
         sales: 0,
@@ -727,7 +731,7 @@ router.post('/update-price', requireAdmin, async (req, res) => {
 router.put('/template/:id', requireAdmin, async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description, price, category, tag, keywords, image } = req.body;
+    const { title, description, price, category, tag, keywords, image, previewUrl, demo_url } = req.body;
 
     const updates = {};
     if (title !== undefined) updates.title = title;
@@ -736,6 +740,11 @@ router.put('/template/:id', requireAdmin, async (req, res) => {
     if (category !== undefined) updates.category = category;
     if (tag !== undefined) updates.tag = tag;
     if (image !== undefined) updates.image = image;
+    if (previewUrl !== undefined || demo_url !== undefined) {
+      const liveUrl = previewUrl || demo_url || '';
+      updates.previewUrl = liveUrl;
+      updates.demo_url = liveUrl;
+    }
     if (keywords !== undefined) {
       updates.keywords = Array.isArray(keywords)
         ? keywords

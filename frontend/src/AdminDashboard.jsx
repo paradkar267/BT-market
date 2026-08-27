@@ -201,7 +201,8 @@ export default function AdminDashboard() {
     category: 'React',
     tag: 'SaaS',
     keywords: '',
-    image: ''
+    image: '',
+    previewUrl: ''
   });
   const [selectedFile, setSelectedFile] = useState(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
@@ -1586,6 +1587,8 @@ export default function AdminDashboard() {
     formPayload.append('tag', formData.tag);
     formPayload.append('keywords', formData.keywords);
     formPayload.append('image', formData.image);
+    formPayload.append('previewUrl', formData.previewUrl);
+    formPayload.append('demo_url', formData.previewUrl);
 
     try {
       const { data: { session: currentSession } } = await supabase.auth.getSession();
@@ -2456,35 +2459,36 @@ export default function AdminDashboard() {
                   />
                 </div>
 
-                {/* Live Preview Notification & Status */}
-                {previewLoading && (
-                  <div className="mt-4 p-4 bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 rounded-xl flex items-center gap-3 text-indigo-600 dark:text-indigo-400">
-                    <Loader2 className="w-5 h-5 animate-spin shrink-0" />
-                    <div className="text-sm font-medium">
-                      <span>Analyzing ZIP package and generating live browser preview...</span>
-                    </div>
+                {/* ── Live Demo URL Input (ThemeForest / Envato Standard) ── */}
+                <div className="mt-6 pt-6 border-t border-gray-200 dark:border-white/10">
+                  <div className="flex items-center justify-between mb-2">
+                    <label className="block text-sm font-bold flex items-center gap-2">
+                      <Sparkles className="w-4 h-4 text-indigo-500" />
+                      <span>Live Demo URL (ThemeForest / Envato Standard)</span>
+                    </label>
+                    <span className="text-[11px] font-bold px-2 py-0.5 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-md">
+                      Live Preview Link
+                    </span>
                   </div>
-                )}
+                  <input
+                    type="url"
+                    value={formData.previewUrl}
+                    onChange={e => setFormData({ ...formData, previewUrl: e.target.value })}
+                    className={inputCls}
+                    placeholder="https://dental-clinic-demo.vercel.app"
+                  />
+                  <p className="text-xs text-gray-500 mt-1.5">
+                    Enter the live working demo URL of your template. Marketplace customers will see an interactive responsive preview.
+                  </p>
+                </div>
 
-                {previewError && (
-                  <div className="mt-4 p-4 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl flex items-center gap-3 text-amber-700 dark:text-amber-400">
-                    <AlertCircle className="w-5 h-5 shrink-0" />
-                    <div className="text-sm font-medium">
-                      <span>Preview generation notice: {previewError}. You can still proceed with upload.</span>
-                    </div>
-                  </div>
-                )}
-
-                {/* ── Visual Preview Frame ── */}
-                {previewData && (
+                {/* ── Live Device Frame Preview ── */}
+                {formData.previewUrl ? (
                   <div className="mt-6 border border-gray-200 dark:border-white/10 rounded-2xl overflow-hidden bg-gray-50 dark:bg-black">
                     <div className="bg-gray-100 dark:bg-white/5 px-6 py-4 border-b border-gray-200 dark:border-white/10 flex flex-wrap items-center justify-between gap-4">
                       <div className="flex items-center gap-2">
-                        <Sparkles className="w-4 h-4 text-indigo-500" />
-                        <span className="font-bold text-sm">Automatic Live Preview Ready</span>
-                        <span className="px-2 py-0.5 bg-indigo-50 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-xs font-bold rounded-md">
-                          {previewData.detectedType}
-                        </span>
+                        <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                        <span className="font-bold text-sm">Live Demo Frame Preview</span>
                       </div>
                       
                       <div className="flex items-center gap-2">
@@ -2516,7 +2520,7 @@ export default function AdminDashboard() {
                         </div>
 
                         <a
-                          href={previewData.previewUrl}
+                          href={formData.previewUrl}
                           target="_blank"
                           rel="noreferrer"
                           className="px-3 py-1.5 bg-gray-200 dark:bg-white/10 hover:bg-gray-300 dark:hover:bg-white/20 rounded-lg text-xs font-bold flex items-center gap-1 transition-colors"
@@ -2530,12 +2534,12 @@ export default function AdminDashboard() {
                     <div className="p-6 flex justify-center items-center bg-[#09090b]">
                       <div 
                         className={`transition-all duration-300 overflow-hidden rounded-xl border border-white/10 shadow-2xl bg-white ${
-                          previewDevice === 'desktop' ? 'w-full h-[450px]' : 
+                          previewDevice === 'desktop' ? 'w-full h-[480px]' : 
                           previewDevice === 'tablet' ? 'w-[600px] h-[550px]' : 'w-[360px] h-[550px]'
                         }`}
                       >
                         <iframe
-                          src={previewData.previewUrl}
+                          src={formData.previewUrl}
                           title="Template Preview"
                           className="w-full h-full border-0"
                           sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
@@ -2543,7 +2547,7 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                   </div>
-                )}
+                ) : null}
               </div>
 
               {/* Template Details Form */}
