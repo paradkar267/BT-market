@@ -407,16 +407,30 @@ export default async function handler(req, res) {
       // Remove duplicates
       targetEmails = [...new Set(targetEmails)];
 
-      // Setup Nodemailer Transporter
-      const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST || 'smtp.gmail.com',
-        port: parseInt(process.env.SMTP_PORT || '587'),
-        secure: process.env.SMTP_PORT === '465',
-        auth: {
-          user: process.env.SMTP_USER,
-          pass: process.env.SMTP_PASSWORD || process.env.SMTP_PASS
-        }
-      });
+      // Setup Nodemailer Transporter with sanitized app password & Gmail direct support
+      const rawPass = process.env.SMTP_PASSWORD || process.env.SMTP_PASS || '';
+      const cleanPass = rawPass.replace(/\s+/g, '');
+      const isGmail = (process.env.SMTP_HOST || '').includes('gmail') || (process.env.SMTP_USER || '').includes('gmail');
+
+      const transporter = isGmail
+        ? nodemailer.createTransport({
+            service: 'gmail',
+            auth: {
+              user: process.env.SMTP_USER,
+              pass: cleanPass
+            },
+            tls: { rejectUnauthorized: false }
+          })
+        : nodemailer.createTransport({
+            host: process.env.SMTP_HOST || 'smtp.gmail.com',
+            port: parseInt(process.env.SMTP_PORT || '587'),
+            secure: process.env.SMTP_PORT === '465',
+            auth: {
+              user: process.env.SMTP_USER,
+              pass: cleanPass
+            },
+            tls: { rejectUnauthorized: false }
+          });
 
       const hostUrl = frontendUrl || process.env.FRONTEND_URL || 'https://bt-templates.vercel.app';
 
@@ -431,26 +445,40 @@ export default async function handler(req, res) {
         baseUrl: hostUrl
       });
 
-      // Dispatch Emails Concurrently in chunks
+      // Dispatch Emails Concurrently in chunks of 5
       let sentCount = 0;
       let failedCount = 0;
       const sendResults = [];
 
-      for (const recipient of targetEmails) {
-        try {
-          const info = await transporter.sendMail({
-            from: `"Bizleap Marketplace" <${process.env.SMTP_FROM || process.env.SMTP_USER || 'bizleap1@gmail.com'}>`,
-            to: recipient,
-            subject: subject,
-            html: emailHtml
-          });
-          sentCount++;
-          sendResults.push({ email: recipient, status: 'sent', id: info.messageId });
-        } catch (sendErr) {
-          failedCount++;
-          console.error(`Failed sending campaign to ${recipient}:`, sendErr?.message);
-          sendResults.push({ email: recipient, status: 'failed', error: sendErr?.message });
-        }
+      const chunkSize = 5;
+      for (let i = 0; i < targetEmails.length; i += chunkSize) {
+        const chunk = targetEmails.slice(i, i + chunkSize);
+        await Promise.allSettled(
+          chunk.map(async (recipient) => {
+            try {
+              const info = await transporter.sendMail({
+                from: `"Bizleap Marketplace" <${process.env.SMTP_FROM || process.env.SMTP_USER || 'bizleap1@gmail.com'}>`,
+                to: recipient,
+                subject: subject,
+                html: emailHtml
+              });
+              sentCount++;
+              sendResults.push({ email: recipient, status: 'sent', id: info.messageId });
+            } catch (sendErr) {
+              failedCount++;
+              console.error(`Failed sending campaign to ${recipient}:`, sendErr?.message);
+              sendResults.push({ email: recipient, status: 'failed', error: sendErr?.message });
+            }
+          })
+        );
+      }
+
+      if (targetEmails.length > 0 && sentCount === 0) {
+        const firstError = sendResults[0]?.error || 'SMTP delivery failed. Check mail server settings.';
+        return res.status(500).json({
+          error: `Email delivery failed: ${firstError}`,
+          details: sendResults
+        });
       }
 
       // Record Campaign Record

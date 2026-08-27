@@ -213,15 +213,29 @@ export default async function handler(req, res) {
     }
 
     // 4. Setup Transporter
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'smtp.gmail.com',
-      port: parseInt(process.env.SMTP_PORT || '587'),
-      secure: process.env.SMTP_PORT === '465',
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASSWORD || process.env.SMTP_PASS
-      }
-    });
+    const rawPass = process.env.SMTP_PASSWORD || process.env.SMTP_PASS || '';
+    const cleanPass = rawPass.replace(/\s+/g, '');
+    const isGmail = (process.env.SMTP_HOST || '').includes('gmail') || (process.env.SMTP_USER || '').includes('gmail');
+
+    const transporter = isGmail
+      ? nodemailer.createTransport({
+          service: 'gmail',
+          auth: {
+            user: process.env.SMTP_USER,
+            pass: cleanPass
+          },
+          tls: { rejectUnauthorized: false }
+        })
+      : nodemailer.createTransport({
+          host: process.env.SMTP_HOST || 'smtp.gmail.com',
+          port: parseInt(process.env.SMTP_PORT || '587'),
+          secure: process.env.SMTP_PORT === '465',
+          auth: {
+            user: process.env.SMTP_USER,
+            pass: cleanPass
+          },
+          tls: { rejectUnauthorized: false }
+        });
 
     const hostUrl = frontendUrl || process.env.FRONTEND_URL || 'https://bt-templates.vercel.app';
     const downloadUrl = `${hostUrl}/dashboard?tab=templates`;
@@ -236,19 +250,25 @@ export default async function handler(req, res) {
     });
 
     const results = [];
-    for (const recipientEmail of emailList) {
-      try {
-        const info = await transporter.sendMail({
-          from: `"Bizleap Marketplace" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
-          to: recipientEmail,
-          subject: `⚡ Update Available: ${template.title} updated to ${version}!`,
-          html: htmlContent
-        });
-        results.push({ email: recipientEmail, status: 'sent', messageId: info.messageId });
-      } catch (sendErr) {
-        console.error(`Failed sending update broadcast to ${recipientEmail}:`, sendErr?.message);
-        results.push({ email: recipientEmail, status: 'failed', error: sendErr?.message });
-      }
+    const chunkSize = 5;
+    for (let i = 0; i < emailList.length; i += chunkSize) {
+      const chunk = emailList.slice(i, i + chunkSize);
+      await Promise.allSettled(
+        chunk.map(async (recipientEmail) => {
+          try {
+            const info = await transporter.sendMail({
+              from: `"Bizleap Marketplace" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
+              to: recipientEmail,
+              subject: `⚡ Update Available: ${template.title} updated to ${version}!`,
+              html: htmlContent
+            });
+            results.push({ email: recipientEmail, status: 'sent', messageId: info.messageId });
+          } catch (sendErr) {
+            console.error(`Failed sending update broadcast to ${recipientEmail}:`, sendErr?.message);
+            results.push({ email: recipientEmail, status: 'failed', error: sendErr?.message });
+          }
+        })
+      );
     }
 
     res.status(200).json({

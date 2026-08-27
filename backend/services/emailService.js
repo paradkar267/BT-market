@@ -16,15 +16,29 @@ dotenv.config();
 
 const smtpPort = parseInt(process.env.SMTP_PORT, 10) || 587;
 
-export const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.gmail.com',
-  port: smtpPort,
-  secure: smtpPort === 465,
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASSWORD,
-  },
-});
+const rawPass = process.env.SMTP_PASSWORD || process.env.SMTP_PASS || '';
+const cleanPass = rawPass.replace(/\s+/g, '');
+const isGmail = (process.env.SMTP_HOST || '').includes('gmail') || (process.env.SMTP_USER || '').includes('gmail');
+
+export const transporter = isGmail
+  ? nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: cleanPass
+      },
+      tls: { rejectUnauthorized: false }
+    })
+  : nodemailer.createTransport({
+      host: process.env.SMTP_HOST || 'smtp.gmail.com',
+      port: smtpPort,
+      secure: smtpPort === 465,
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: cleanPass
+      },
+      tls: { rejectUnauthorized: false }
+    });
 
 export const sendReceiptEmail = async (to, orderDetails, frontendUrl, invoicePdfBase64) => {
   const baseUrl = frontendUrl || process.env.FRONTEND_URL || 'http://localhost:5173';

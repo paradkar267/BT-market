@@ -18,18 +18,33 @@ const supabaseAdmin = (supabaseUrl && supabaseServiceKey)
   : null;
 
 // Gmail SMTP transporter for customer direct messaging and gift alerts
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'smtp.gmail.com',
-  port: parseInt(process.env.SMTP_PORT || '465', 10),
-  secure: process.env.SMTP_SECURE !== 'false',
-  auth: {
-    user: process.env.SMTP_USER || 'bizleap1@gmail.com',
-    pass: process.env.SMTP_PASS || ''
-  },
-  tls: {
-    rejectUnauthorized: false
-  }
-});
+const rawPass = process.env.SMTP_PASSWORD || process.env.SMTP_PASS || '';
+const cleanPass = rawPass.replace(/\s+/g, '');
+const isGmail = (process.env.SMTP_HOST || '').includes('gmail') || (process.env.SMTP_USER || '').includes('gmail');
+
+const transporter = isGmail
+  ? nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: process.env.SMTP_USER || 'bizleap1@gmail.com',
+        pass: cleanPass
+      },
+      tls: {
+        rejectUnauthorized: false
+      }
+    })
+  : nodemailer.createTransport({
+      host: process.env.SMTP_HOST || 'smtp.gmail.com',
+      port: parseInt(process.env.SMTP_PORT || '587', 10),
+      secure: process.env.SMTP_PORT === '465',
+      auth: {
+        user: process.env.SMTP_USER || 'bizleap1@gmail.com',
+        pass: cleanPass
+      },
+      tls: {
+        rejectUnauthorized: false
+      }
+    });
 
 // Fallback customers when offline or in dev
 const fallbackCustomers = [
