@@ -140,7 +140,7 @@ export function InteractiveProductCard({
 
       {/* Content Area */}
       <div 
-        onClick={(e) => { e.stopPropagation(); requireAuth(() => navigate(`/product/${template.id}`)); }}
+        onClick={(e) => { e.stopPropagation(); navigate(`/product/${template.id}`); }}
         className="flex flex-col flex-1 p-5 bg-white dark:bg-black rounded-b-[1.75rem]"
       >
         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em] mb-1">{template.tag}</p>

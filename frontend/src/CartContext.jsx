@@ -27,7 +27,7 @@ export const CartProvider = ({ children }) => {
 
   // Robustly load purchases from both User Metadata and Purchases DB table
   const loadPurchasedTemplates = useCallback(async () => {
-    if (!user || templates.length === 0) {
+    if (!user) {
       setPurchasedTemplates([]);
       return;
     }
@@ -47,24 +47,48 @@ export const CartProvider = ({ children }) => {
       // Combine both sources
       const allPurchasedIds = [...new Set([...metadataIds, ...dbIds])];
 
-      const fetchedTemplates = templates.filter(t => allPurchasedIds.includes(String(t.id)));
-      setPurchasedTemplates(fetchedTemplates);
+      if (templates.length > 0) {
+        const fetchedTemplates = templates.filter(t => allPurchasedIds.includes(String(t.id)));
+        setPurchasedTemplates(fetchedTemplates);
+      }
     } catch (err) {
       console.error("Error loading purchased templates:", err);
     }
   }, [user, templates]);
 
   useEffect(() => {
-    loadPurchasedTemplates();
-  }, [loadPurchasedTemplates]);
+    let isMounted = true;
+    const fetchPurchases = async () => {
+      if (!user) {
+        if (isMounted) setPurchasedTemplates([]);
+        return;
+      }
+      if (templates.length === 0) return;
+      try {
+        const { data: dbPurchases, error } = await supabase
+          .from('purchases')
+          .select('template_id')
+          .eq('user_id', user.id);
 
-  // Clear cart on logout
-  useEffect(() => {
-    if (!user) {
-      setCartItems([]);
-      localStorage.removeItem('bt_cart');
-    }
-  }, [user]);
+        if (!isMounted) return;
+        
+        let allPurchasedIds = [];
+        if (!error && dbPurchases !== null) {
+          allPurchasedIds = dbPurchases.map(p => String(p.template_id));
+        } else {
+          allPurchasedIds = (user.user_metadata?.purchased_templates || []).map(id => String(id));
+        }
+
+        const fetchedTemplates = templates.filter(t => allPurchasedIds.includes(String(t.id)));
+        setPurchasedTemplates(fetchedTemplates);
+      } catch (err) {
+        console.error("Error loading purchased templates:", err);
+      }
+    };
+
+    fetchPurchases();
+    return () => { isMounted = false; };
+  }, [user, templates]);
 
   // Sync cart with localStorage and across tabs
   useEffect(() => {
@@ -108,48 +132,38 @@ export const CartProvider = ({ children }) => {
     toast.success("Item removed from cart");
   };
 
-  const checkout = async (paymentId = 'mock_pay_id') => {
-    if (cartItems.length === 0) return;
+  const checkout = async (paymentId = 'mock_pay_id', purchasedItems = null) => {
+    const itemsToBuy = purchasedItems || cartItems;
+    if (itemsToBuy.length === 0) return;
     if (!user) {
       toast.error("You must be logged in to checkout.");
       return;
     }
     
-    const newPurchaseIds = cartItems.map(item => item.id);
-    
-    // Check if any items just became sold out
-    const { data: checkTemplates, error: checkError } = await supabase
-      .from('templates')
-      .select('id, title, is_sold_out')
-      .in('id', newPurchaseIds);
-      
-    if (checkError) {
-      toast.error("Error verifying cart availability.");
-      return;
-    }
-    
-    const soldOutItems = [];
-    if (soldOutItems.length > 0) {
-      toast.error(`Sorry, ${soldOutItems[0].title} was just purchased by someone else!`);
-      // Remove sold out items from cart
-      const soldIds = soldOutItems.map(t => t.id);
-      setCartItems(prev => prev.filter(item => !soldIds.includes(item.id)));
-      return;
+    // Immediately update local purchased state for seamless instant navigation
+    setPurchasedTemplates(prev => {
+      const combined = [...prev];
+      itemsToBuy.forEach(item => {
+        if (!combined.some(c => String(c.id) === String(item.id))) {
+          combined.push(item);
+        }
+      });
+      return combined;
+    });
+
+    // Clear cart immediately
+    setCartItems([]);
+    try {
+      localStorage.removeItem('bt_cart');
+    } catch {
+      // Ignore
     }
 
-    // The purchase records and metadata updates are now handled securely by the backend
-    // in the /api/verify-payment route.
-
-    // Note: The templates table will be automatically updated to is_sold_out = true 
-    // by the Supabase Database Trigger (trigger_mark_template_sold_out) 
-    // immediately after the purchase record is inserted by the backend.
-    
     // Trigger a custom event to tell useTemplates to refetch globally across components
     window.dispatchEvent(new Event('templates_updated'));
     
-    // Update local state by re-fetching purchased templates from DB & Auth metadata
+    // Update local state by re-fetching purchased templates from DB & Auth metadata in background
     await loadPurchasedTemplates();
-    setCartItems([]);
   };
 
   const removePurchasedTemplate = async (templateId) => {

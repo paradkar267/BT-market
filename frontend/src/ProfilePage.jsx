@@ -2,40 +2,27 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { ConfirmModal } from './components/ui/ConfirmModal';
 import { Link, useNavigate } from 'react-router-dom';
 import { 
-  ArrowLeft, User as UserIcon, Mail, Settings, Shield, 
-  Moon, Sun, Bell, CreditCard, Lock, AlertTriangle, Trash2,
-  CheckCircle2
+  ArrowLeft, User as UserIcon, Settings, Shield, 
+  AlertTriangle, Trash2
 } from 'lucide-react';
 import { useAuth } from './AuthContext';
-import { useTheme } from './ThemeContext';
 import UserMenu from './UserMenu';
 import { toast } from 'sonner';
 import { Logo } from './components/ui/Logo';
 import { supabase } from './lib/supabase';
 
-// Reusable Toggle Switch Component
-const Toggle = ({ enabled, onChange }) => (
-  <button 
-    onClick={() => onChange(!enabled)}
-    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${enabled ? 'bg-black dark:bg-white' : 'bg-gray-200 dark:bg-gray-800'}`}
-  >
-    <span className={`inline-block h-4 w-4 transform rounded-full bg-white dark:bg-black transition-transform ${enabled ? 'translate-x-6' : 'translate-x-1'}`} />
-  </button>
-);
-
 export default function ProfilePage() {
   const { user, profile, setProfile, isAdmin } = useAuth();
-  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
 
-  // Mock states for settings
-  const [notifEmail, setNotifEmail] = useState(true);
-  const [notifOffers, setNotifOffers] = useState(false);
-  const [notifOrders, setNotifOrders] = useState(true);
-  
   // Edit Profile States
-  const [name, setName] = useState(profile?.full_name || '');
-  const [bio, setBio] = useState('');
+  const [name, setName] = useState(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const currentName = name !== null ? name : (profile?.full_name || '');
+
+  const confirmDeleteAccount = useCallback(() => {
+    toast.error("Account deletion request submitted to admin.");
+  }, []);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -44,17 +31,13 @@ export default function ProfilePage() {
     }
   }, [user, navigate]);
 
-  useEffect(() => {
-    if (profile?.full_name) setName(profile.full_name);
-  }, [profile]);
-
-  if (!user) return null;
-
   const handleSaveProfile = async (e) => {
     e.preventDefault();
+    if (!user) return;
     try {
+      const finalName = currentName;
       const { error: authError } = await supabase.auth.updateUser({
-        data: { full_name: name }
+        data: { full_name: finalName }
       });
 
       if (authError) throw authError;
@@ -64,14 +47,15 @@ export default function ProfilePage() {
           .from('profiles')
           .upsert({
             id: user.id,
-            full_name: name,
+            full_name: finalName,
             updated_at: new Date().toISOString()
           });
-      } catch (err) {
+      } catch {
         // Ignore table errors
       }
 
-      setProfile(prev => ({ ...prev, full_name: name }));
+      setProfile(prev => ({ ...prev, full_name: finalName }));
+      setName(null);
       toast.success("Profile updated successfully!");
     } catch (error) {
       toast.error(error.message || "Failed to update profile");
@@ -79,13 +63,9 @@ export default function ProfilePage() {
     }
   };
 
-
-
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const handleDeleteAccount = () => setShowDeleteConfirm(true);
-  const confirmDeleteAccount = useCallback(() => {
-    toast.error("Account deletion request submitted to admin.");
-  }, []);
+
+  if (!user) return null;
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-black text-black dark:text-white font-sans pb-24 transition-colors duration-500">
@@ -152,7 +132,7 @@ export default function ProfilePage() {
                   <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Full Name</label>
                   <input 
                     type="text" 
-                    value={name}
+                    value={currentName}
                     onChange={(e) => setName(e.target.value)}
                     className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-black border border-gray-200 dark:border-gray-800 focus:border-black dark:focus:border-white outline-none transition-colors"
                     placeholder="Your Name"

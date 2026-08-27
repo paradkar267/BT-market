@@ -10,14 +10,13 @@ export function LivePreviewModal({ isOpen, onClose, template }) {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
-      setIframeLoaded(false); // Reset loading state when opened
     } else {
       document.body.style.overflow = 'unset';
     }
     return () => {
       document.body.style.overflow = 'unset';
     };
-  }, [isOpen, template]);
+  }, [isOpen]);
 
   if (!isOpen || !template) return null;
 

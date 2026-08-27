@@ -1,4 +1,304 @@
 import nodemailer from 'nodemailer';
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import dns from 'dns';
+
+// Force IPv4 for Nodemailer
+dns.setDefaultResultOrder('ipv4first');
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.resolve(__dirname, '../.env.local') });
+dotenv.config({ path: path.resolve(__dirname, '../../.env.local') });
+dotenv.config();
+
+export function generateInvoiceHtml({ to, orderDetails, baseUrl, orderDate, orderTime }) {
+  const items = orderDetails.items || [];
+  const total = orderDetails.total || '0.00';
+  const orderId = orderDetails.orderId || Math.random().toString(36).substring(7).toUpperCase();
+  const customerEmail = to || 'Customer';
+
+  // Build itemized cards with direct clickable download & preview buttons
+  const itemsHtml = items.map((item) => {
+    const itemTitle = item.title || 'Digital Template';
+    const itemCategory = item.category || 'React / Web Template';
+    const itemPrice = item.price || '0';
+    const itemId = item.id || '';
+    const initialLetter = itemTitle.charAt(0).toUpperCase() || 'T';
+    const downloadUrl = `${baseUrl}/my-templates?download=${itemId}`;
+    const previewUrl = `${baseUrl}/preview/${itemId}`;
+
+    return `
+      <!-- Template Item Card -->
+      <table cellpadding="0" cellspacing="0" border="0" width="100%" class="item-card" style="margin-bottom: 16px; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+        <tr>
+          <td style="padding: 18px 20px;">
+            <table cellpadding="0" cellspacing="0" border="0" width="100%">
+              <tr>
+                <td style="width: 44px; vertical-align: top;">
+                  <div style="width: 44px; height: 44px; background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%); border-radius: 10px; text-align: center; line-height: 44px; color: #ffffff; font-size: 17px; font-weight: 800;">
+                    ${initialLetter}
+                  </div>
+                </td>
+                <td style="padding-left: 14px; vertical-align: top;">
+                  <div style="display: inline-block; padding: 2px 8px; background-color: #f1f5f9; color: #475569; border-radius: 5px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+                    ${itemCategory}
+                  </div>
+                  <h4 style="margin: 0 0 3px; color: #0f172a; font-size: 15px; font-weight: 700; line-height: 1.3;">
+                    ${itemTitle}
+                  </h4>
+                  <p style="margin: 0; color: #64748b; font-size: 12px;">
+                    Commercial License &bull; Full Source Code (.zip)
+                  </p>
+                </td>
+                <td style="vertical-align: top; text-align: right; white-space: nowrap; padding-left: 12px;">
+                  <span style="color: #0f172a; font-size: 16px; font-weight: 800;">
+                    ₹${itemPrice}
+                  </span>
+                </td>
+              </tr>
+            </table>
+
+            <!-- Direct Action Buttons Row -->
+            <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-top: 14px; padding-top: 14px; border-top: 1px dashed #e2e8f0;">
+              <tr>
+                <td align="left" style="vertical-align: middle;">
+                  <!-- Direct Download Button -->
+                  <table cellpadding="0" cellspacing="0" border="0">
+                    <tr>
+                      <td style="background-color: #4f46e5; border-radius: 8px; text-align: center;">
+                        <a href="${downloadUrl}" target="_blank" style="display: inline-block; padding: 9px 18px; color: #ffffff; text-decoration: none; font-size: 12px; font-weight: 700; letter-spacing: 0.2px;">
+                          ⬇ Download Template
+                        </a>
+                      </td>
+                    </tr>
+                  </table>
+                </td>
+                <td align="right" style="vertical-align: middle;">
+                  <a href="${previewUrl}" target="_blank" style="display: inline-block; padding: 8px 12px; color: #4f46e5; text-decoration: none; font-size: 12px; font-weight: 600;">
+                    Live Preview &rarr;
+                  </a>
+                </td>
+              </tr>
+            </table>
+
+          </td>
+        </tr>
+      </table>
+    `;
+  }).join('');
+
+  return `
+  <!DOCTYPE html>
+  <html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Bizleap Invoice #${orderId}</title>
+  </head>
+  <body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; color: #0f172a;">
+    
+    <!-- Preview Text -->
+    <div style="display: none; max-height: 0; overflow: hidden; mso-hide: all;">
+      Payment of ₹${total} confirmed! Click inside to download your templates. Order #${orderId}
+    </div>
+
+    <!-- Outer Wrapper -->
+    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #f8fafc; padding: 36px 16px;">
+      <tr>
+        <td align="center">
+          
+          <table cellpadding="0" cellspacing="0" border="0" width="580" style="max-width: 580px; width: 100%;">
+            
+            <!-- Brand Logo Header -->
+            <tr>
+              <td style="padding: 0 0 24px; text-align: center;">
+                <table cellpadding="0" cellspacing="0" border="0" style="margin: 0 auto;">
+                  <tr>
+                    <td style="width: 36px; height: 36px; background-color: #0f172a; border-radius: 10px; text-align: center; vertical-align: middle;">
+                      <span style="color: #ffffff; font-size: 16px; font-weight: 900; line-height: 36px;">B</span>
+                    </td>
+                    <td style="padding-left: 10px; vertical-align: middle;">
+                      <span style="font-size: 20px; font-weight: 900; color: #0f172a; letter-spacing: 2px;">BIZLEAP</span>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- Main White Card -->
+            <tr>
+              <td>
+                <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.04); border: 1px solid #e2e8f0;">
+                  
+                  <!-- Clean White Hero Header -->
+                  <tr>
+                    <td style="background-color: #ffffff; padding: 36px 32px 28px; text-align: center; border-bottom: 1px solid #f1f5f9;">
+                      
+                      <!-- Success Badge -->
+                      <table cellpadding="0" cellspacing="0" border="0" style="margin: 0 auto 16px;">
+                        <tr>
+                          <td style="background-color: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 50px; padding: 6px 16px;">
+                            <span style="color: #059669; font-size: 11px; font-weight: 800; letter-spacing: 0.8px; text-transform: uppercase;">
+                              ✓ PAYMENT CONFIRMED & INVOICE PAID
+                            </span>
+                          </td>
+                        </tr>
+                      </table>
+
+                      <h1 style="margin: 0 0 8px; color: #0f172a; font-size: 24px; font-weight: 900; letter-spacing: -0.5px; line-height: 1.3;">
+                        Thank You for Your Order!
+                      </h1>
+                      <p style="margin: 0; color: #64748b; font-size: 14px; line-height: 1.5;">
+                        Your digital templates are ready. Download them below or access your dashboard anytime.
+                      </p>
+                    </td>
+                  </tr>
+
+                  <!-- Metadata Strip (Light Clean Slate) -->
+                  <tr>
+                    <td style="padding: 24px 28px 0;">
+                      <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
+                        <tr>
+                          <td style="padding: 14px 18px; width: 50%; border-right: 1px solid #e2e8f0;">
+                            <span style="display: block; font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; margin-bottom: 3px;">Invoice Number</span>
+                            <span style="font-size: 13px; color: #0f172a; font-weight: 700; font-family: monospace;">#INV-${orderId.substring(0, 12)}</span>
+                          </td>
+                          <td style="padding: 14px 18px; width: 50%;">
+                            <span style="display: block; font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; margin-bottom: 3px;">Date & Time</span>
+                            <span style="font-size: 13px; color: #0f172a; font-weight: 600;">${orderDate}, ${orderTime}</span>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td style="padding: 14px 18px; width: 50%; border-top: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0;">
+                            <span style="display: block; font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; margin-bottom: 3px;">Billed To</span>
+                            <span style="font-size: 12px; color: #0f172a; font-weight: 600; word-break: break-all;">${customerEmail}</span>
+                          </td>
+                          <td style="padding: 14px 18px; width: 50%; border-top: 1px solid #e2e8f0;">
+                            <span style="display: block; font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; margin-bottom: 3px;">Payment Status</span>
+                            <span style="font-size: 12px; color: #059669; font-weight: 700;">● Paid via Razorpay (Verified)</span>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+
+                  <!-- Itemized Templates Section -->
+                  <tr>
+                    <td style="padding: 24px 28px 0;">
+                      <div style="margin-bottom: 12px;">
+                        <span style="font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; font-weight: 800;">
+                          📦 Purchased Items & Direct Downloads
+                        </span>
+                      </div>
+                      ${itemsHtml}
+                    </td>
+                  </tr>
+
+                  <!-- Price Calculation Breakdown -->
+                  <tr>
+                    <td style="padding: 6px 28px 0;">
+                      <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px 20px;">
+                        <tr>
+                          <td>
+                            <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                              <tr>
+                                <td style="padding: 4px 0; color: #64748b; font-size: 13px;">Subtotal</td>
+                                <td style="padding: 4px 0; text-align: right; color: #0f172a; font-size: 13px; font-weight: 600;">₹${total}</td>
+                              </tr>
+                              <tr>
+                                <td style="padding: 4px 0; color: #64748b; font-size: 13px;">Discount</td>
+                                <td style="padding: 4px 0; text-align: right; color: #059669; font-size: 13px; font-weight: 600;">-₹0.00</td>
+                              </tr>
+                              <tr>
+                                <td style="padding: 4px 0; color: #64748b; font-size: 13px;">Taxes (GST Included)</td>
+                                <td style="padding: 4px 0; text-align: right; color: #0f172a; font-size: 13px; font-weight: 600;">₹0.00</td>
+                              </tr>
+                              <tr>
+                                <td colspan="2" style="padding: 8px 0;">
+                                  <hr style="border: none; border-top: 1px dashed #cbd5e1; margin: 0;" />
+                                </td>
+                              </tr>
+                              <tr>
+                                <td style="color: #0f172a; font-size: 15px; font-weight: 900;">Grand Total Paid</td>
+                                <td style="text-align: right; color: #4f46e5; font-size: 20px; font-weight: 900;">₹${total}</td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+
+                  <!-- Main Dashboard CTA Button -->
+                  <tr>
+                    <td style="padding: 24px 28px 8px; text-align: center;">
+                      <table cellpadding="0" cellspacing="0" border="0" style="margin: 0 auto; width: 100%;">
+                        <tr>
+                          <td style="background-color: #0f172a; border-radius: 12px; text-align: center;">
+                            <a href="${baseUrl}/my-templates" target="_blank" style="display: block; color: #ffffff; padding: 15px 28px; text-decoration: none; font-weight: 800; font-size: 14px; letter-spacing: 0.3px;">
+                              ⚡ Open My Templates Dashboard &rarr;
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+
+                  <!-- Guarantee Info Box -->
+                  <tr>
+                    <td style="padding: 16px 28px 24px;">
+                      <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #eff6ff; border-radius: 10px; border-left: 4px solid #3b82f6;">
+                        <tr>
+                          <td style="padding: 12px 16px;">
+                            <p style="margin: 0; font-size: 12px; color: #1e40af; line-height: 1.5;">
+                              <strong>🛡️ Lifetime Access Guarantee:</strong> You can re-download your templates at any time from your Bizleap account. All future minor version updates for your purchased templates are 100% free.
+                            </p>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+
+                  <!-- Footer Section -->
+                  <tr>
+                    <td style="background-color: #f8fafc; padding: 22px 28px; border-top: 1px solid #e2e8f0; text-align: center;">
+                      <p style="margin: 0 0 6px; font-size: 12px; color: #64748b;">
+                        Questions or need support? We're always here to assist you.
+                      </p>
+                      <a href="mailto:bizleap1@gmail.com" style="color: #4f46e5; text-decoration: none; font-size: 13px; font-weight: 700;">
+                        bizleap1@gmail.com
+                      </a>
+                      <p style="margin: 14px 0 0; font-size: 11px; color: #94a3b8; line-height: 1.5;">
+                        &copy; ${new Date().getFullYear()} Bizleap Marketplace. All rights reserved.<br>
+                        This is an official automated purchase confirmation and tax receipt.
+                      </p>
+                    </td>
+                  </tr>
+
+                </table>
+              </td>
+            </tr>
+
+            <!-- Bottom Tagline -->
+            <tr>
+              <td style="padding: 18px 0 0; text-align: center;">
+                <p style="margin: 0; font-size: 11px; color: #94a3b8; letter-spacing: 0.2px;">
+                  Bizleap &bull; Premium UI Templates & Components for Modern Builders
+                </p>
+              </td>
+            </tr>
+
+          </table>
+
+        </td>
+      </tr>
+    </table>
+  </body>
+  </html>
+  `;
+}
 
 export default async function handler(req, res) {
   // CORS setup for Vercel
@@ -20,320 +320,84 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { to, orderDetails, frontendUrl } = req.body;
+    const { to, email, orderDetails, cartItems, totalAmount, paymentId, frontendUrl, invoicePdfBase64 } = req.body || {};
 
-    if (!to || !orderDetails) {
-      return res.status(400).json({ error: 'Missing required fields' });
+    const recipientEmail = to || email;
+    if (!recipientEmail) {
+      return res.status(400).json({ error: 'Missing recipient email' });
     }
 
-    // Connect to Gmail via SMTP
+    // Normalize orderDetails
+    let normalizedOrderDetails = orderDetails;
+    if (!normalizedOrderDetails) {
+      if (cartItems && cartItems.length) {
+        normalizedOrderDetails = {
+          orderId: paymentId || 'ORD_' + Math.random().toString(36).substring(7).toUpperCase(),
+          total: totalAmount ? String(totalAmount) : '0.00',
+          items: cartItems
+        };
+      } else {
+        return res.status(400).json({ error: 'Missing order details or cart items' });
+      }
+    }
+
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST || 'smtp.gmail.com',
       port: parseInt(process.env.SMTP_PORT || '587'),
       secure: process.env.SMTP_PORT === '465',
       auth: {
         user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASSWORD
+        pass: process.env.SMTP_PASSWORD || process.env.SMTP_PASS
       }
     });
 
-    const items = orderDetails.items || [];
-    const total = orderDetails.total || '0.00';
-    const orderId = orderDetails.orderId || Math.random().toString(36).substring(7).toUpperCase();
     const baseUrl = frontendUrl || 'https://bt-templates.vercel.app';
-    const orderDate = new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric' });
-    const orderTime = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: true });
-    const customerEmail = to;
-
-    // Build items rows
-    let itemsHtml = '';
-    items.forEach((item, index) => {
-      const isLast = index === items.length - 1;
-      itemsHtml += `
-                <tr>
-                  <td class="border-box" style="padding: 16px 20px; border-bottom: ${isLast ? 'none' : '1px solid #f0f0f5'};">
-                    <table cellpadding="0" cellspacing="0" border="0" style="width: 100%;">
-                      <tr>
-                        <td style="width: 48px; vertical-align: top;">
-                          <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 10px; text-align: center; line-height: 48px; color: #fff; font-size: 18px; font-weight: 700;">
-                            ${(item.title || 'T').charAt(0).toUpperCase()}
-                          </div>
-                        </td>
-                        <td style="padding-left: 14px; vertical-align: top;">
-                          <p class="text-main" style="margin: 0; color: #1a1a2e; font-size: 14px; font-weight: 700; line-height: 1.3;">${item.title || 'Template'}</p>
-                          <p class="text-muted" style="margin: 4px 0 0; color: #8b8fa3; font-size: 12px;">Digital Template &bull; Instant Access</p>
-                        </td>
-                        <td style="vertical-align: middle; text-align: right; white-space: nowrap;">
-                          <span class="text-main" style="color: #1a1a2e; font-size: 15px; font-weight: 800;">₹${item.price || '0'}</span>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>`;
+    const orderDate = new Date().toLocaleDateString('en-IN', {
+      timeZone: 'Asia/Kolkata', day: '2-digit', month: 'short', year: 'numeric'
+    });
+    const orderTime = new Date().toLocaleTimeString('en-IN', {
+      timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: true
     });
 
-    const htmlContent = `
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="utf-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <meta name="color-scheme" content="light dark">
-      <meta name="supported-color-schemes" content="light dark">
-      <title>Your Bizleap Invoice</title>
-      <style>
-        :root {
-          color-scheme: light dark;
-          supported-color-schemes: light dark;
-        }
-        
-        /* Dark mode styles */
-        @media (prefers-color-scheme: dark) {
-          .bg-body { background-color: #0A0A0A !important; }
-          .bg-card { background-color: #121212 !important; border: 1px solid #222222 !important; box-shadow: 0 4px 20px rgba(0,0,0,0.5) !important; }
-          .text-main { color: #FFFFFF !important; }
-          .text-muted { color: #A1A1AA !important; }
-          .bg-light-box { background-color: #1A1A1A !important; }
-          .border-box { border-color: #27272A !important; }
-          .divider { border-top-color: #27272A !important; }
-          .dashed-divider { border-top-color: #3F3F46 !important; }
-          .tip-box { background: linear-gradient(135deg, #1e3a8a, #172554) !important; border-left-color: #3b82f6 !important; }
-          .tip-text { color: #bfdbfe !important; }
-          .btn-gradient { background: linear-gradient(135deg, #FFFFFF, #E5E5E5) !important; }
-          .btn-text { color: #000000 !important; }
-          .force-white { color: #ffffff !important; }
-          .force-muted { color: rgba(255,255,255,0.7) !important; }
-        }
-        
-        /* Outlook Data-ogsc fixes */
-        [data-ogsc] .bg-body { background-color: #0A0A0A !important; }
-        [data-ogsc] .bg-card { background-color: #121212 !important; border: 1px solid #222222 !important; }
-        [data-ogsc] .text-main { color: #FFFFFF !important; }
-        [data-ogsc] .text-muted { color: #A1A1AA !important; }
-        [data-ogsc] .bg-light-box { background-color: #1A1A1A !important; }
-        [data-ogsc] .border-box { border-color: #27272A !important; }
-        [data-ogsc] .divider { border-top-color: #27272A !important; }
-        [data-ogsc] .dashed-divider { border-top-color: #3F3F46 !important; }
-        [data-ogsc] .tip-box { background: linear-gradient(135deg, #1e3a8a, #172554) !important; border-left-color: #3b82f6 !important; }
-        [data-ogsc] .tip-text { color: #bfdbfe !important; }
-        [data-ogsc] .force-white { color: #ffffff !important; }
-        [data-ogsc] .force-muted { color: rgba(255,255,255,0.7) !important; }
-      </style>
-      <!--[if mso]>
-      <noscript>
-        <xml>
-          <o:OfficeDocumentSettings>
-            <o:PixelsPerInch>96</o:PixelsPerInch>
-          </o:OfficeDocumentSettings>
-        </xml>
-      </noscript>
-      <![endif]-->
-    </head>
-    <body class="bg-body" style="margin: 0; padding: 0; background-color: #f0f0f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; -webkit-font-smoothing: antialiased;">
-      
-      <!-- Preheader (hidden preview text) -->
-      <div style="display: none; max-height: 0; overflow: hidden; mso-hide: all;">
-        Payment of ₹${total} confirmed! Your templates are ready to download. Order #${orderId}
-      </div>
+    const htmlContent = generateInvoiceHtml({
+      to: recipientEmail,
+      orderDetails: normalizedOrderDetails,
+      baseUrl,
+      orderDate,
+      orderTime
+    });
 
-      <!-- Outer Wrapper -->
-      <table class="bg-body" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #f0f0f5; padding: 32px 16px;">
-        <tr>
-          <td align="center">
-            <!-- Main Container -->
-            <table cellpadding="0" cellspacing="0" border="0" width="560" style="max-width: 560px; width: 100%;">
-              
-              <!-- Logo Bar -->
-              <tr>
-                <td style="padding: 0 0 24px; text-align: center;">
-                  <table cellpadding="0" cellspacing="0" border="0" style="margin: 0 auto;">
-                    <tr>
-                      <td style="width: 36px; height: 36px; background: linear-gradient(135deg, #0a0a0a, #1a1a2e); border-radius: 10px; text-align: center; vertical-align: middle;">
-                        <span style="color: #fff; font-size: 16px; font-weight: 800; line-height: 36px;">B</span>
-                      </td>
-                      <td style="padding-left: 10px; vertical-align: middle;">
-                        <span class="text-main" style="font-size: 20px; font-weight: 800; color: #1a1a2e; letter-spacing: 1.5px;">BIZLEAP</span>
-                      </td>
-                    </tr>
-                  </table>
-                </td>
-              </tr>
+    const orderId = normalizedOrderDetails.orderId || 'ORDER';
 
-              <!-- Main Card -->
-              <tr>
-                <td>
-                  <table class="bg-card" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 2px 40px rgba(0,0,0,0.06);">
-                    
-                    <!-- Success Header -->
-                    <tr>
-                      <td style="background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 60%, #16213e 100%); padding: 44px 40px 40px; text-align: center;">
-                        <!-- Checkmark Circle -->
-                        <table cellpadding="0" cellspacing="0" border="0" style="margin: 0 auto 20px;">
-                          <tr>
-                            <td style="width: 64px; height: 64px; border-radius: 50%; background: rgba(16, 185, 129, 0.15); text-align: center; vertical-align: middle; border: 2px solid rgba(16, 185, 129, 0.3);">
-                              <span style="font-size: 30px; line-height: 64px; color: #10b981;">✓</span>
-                            </td>
-                          </tr>
-                        </table>
-                        <h1 class="force-white" style="margin: 0 0 8px; color: #ffffff; font-size: 26px; font-weight: 800; letter-spacing: -0.5px;">Payment Successful!</h1>
-                        <p class="force-muted" style="margin: 0; color: rgba(255,255,255,0.7); font-size: 14px; line-height: 1.5;">Your order has been confirmed and templates are ready.</p>
-                      </td>
-                    </tr>
-
-                    <!-- Order Info Grid -->
-                    <tr>
-                      <td style="padding: 28px 32px 0;">
-                        <table class="bg-light-box" cellpadding="0" cellspacing="0" border="0" width="100%" style="background: #f8f9fc; border-radius: 14px; overflow: hidden;">
-                          <tr>
-                            <td class="border-box" style="padding: 16px 20px; width: 33%; border-right: 1px solid #eeeff4;">
-                              <p class="text-muted" style="margin: 0 0 4px; font-size: 10px; color: #8b8fa3; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">Order ID</p>
-                              <p class="text-main" style="margin: 0; font-size: 13px; color: #1a1a2e; font-weight: 700; font-family: 'SF Mono', Monaco, 'Cascadia Code', monospace;">#${orderId.substring(0, 12)}</p>
-                            </td>
-                            <td class="border-box" style="padding: 16px 20px; width: 34%; border-right: 1px solid #eeeff4; text-align: center;">
-                              <p class="text-muted" style="margin: 0 0 4px; font-size: 10px; color: #8b8fa3; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">Date</p>
-                              <p class="text-main" style="margin: 0; font-size: 13px; color: #1a1a2e; font-weight: 600;">${orderDate}</p>
-                            </td>
-                            <td style="padding: 16px 20px; width: 33%; text-align: right;">
-                              <p class="text-muted" style="margin: 0 0 4px; font-size: 10px; color: #8b8fa3; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">Time</p>
-                              <p class="text-main" style="margin: 0; font-size: 13px; color: #1a1a2e; font-weight: 600;">${orderTime}</p>
-                            </td>
-                          </tr>
-                        </table>
-                      </td>
-                    </tr>
-
-                    <!-- Divider -->
-                    <tr>
-                      <td style="padding: 24px 32px 0;">
-                        <hr class="divider" style="border: none; border-top: 1px solid #f0f0f5; margin: 0;" />
-                      </td>
-                    </tr>
-
-                    <!-- Items Section -->
-                    <tr>
-                      <td style="padding: 24px 32px 0;">
-                        <p class="text-muted" style="margin: 0 0 16px; font-size: 13px; color: #8b8fa3; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700;">🛒 Items Purchased</p>
-                        <table class="bg-light-box" cellpadding="0" cellspacing="0" border="0" width="100%" style="background: #f8f9fc; border-radius: 14px; overflow: hidden;">
-                          ${itemsHtml}
-                        </table>
-                      </td>
-                    </tr>
-
-                    <!-- Totals -->
-                    <tr>
-                      <td style="padding: 24px 32px 0;">
-                        <table cellpadding="0" cellspacing="0" border="0" width="100%">
-                          <tr>
-                            <td class="text-muted" style="padding: 8px 0; color: #8b8fa3; font-size: 14px;">Subtotal</td>
-                            <td class="text-main" style="padding: 8px 0; text-align: right; color: #1a1a2e; font-size: 14px; font-weight: 600;">₹${total}</td>
-                          </tr>
-                          <tr>
-                            <td class="text-muted" style="padding: 8px 0; color: #8b8fa3; font-size: 14px;">Discount</td>
-                            <td style="padding: 8px 0; text-align: right; color: #10b981; font-size: 14px; font-weight: 600;">-₹0.00</td>
-                          </tr>
-                          <tr>
-                            <td colspan="2" style="padding: 12px 0;">
-                              <hr class="dashed-divider" style="border: none; border-top: 2px dashed #e5e7ee; margin: 0;" />
-                            </td>
-                          </tr>
-                          <tr>
-                            <td class="text-main" style="padding: 4px 0 0; color: #1a1a2e; font-size: 18px; font-weight: 800;">Total Paid</td>
-                            <td class="text-main" style="padding: 4px 0 0; text-align: right; color: #1a1a2e; font-size: 24px; font-weight: 800;">₹${total}</td>
-                          </tr>
-                        </table>
-                      </td>
-                    </tr>
-
-                    <!-- CTA Button -->
-                    <tr>
-                      <td style="padding: 32px 32px 8px; text-align: center;">
-                        <table cellpadding="0" cellspacing="0" border="0" style="margin: 0 auto;">
-                          <tr>
-                            <td class="btn-gradient" style="background: linear-gradient(135deg, #0a0a0a, #1a1a2e); border-radius: 14px; text-align: center; box-shadow: 0 4px 16px rgba(0,0,0,0.15);">
-                              <a href="${baseUrl}/my-templates" target="_blank" class="btn-text" style="display: inline-block; color: #ffffff; padding: 16px 40px; text-decoration: none; font-weight: 700; font-size: 14px; letter-spacing: 0.3px;">
-                                ↓ &nbsp; Download Your Templates
-                              </a>
-                            </td>
-                          </tr>
-                        </table>
-                      </td>
-                    </tr>
-
-                    <!-- Tip Box -->
-                    <tr>
-                      <td style="padding: 24px 32px 28px;">
-                        <table class="tip-box" cellpadding="0" cellspacing="0" border="0" width="100%" style="background: linear-gradient(135deg, #eff6ff, #f0f7ff); border-radius: 14px; border-left: 4px solid #3b82f6;">
-                          <tr>
-                            <td style="padding: 16px 20px;">
-                              <p class="tip-text" style="margin: 0; font-size: 13px; color: #1e40af; line-height: 1.6;">
-                                <strong>💡 Quick Tip:</strong> You can download your purchased templates anytime from the "My Templates" section. Your downloads are secure and always available.
-                              </p>
-                            </td>
-                          </tr>
-                        </table>
-                      </td>
-                    </tr>
-
-                    <!-- Footer -->
-                    <tr>
-                      <td class="bg-light-box border-box" style="background-color: #f8f9fc; padding: 28px 32px; border-top: 1px solid #f0f0f5;">
-                        <table cellpadding="0" cellspacing="0" border="0" width="100%">
-                          <tr>
-                            <td style="text-align: center;">
-                              <!-- Mini Logo -->
-                              <table cellpadding="0" cellspacing="0" border="0" style="margin: 0 auto 16px;">
-                                <tr>
-                                  <td style="width: 28px; height: 28px; background: linear-gradient(135deg, #0a0a0a, #1a1a2e); border-radius: 8px; text-align: center; vertical-align: middle;">
-                                    <span style="color: #fff; font-size: 12px; font-weight: 800; line-height: 28px;">B</span>
-                                  </td>
-                                </tr>
-                              </table>
-                              <p class="text-muted" style="margin: 0 0 6px; font-size: 12px; color: #8b8fa3;">Need help? We're here for you.</p>
-                              <a href="mailto:bizleap1@gmail.com" style="color: #3b82f6; text-decoration: none; font-size: 12px; font-weight: 700;">bizleap1@gmail.com</a>
-                              <p style="margin: 20px 0 0; font-size: 11px; color: #c0c4d0; line-height: 1.6;">
-                                © ${new Date().getFullYear()} Bizleap. All rights reserved.<br>
-                                This is an automated receipt. Please do not reply.
-                              </p>
-                            </td>
-                          </tr>
-                        </table>
-                      </td>
-                    </tr>
-
-                  </table>
-                </td>
-              </tr>
-
-              <!-- Bottom Tagline -->
-              <tr>
-                <td style="padding: 24px 0 0; text-align: center;">
-                  <p style="margin: 0; font-size: 11px; color: #b0b4c0; letter-spacing: 0.3px;">
-                    Sent with ♥ from Bizleap Digital Marketplace
-                  </p>
-                </td>
-              </tr>
-
-            </table>
-          </td>
-        </tr>
-      </table>
-    </body>
-    </html>
-    `;
+    // Prepare attachments if PDF base64 provided
+    const attachments = [];
+    if (invoicePdfBase64) {
+      try {
+        const cleanBase64 = invoicePdfBase64.includes('base64,')
+          ? invoicePdfBase64.split('base64,')[1]
+          : invoicePdfBase64;
+        attachments.push({
+          filename: `Bizleap_Invoice_${orderId}.pdf`,
+          content: Buffer.from(cleanBase64, 'base64'),
+          contentType: 'application/pdf'
+        });
+      } catch (attErr) {
+        console.warn('Could not attach PDF invoice:', attErr?.message);
+      }
+    }
 
     const info = await transporter.sendMail({
-      from: `"Bizleap" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
-      to: to,
-      subject: `🧾 Your Bizleap Invoice — Order #${orderId}`,
+      from: `"Bizleap Marketplace" <${process.env.SMTP_FROM || process.env.SMTP_USER}>`,
+      to: recipientEmail,
+      subject: `🧾 Your Bizleap Invoice & Download Access — Order #${orderId}`,
       html: htmlContent,
+      attachments: attachments.length ? attachments : undefined
     });
 
+    console.log('Receipt email sent successfully to', recipientEmail, 'MessageId:', info.messageId);
     res.status(200).json({ success: true, messageId: info.messageId });
   } catch (error) {
     console.error('Error sending email:', error);
     res.status(500).json({ error: error.message || 'Failed to send email' });
   }
 }
-
-
-

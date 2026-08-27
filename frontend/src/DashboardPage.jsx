@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Users, DollarSign, Activity, CreditCard, ArrowUpRight, ArrowDownRight, Package, LayoutGrid, BarChart3, Settings, Bell, Search, MoreHorizontal, CheckCircle2, Download, ChevronDown, FileText, FileSpreadsheet, Loader2, Check } from 'lucide-react';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, PieChart, Pie, Cell } from 'recharts';
+import { Link } from 'react-router-dom';
+import { ArrowLeft, Users, DollarSign, Activity, CreditCard, ArrowUpRight, ArrowDownRight, Package, BarChart3, Bell, MoreHorizontal, Download, ChevronDown, FileText, FileSpreadsheet, Loader2, Check } from 'lucide-react';
+import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { motion } from 'framer-motion';
 import UserMenu from './UserMenu';
 import { useTheme } from './ThemeContext';
@@ -18,7 +18,6 @@ const COLORS = ['#8b5cf6', '#3b82f6', '#ec4899', '#10b981'];
 
 export default function DashboardPage() {
   const { theme } = useTheme();
-  const navigate = useNavigate();
   const { isAdmin } = useAuth();
   const { templates: marketplaceTemplates } = useTemplates();
   const { formatPrice, currency, convertPrice } = useCurrency();
@@ -31,6 +30,7 @@ export default function DashboardPage() {
     templates: marketplaceTemplates.length
   });
   const [transactions, setTransactions] = useState([]);
+  const [syncKey, setSyncKey] = useState(0);
   const [chartRevenueData, setChartRevenueData] = useState([]);
   const [chartCategoryData, setChartCategoryData] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -135,136 +135,189 @@ export default function DashboardPage() {
 
 
   useEffect(() => {
+    let isMounted = true;
+    if (!isAdmin) return;
+
+    const loadData = async () => {
+      try {
+        let totalRevenue = 0;
+        let formattedTransactions = [];
+        let fetchedUsersCount = 0;
+
+        // Try fetching through authenticated Admin API
+        const { data: { session: currentSession } } = await supabase.auth.getSession();
+        let adminOrdersData = null;
+
+        if (currentSession) {
+          const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || '';
+          const targetUrls = [];
+          if (backendUrl) targetUrls.push(`${backendUrl}/api/admin/orders`);
+          targetUrls.push('/api/admin/orders');
+          targetUrls.push('/api/admin-orders');
+
+          for (const url of targetUrls) {
+            try {
+              const res = await fetch(url, {
+                headers: { 'Authorization': `Bearer ${currentSession.access_token}` }
+              });
+              if (res.ok) {
+                adminOrdersData = await res.json();
+                break;
+              }
+            } catch {
+              // fallback
+            }
+          }
+        }
+
+        if (adminOrdersData && adminOrdersData.orders) {
+          fetchedUsersCount = adminOrdersData.stats?.totalUsers || adminOrdersData.stats?.totalCustomers || 0;
+          
+          let filteredOrders = adminOrdersData.orders;
+          if (dateFilter === '7days') {
+            const d = new Date();
+            d.setDate(d.getDate() - 7);
+            filteredOrders = filteredOrders.filter(o => new Date(o.createdAt) >= d);
+          } else if (dateFilter === '30days') {
+            const d = new Date();
+            d.setDate(d.getDate() - 30);
+            filteredOrders = filteredOrders.filter(o => new Date(o.createdAt) >= d);
+          }
+
+          filteredOrders.forEach(o => {
+            totalRevenue += o.amount || 0;
+            formattedTransactions.push({
+              id: o.paymentId,
+              user: `${o.customer.name} (${o.customer.email})`,
+              customerEmail: o.customer.email,
+              customerName: o.customer.name,
+              amount: o.amount,
+              status: 'Completed',
+              date: new Date(o.createdAt).toLocaleString(),
+              template: o.template.title,
+              avatar: o.customer.name.charAt(0).toUpperCase()
+            });
+          });
+        } else {
+          // Fallback: Fetch via Supabase client directly
+          const { count: usersCount } = await supabase
+            .from('profiles')
+            .select('*', { count: 'exact', head: true });
+          fetchedUsersCount = usersCount || 0;
+
+          let query = supabase
+            .from('purchases')
+            .select('id, user_id, template_id, created_at, payment_id')
+            .order('created_at', { ascending: false });
+
+          if (dateFilter === '7days') {
+            const d = new Date();
+            d.setDate(d.getDate() - 7);
+            query = query.gte('created_at', d.toISOString());
+          } else if (dateFilter === '30days') {
+            const d = new Date();
+            d.setDate(d.getDate() - 30);
+            query = query.gte('created_at', d.toISOString());
+          }
+          
+          const { data: purchases } = await query;
+
+          if (purchases && purchases.length > 0) {
+            const { data: allProfiles } = await supabase.from('profiles').select('id, full_name');
+            
+            purchases.forEach(p => {
+              const template = marketplaceTemplates.find(t => t.id === p.template_id);
+              const price = template ? parseFloat(template.price) : 0;
+              totalRevenue += price;
+
+              const userProfile = allProfiles?.find(prof => prof.id === p.user_id);
+              const userName = userProfile?.full_name || 'Customer';
+
+              formattedTransactions.push({
+                id: p.payment_id || p.id.split('-')[0].toUpperCase(),
+                user: userName,
+                amount: price,
+                status: 'Completed',
+                date: new Date(p.created_at).toLocaleString(),
+                template: template?.title || 'Template #' + p.template_id,
+                avatar: userName.charAt(0).toUpperCase()
+              });
+            });
+          }
+        }
+
+        if (!isMounted) return;
+
+        setTransactions(formattedTransactions);
+
+        const salesCount = formattedTransactions.length;
+        setStats({
+          revenue: totalRevenue,
+          sales: salesCount,
+          users: fetchedUsersCount,
+          templates: marketplaceTemplates.length,
+          aov: salesCount > 0 ? totalRevenue / salesCount : 0
+        });
+        
+        // Calculate Real-Time Chart Data
+        const last7Days = Array.from({length: 7}).map((_, i) => {
+          const d = new Date();
+          d.setDate(d.getDate() - (6 - i));
+          return {
+            dateObj: d,
+            name: d.toLocaleDateString('en-US', { weekday: 'short' }),
+            revenue: 0,
+            visitors: 0
+          };
+        });
+
+        const categoryMap = {};
+
+        formattedTransactions.forEach(t => {
+          // Revenue Chart aggregation
+          const tDate = new Date(t.date);
+          const dayMatch = last7Days.find(d => 
+            d.dateObj.getDate() === tDate.getDate() && 
+            d.dateObj.getMonth() === tDate.getMonth() &&
+            d.dateObj.getFullYear() === tDate.getFullYear()
+          );
+          if (dayMatch) {
+            dayMatch.revenue += t.amount;
+          }
+
+          // Category Pie Chart aggregation
+          const tmpl = marketplaceTemplates.find(m => m.title === t.template);
+          if (tmpl) {
+            const cat = tmpl.tag;
+            categoryMap[cat] = (categoryMap[cat] || 0) + t.amount;
+          }
+        });
+        
+        setChartRevenueData(last7Days);
+
+        const newCategoryData = Object.entries(categoryMap)
+          .map(([name, value]) => ({ name, value }))
+          .sort((a, b) => b.value - a.value)
+          .slice(0, 4); // Keep top 4 for pie chart
+
+        setChartCategoryData(newCategoryData);
+        setTransactions(formattedTransactions.slice(0, 10)); // Top 10 recent
+      } catch (err) {
+        console.error("Dashboard data fetch error:", err);
+      } finally {
+        if (isMounted) setIsLoading(false);
+      }
+    };
+
+    loadData();
+    return () => { isMounted = false; };
+  }, [isAdmin, dateFilter, marketplaceTemplates, syncKey]);
+
+  useEffect(() => {
     window.scrollTo(0, 0);
     const timer = setInterval(() => setCurrentTime(new Date()), 60000);
     return () => clearInterval(timer);
   }, []);
-
-  useEffect(() => {
-    if (isAdmin) {
-      fetchDashboardData();
-    }
-  }, [isAdmin, dateFilter]);
-
-  const fetchDashboardData = async () => {
-    try {
-      setIsLoading(true);
-      // 1. Fetch Users Count
-      const { count: usersCount, error: usersError } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true });
-
-      // 2. Fetch all purchases (requires RLS policy for Admin)
-      let query = supabase
-        .from('purchases')
-        .select('id, user_id, template_id, created_at, payment_id')
-        .order('created_at', { ascending: false });
-
-      if (dateFilter === '7days') {
-        const d = new Date();
-        d.setDate(d.getDate() - 7);
-        query = query.gte('created_at', d.toISOString());
-      } else if (dateFilter === '30days') {
-        const d = new Date();
-        d.setDate(d.getDate() - 30);
-        query = query.gte('created_at', d.toISOString());
-      }
-      
-      const { data: purchases, error: purchasesError } = await query;
-
-      if (purchasesError) {
-        console.error("Error fetching purchases:", purchasesError);
-      }
-
-      let totalRevenue = 0;
-      let formattedTransactions = [];
-
-      if (purchases && purchases.length > 0) {
-        // We also need to fetch profiles for the names
-        const { data: allProfiles } = await supabase.from('profiles').select('id, full_name');
-        
-        purchases.forEach(p => {
-          const template = marketplaceTemplates.find(t => t.id === p.template_id);
-          const price = template ? parseFloat(template.price) : 0;
-          totalRevenue += price;
-
-          const userProfile = allProfiles?.find(prof => prof.id === p.user_id);
-          const userName = userProfile?.full_name || 'Anonymous User';
-
-          formattedTransactions.push({
-            id: p.payment_id || p.id.split('-')[0].toUpperCase(), // Use Razorpay ID if available!
-            user: userName,
-            amount: price,
-            status: 'Completed',
-            date: new Date(p.created_at).toLocaleString(),
-            template: template?.title || 'Unknown Template',
-            avatar: userName.charAt(0).toUpperCase()
-          });
-        });
-      } 
-      
-      // Calculate derived stats
-      const salesCount = formattedTransactions.length;
-      const uniqueUsers = new Set(formattedTransactions.map(t => t.user)).size;
-      
-      setStats({
-        revenue: totalRevenue,
-        sales: salesCount,
-        users: usersCount || 0,
-        templates: marketplaceTemplates.length,
-        aov: salesCount > 0 ? totalRevenue / salesCount : 0
-      });
-      
-      // Calculate Real-Time Chart Data
-      const last7Days = Array.from({length: 7}).map((_, i) => {
-        const d = new Date();
-        d.setDate(d.getDate() - (6 - i));
-        return {
-          dateObj: d,
-          name: d.toLocaleDateString('en-US', { weekday: 'short' }),
-          revenue: 0,
-          visitors: 0 // real visitors data not tracked yet
-        };
-      });
-
-      const categoryMap = {};
-
-      formattedTransactions.forEach(t => {
-        // Revenue Chart aggregation
-        const tDate = new Date(t.date);
-        const dayMatch = last7Days.find(d => 
-          d.dateObj.getDate() === tDate.getDate() && 
-          d.dateObj.getMonth() === tDate.getMonth() &&
-          d.dateObj.getFullYear() === tDate.getFullYear()
-        );
-        if (dayMatch) {
-          dayMatch.revenue += t.amount;
-        }
-
-        // Category Pie Chart aggregation
-        const tmpl = marketplaceTemplates.find(m => m.title === t.template);
-        if (tmpl) {
-          const cat = tmpl.tag;
-          categoryMap[cat] = (categoryMap[cat] || 0) + t.amount;
-        }
-      });
-      
-      setChartRevenueData(last7Days);
-
-      const newCategoryData = Object.entries(categoryMap)
-        .map(([name, value]) => ({ name, value }))
-        .sort((a, b) => b.value - a.value)
-        .slice(0, 4); // Keep top 4 for pie chart
-
-      setChartCategoryData(newCategoryData);
-
-      setTransactions(formattedTransactions.slice(0, 10)); // Top 10 recent
-    } catch (err) {
-      console.error("Dashboard data fetch error:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   if (!isAdmin) {
     return (
@@ -358,7 +411,7 @@ export default function DashboardPage() {
                 <option value="7days" className="bg-white dark:bg-[#111] text-gray-900 dark:text-white">Last 7 Days</option>
               </select>
               <button 
-                onClick={fetchDashboardData}
+                onClick={() => setSyncKey(k => k + 1)}
                 className="px-5 py-2.5 bg-white dark:bg-[#111] border border-gray-200 dark:border-white/10 rounded-xl font-bold text-sm hover:shadow-lg transition-all flex items-center gap-2"
               >
                 {isLoading ? <Activity className="w-4 h-4 animate-spin" /> : <Activity className="w-4 h-4" />}

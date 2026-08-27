@@ -9,37 +9,35 @@ const WishlistContext = createContext();
 export const useWishlist = () => useContext(WishlistContext);
 
 export const WishlistProvider = ({ children }) => {
-  const [wishlistItems, setWishlistItems] = useState([]);
   const { user, requireAuth } = useAuth();
   const { templates } = useTemplates();
+  const [localWishlistIds, setLocalWishlistIds] = useState(null);
 
-  // Load wishlist from User Metadata
-  useEffect(() => {
-    if (user && templates.length > 0) {
-      const savedIds = user.user_metadata?.wishlist_templates || [];
-      const newSavedObjects = templates.filter(t => savedIds.includes(t.id));
-      setWishlistItems(newSavedObjects);
-    } else if (!user) {
-      setWishlistItems([]);
-    }
-  }, [user, templates]);
+  const savedIds = React.useMemo(() => {
+    if (localWishlistIds !== null) return localWishlistIds;
+    if (!user) return [];
+    return (user.user_metadata?.wishlist_templates || []).map(String);
+  }, [user, localWishlistIds]);
+
+  const wishlistItems = React.useMemo(() => {
+    return templates.filter(t => savedIds.includes(String(t.id)));
+  }, [templates, savedIds]);
 
   const toggleWishlist = (product) => {
     requireAuth(async () => {
-      const isCurrentlyInWishlist = wishlistItems.some(item => item.id === product.id);
+      const isCurrentlyInWishlist = savedIds.includes(String(product.id));
       
-      let newWishlist;
+      const newIds = isCurrentlyInWishlist
+        ? savedIds.filter(id => id !== String(product.id))
+        : [...savedIds, String(product.id)];
+        
+      setLocalWishlistIds(newIds);
+      
       if (isCurrentlyInWishlist) {
-        newWishlist = wishlistItems.filter(item => item.id !== product.id);
         toast.info(`${product.title} removed from wishlist.`);
       } else {
-        newWishlist = [...wishlistItems, product];
         toast.success(`${product.title} added to wishlist!`);
       }
-      
-      setWishlistItems(newWishlist);
-      
-      const newIds = newWishlist.map(item => item.id);
       
       const { error } = await supabase.auth.updateUser({
         data: { wishlist_templates: newIds }
@@ -53,7 +51,7 @@ export const WishlistProvider = ({ children }) => {
   };
 
   const isInWishlist = (productId) => {
-    return wishlistItems.some(item => item.id === productId);
+    return savedIds.includes(String(productId));
   };
 
   return (

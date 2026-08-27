@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import confetti from 'canvas-confetti';
 import { Download, LayoutTemplate, ArrowLeft, Loader2, CheckCircle2, Eye } from 'lucide-react';
@@ -13,6 +13,93 @@ export default function MyTemplatesPage() {
   const [downloading, setDownloading] = useState({});
   const location = useLocation();
   const navigate = useNavigate();
+
+  const handleDownload = useCallback(async (templateId, templateTitle) => {
+    if (downloading[templateId]) return;
+
+    setDownloading(prev => ({ ...prev, [templateId]: { progress: 0, done: false, link: null } }));
+    toast.info(`Authenticating & generating secure token for ${templateTitle}...`);
+    
+    // Fake progress animation for UX
+    let progress = 0;
+    const progressInterval = setInterval(() => {
+      progress += Math.floor(Math.random() * 20) + 10;
+      if (progress < 90) {
+        setDownloading(prev => ({ ...prev, [templateId]: { progress, done: false, link: null } }));
+      }
+    }, 400);
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Not authenticated");
+
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || '';
+      const targetUrls = [];
+      if (backendUrl) targetUrls.push(`${backendUrl}/api/generate-download`);
+      targetUrls.push('/api/generate-download');
+
+      let response = null;
+      let data = {};
+
+      for (const url of targetUrls) {
+        try {
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${session.access_token}`
+            },
+            body: JSON.stringify({ templateId })
+          });
+
+          const text = await res.text();
+          data = text ? JSON.parse(text) : {};
+          if (res.ok && data.downloadUrl) {
+            response = res;
+            break;
+          }
+        } catch {
+          // Try next target URL
+        }
+      }
+
+      clearInterval(progressInterval);
+
+      if (!response || !response.ok || !data.downloadUrl) {
+        throw new Error(data.error || "Failed to generate download link");
+      }
+
+      setDownloading(prev => ({ 
+        ...prev, 
+        [templateId]: { progress: 100, done: true, link: data.downloadUrl } 
+      }));
+      
+      toast.success(`Secure temporary link generated!`, {
+        icon: <CheckCircle2 className="w-5 h-5 text-green-500" />
+      });
+
+      // Automatically reset the link right before it expires (55 seconds)
+      setTimeout(() => {
+        setDownloading(prev => {
+          const newState = { ...prev };
+          if (newState[templateId]?.done) {
+            delete newState[templateId]; // reset entirely
+          }
+          return newState;
+        });
+        toast.info(`The secure link for ${templateTitle} has expired. Please generate a new one if needed.`);
+      }, 55000);
+      
+    } catch (error) {
+      clearInterval(progressInterval);
+      setDownloading(prev => {
+        const newState = { ...prev };
+        delete newState[templateId];
+        return newState;
+      });
+      toast.error(error.message || "Failed to download template. Please try again.");
+    }
+  }, [downloading]);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -39,82 +126,21 @@ export default function MyTemplatesPage() {
     }
   }, [location, navigate, loadPurchasedTemplates]);
 
-
-
-  const handleDownload = async (templateId, templateTitle) => {
-    if (downloading[templateId]) return;
-
-    setDownloading(prev => ({ ...prev, [templateId]: { progress: 0, done: false, link: null } }));
-    toast.info(`Authenticating & generating secure token for ${templateTitle}...`);
-    
-    // Fake progress animation for UX
-    let progress = 0;
-    const progressInterval = setInterval(() => {
-      progress += Math.floor(Math.random() * 20) + 10;
-      if (progress < 90) {
-        setDownloading(prev => ({ ...prev, [templateId]: { progress, done: false, link: null } }));
+  // Handle direct download trigger from email link: /my-templates?download=<id>
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const downloadId = searchParams.get('download');
+    if (downloadId && purchasedTemplates && purchasedTemplates.length > 0) {
+      const targetTmpl = purchasedTemplates.find(t => String(t.id) === String(downloadId));
+      if (targetTmpl && !downloading[targetTmpl.id]) {
+        const timer = setTimeout(() => {
+          handleDownload(targetTmpl.id, targetTmpl.title);
+          navigate('.', { replace: true, state: {} });
+        }, 150);
+        return () => clearTimeout(timer);
       }
-    }, 400);
-
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error("Not authenticated");
-
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || '';
-      const response = await fetch(`${backendUrl}/api/generate-download`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
-        },
-        body: JSON.stringify({ templateId })
-      });
-
-      let data = {};
-      try {
-        const text = await response.text();
-        data = text ? JSON.parse(text) : {};
-      } catch (e) {
-        data = { error: `Server returned status ${response.status}` };
-      }
-      
-      clearInterval(progressInterval);
-
-      if (!response.ok) {
-        throw new Error(data.error || "Failed to generate download link");
-      }
-
-      setDownloading(prev => ({ 
-        ...prev, 
-        [templateId]: { progress: 100, done: true, link: data.downloadUrl } 
-      }));
-      
-      toast.success(`Secure temporary link generated!`, {
-        icon: <CheckCircle2 className="w-5 h-5 text-green-500" />
-      });
-
-      // Automatically reset the link right before it expires (55 seconds)
-      setTimeout(() => {
-        setDownloading(prev => {
-          const newState = { ...prev };
-          if (newState[templateId]?.done) {
-             delete newState[templateId]; // reset entirely
-          }
-          return newState;
-        });
-        toast.info(`The secure link for ${templateTitle} has expired. Please generate a new one if needed.`);
-      }, 55000);
-      
-    } catch (error) {
-      clearInterval(progressInterval);
-      setDownloading(prev => {
-        const newState = { ...prev };
-        delete newState[templateId];
-        return newState;
-      });
-      toast.error(error.message || "Failed to download template. Please try again.");
     }
-  };
+  }, [location.search, purchasedTemplates, downloading, handleDownload, navigate]);
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-black text-black dark:text-white font-sans pb-24 transition-colors duration-500">

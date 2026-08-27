@@ -6,17 +6,16 @@ import { useCart } from './CartContext';
 import SEO from './components/SEO';
 
 export default function App() {
-  const [mountSpline, setMountSpline] = useState(false); // Delay mounting 3D scene until intro is done
-  const [introVisible, setIntroVisible] = useState(true);
   const { hasPlayedIntro, setHasPlayedIntro } = useCart();
+  const shouldSkip = typeof window !== 'undefined' && (window.location.hash === '#catalog' || hasPlayedIntro);
+  const [mountSpline, setMountSpline] = useState(() => shouldSkip);
+  const [introVisible, setIntroVisible] = useState(() => !shouldSkip);
 
   useEffect(() => {
     const skipIntro = window.location.hash === '#catalog' || hasPlayedIntro;
 
     if (skipIntro) {
-      setIntroVisible(false);
       document.body.style.overflow = 'auto';
-      setMountSpline(true);
       gsap.set(".scene-7-hero", { clearProps: "all", pointerEvents: "auto" });
       gsap.set(".hero-nav, .info-stagger", { opacity: 1, y: 0 });
       if (window.location.hash === '#catalog') {
@@ -25,8 +24,7 @@ export default function App() {
           if (el) el.scrollIntoView({ behavior: 'smooth' });
         }, 100);
       }
-      return () => {
-      };
+      return;
     }
 
     setHasPlayedIntro(true);

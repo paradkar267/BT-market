@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function LiquidChrome({ baseColor = [0,0,0], speed = 1, amplitude = 0.1, interactive = false }) {
+export default function LiquidChrome({ baseColor = [0,0,0], speed = 1 }) {
   const r = Math.round(baseColor[0] * 255);
   const g = Math.round(baseColor[1] * 255);
   const b = Math.round(baseColor[2] * 255);

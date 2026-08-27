@@ -69,7 +69,7 @@ export default function PreviewPage() {
   };
 
   // Find the template
-  let template = templates.find(t => t.id === parseInt(id));
+  let template = templates.find(t => String(t.id) === String(id));
   if (template) {
     template = { ...template, is_sold_out: false };
   }

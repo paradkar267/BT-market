@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { NavBar } from './tubelight-navbar';
-import { Home, LayoutTemplate, Layers } from 'lucide-react';
+import { Home, LayoutTemplate } from 'lucide-react';
 import { CategoryDropdown } from './CategoryDropdown';
 
 export function CenterNav() {

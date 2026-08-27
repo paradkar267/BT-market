@@ -169,7 +169,7 @@ export default function SocialCards({ cards }) {
         let targetY = base.y * hM;
         let targetRot = base.rot;
         let targetScale = base.scale;
-        let delay = 0;
+        let delay;
 
         if (hoveredSlot !== null) {
           const distance = Math.abs(slot - hoveredSlot);

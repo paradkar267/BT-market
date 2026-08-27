@@ -13,6 +13,51 @@ import { Logo } from './components/ui/Logo';
 import { CenterNav } from './components/ui/CenterNav';
 import SEO from './components/SEO';
 
+function SidebarFilters({ searchQuery, setSearchQuery, priceRange, setPriceRange, isDark }) {
+  return (
+    <div className="space-y-8">
+      {/* Search */}
+      <div>
+        <h3 className="text-sm font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">Search UI Kits</h3>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <input 
+            type="text" 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search..." 
+            className={`w-full pl-10 pr-4 py-2.5 border rounded-xl outline-none transition-all text-sm font-medium shadow-sm ${isDark ? 'bg-white/5 border-white/10 text-white focus:border-white/30 placeholder:text-gray-500' : 'bg-white border-gray-200 text-black focus:border-black placeholder:text-gray-400'}`}
+          />
+        </div>
+      </div>
+
+      {/* Price */}
+      <div>
+        <h3 className="text-sm font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">Price Range</h3>
+        <div className="space-y-2">
+          {[
+            { id: "all", label: "Any Price" },
+            { id: "free", label: "Free" },
+            { id: "under6000", label: "Under ₹6000" },
+            { id: "6000to8000", label: "₹6000 to ₹8000" },
+            { id: "over8000", label: "₹8000 & Above" },
+          ].map(range => (
+            <label key={range.id} className="flex items-center gap-3 cursor-pointer group py-1">
+              <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${priceRange === range.id ? (isDark ? 'border-white' : 'border-black') : (isDark ? 'border-white/20 group-hover:border-white/50' : 'border-gray-300 group-hover:border-black')}`}>
+                {priceRange === range.id && (
+                  <div className={`w-2.5 h-2.5 rounded-full ${isDark ? 'bg-white' : 'bg-black'}`} />
+                )}
+              </div>
+              <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{range.label}</span>
+              <input type="radio" className="hidden" name="price" checked={priceRange === range.id} onChange={() => setPriceRange(range.id)} />
+            </label>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function UiKitsPage() {
   const { cartItems } = useCart();
   const { theme } = useTheme();
@@ -60,49 +105,6 @@ export default function UiKitsPage() {
                           
     return matchesPrice && matchesSearch && matchesTag;
   });
-
-  const SidebarContent = () => (
-    <div className="space-y-8">
-      {/* Search */}
-      <div>
-        <h3 className="text-sm font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">Search UI Kits</h3>
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input 
-            type="text" 
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search..." 
-            className={`w-full pl-10 pr-4 py-2.5 border rounded-xl outline-none transition-all text-sm font-medium shadow-sm ${isDark ? 'bg-white/5 border-white/10 text-white focus:border-white/30 placeholder:text-gray-500' : 'bg-white border-gray-200 text-black focus:border-black placeholder:text-gray-400'}`}
-          />
-        </div>
-      </div>
-
-      {/* Price */}
-      <div>
-        <h3 className="text-sm font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">Price Range</h3>
-        <div className="space-y-2">
-          {[
-            { id: "all", label: "Any Price" },
-            { id: "free", label: "Free" },
-            { id: "under6000", label: "Under ₹6000" },
-            { id: "6000to8000", label: "₹6000 to ₹8000" },
-            { id: "over8000", label: "₹8000 & Above" },
-          ].map(range => (
-            <label key={range.id} className="flex items-center gap-3 cursor-pointer group py-1">
-              <div className={`w-5 h-5 rounded-full border flex items-center justify-center transition-colors ${priceRange === range.id ? (isDark ? 'border-white' : 'border-black') : (isDark ? 'border-white/20 group-hover:border-white/50' : 'border-gray-300 group-hover:border-black')}`}>
-                {priceRange === range.id && (
-                  <div className={`w-2.5 h-2.5 rounded-full ${isDark ? 'bg-white' : 'bg-black'}`} />
-                )}
-              </div>
-              <span className={`text-sm font-medium ${isDark ? 'text-gray-300' : 'text-gray-700'}`}>{range.label}</span>
-              <input type="radio" className="hidden" name="price" checked={priceRange === range.id} onChange={() => setPriceRange(range.id)} />
-            </label>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
 
   return (
     <div className={`min-h-screen flex flex-col font-sans pb-32 transition-colors duration-1000 ${isDark ? 'bg-transparent text-white' : 'bg-gray-50 text-black'}`}>
@@ -154,7 +156,7 @@ export default function UiKitsPage() {
           
           {/* Desktop Sidebar Filter */}
           <aside className={`hidden lg:block w-72 shrink-0 p-6 rounded-3xl border shadow-sm sticky top-[120px] transition-colors ${isDark ? 'bg-white/5 border-white/10' : 'bg-white border-gray-200'}`}>
-            <SidebarContent />
+            <SidebarFilters searchQuery={searchQuery} setSearchQuery={setSearchQuery} priceRange={priceRange} setPriceRange={setPriceRange} isDark={isDark} />
           </aside>
 
           {/* Mobile Filter Button */}
@@ -185,7 +187,7 @@ export default function UiKitsPage() {
                       <X className="w-5 h-5" />
                     </button>
                   </div>
-                  <SidebarContent />
+                  <SidebarFilters searchQuery={searchQuery} setSearchQuery={setSearchQuery} priceRange={priceRange} setPriceRange={setPriceRange} isDark={isDark} />
                 </motion.div>
               </>
             )}

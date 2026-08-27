@@ -61,8 +61,6 @@ export function CommandPalette() {
     });
   }, [query, templates]);
 
-  if (!isOpen) return null;
-
   return (
     <AnimatePresence>
       {isOpen && (

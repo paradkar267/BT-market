@@ -25,7 +25,7 @@ export function ReviewsSection({ templateId }) {
 
   const hasPurchased = purchasedTemplates.some(t => t.id === templateId);
 
-  const fetchReviews = async () => {
+  const fetchReviews = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from('reviews')
@@ -44,10 +44,31 @@ export function ReviewsSection({ templateId }) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [templateId]);
 
   useEffect(() => {
-    fetchReviews();
+    let isMounted = true;
+    const load = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('reviews')
+          .select('*')
+          .eq('template_id', templateId)
+          .order('created_at', { ascending: false });
+        if (!isMounted) return;
+        if (error) {
+          setReviews([]);
+        } else {
+          setReviews(data || []);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+    load();
+    return () => { isMounted = false; };
   }, [templateId]);
 
   const [deleteReviewId, setDeleteReviewId] = useState(null);

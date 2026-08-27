@@ -44,14 +44,14 @@ export default function ProductPage() {
     );
   }
 
-  let template = templates.find(t => t.id === parseInt(id));
+  let template = templates.find(t => String(t.id) === String(id));
   if (template) {
     template = { ...template, is_sold_out: false };
   }
 
-  const inCart = template ? cartItems.some(item => item.id === template.id) : false;
-  const isOwned = template ? purchasedTemplates?.some(item => item.id === template.id) : false;
-  const similarTemplates = template ? templates.filter(t => t.category === template.category && t.id !== template.id).slice(0, 3) : [];
+  const inCart = template ? cartItems.some(item => String(item.id) === String(template.id)) : false;
+  const isOwned = template ? purchasedTemplates?.some(item => String(item.id) === String(template.id)) : false;
+  const similarTemplates = template ? templates.filter(t => t.category === template.category && String(t.id) !== String(template.id)).slice(0, 3) : [];
 
   if (!template) {
     return (

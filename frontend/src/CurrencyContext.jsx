@@ -20,15 +20,17 @@ const SYMBOLS = {
 };
 
 export function CurrencyProvider({ children }) {
-  const [currency, setCurrency] = useState('INR');
-
-  // Load saved currency from local storage on mount
-  useEffect(() => {
-    const savedCurrency = localStorage.getItem('bt_market_currency');
-    if (savedCurrency && RATES[savedCurrency]) {
-      setCurrency(savedCurrency);
+  const [currency, setCurrency] = useState(() => {
+    try {
+      const savedCurrency = localStorage.getItem('bt_market_currency');
+      if (savedCurrency && RATES[savedCurrency]) {
+        return savedCurrency;
+      }
+    } catch {
+      // Ignore localStorage error
     }
-  }, []);
+    return 'INR';
+  });
 
   const changeCurrency = (newCurrency) => {
     if (RATES[newCurrency]) {

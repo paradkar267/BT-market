@@ -98,12 +98,13 @@ createRoot(document.getElementById('root')).render(
                       <Route path="/product/:id" element={<ProductPage />} />
                       <Route path="/cart" element={<ProtectedRoute><CartPage /></ProtectedRoute>} />
                       <Route path="/templates" element={<TemplatesPage />} />
+                      <Route path="/explore" element={<TemplatesPage />} />
                       <Route path="/featured" element={<FeaturedPage />} />
                       <Route path="/my-templates" element={<ProtectedRoute><MyTemplatesPage /></ProtectedRoute>} />
                       <Route path="/wishlist" element={<ProtectedRoute><WishlistPage /></ProtectedRoute>} />
                       <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
                       <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
-                      <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
+                      <Route path="/dashboard" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
                       <Route path="/contact" element={<ContactPage />} />
                       <Route path="/ui-kits" element={<UiKitsPage />} />
                       <Route path="/reset-password" element={<ResetPasswordPage />} />

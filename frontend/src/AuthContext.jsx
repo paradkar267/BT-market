@@ -7,46 +7,20 @@ const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
+  const [session, setSession] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [pendingAction, setPendingAction] = useState(null);
+  const pendingActionRef = React.useRef(null);
 
-  // Authentication Setup & Listeners
-  useEffect(() => {
-    let subscription;
-
-    const initializeAuth = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        if (error) throw error;
-        handleUserSession(session?.user);
-      } catch (err) {
-        console.error('Session Error:', err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    initializeAuth();
-
-    const { data } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_OUT') {
-        setUser(null);
-        setProfile(null);
-      } else if (session?.user) {
-        handleUserSession(session.user);
-      }
-    });
-    
-    subscription = data.subscription;
-    return () => {
-      if (subscription) subscription.unsubscribe();
-    };
-  }, []);
-
-  const handleUserSession = async (currentUser) => {
-    if (!currentUser) return;
+  const handleUserSession = async (currentSession) => {
+    setSession(currentSession || null);
+    const currentUser = currentSession?.user || null;
+    if (!currentUser) {
+      setUser(null);
+      setProfile(null);
+      return;
+    }
     setUser(currentUser);
     
     const rawFullName = currentUser?.user_metadata?.full_name;
@@ -58,42 +32,72 @@ export function AuthProvider({ children }) {
     };
     setProfile(prev => ({ ...prev, ...authProfile }));
 
+    if (pendingActionRef.current) {
+      const action = pendingActionRef.current;
+      pendingActionRef.current = null;
+      action();
+    }
+
     // Try fetching from profiles table
     try {
       const { data, error } = await supabase.from('profiles').select('*').eq('id', currentUser.id).single();
       if (!error && data) {
-        // We merge data from the profiles table, BUT we make sure authProfile 
-        // (which is the most up-to-date metadata) overwrites any stale full_name or avatar_url
         setProfile(prev => ({ ...prev, ...data, ...authProfile }));
       }
-    } catch (err) {
+    } catch {
       // Ignore if table doesn't exist
     }
   };
+
+  // Authentication Setup & Listeners
+  useEffect(() => {
+    let subscription;
+
+    const initializeAuth = async () => {
+      try {
+        const { data: { session: initialSession }, error } = await supabase.auth.getSession();
+        if (error) throw error;
+        await handleUserSession(initialSession);
+      } catch (err) {
+        console.error('Session Error:', err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    initializeAuth();
+
+    const { data } = supabase.auth.onAuthStateChange((event, currentSession) => {
+      if (event === 'SIGNED_OUT') {
+        setUser(null);
+        setSession(null);
+        setProfile(null);
+      } else if (currentSession) {
+        handleUserSession(currentSession);
+      }
+    });
+    
+    subscription = data.subscription;
+    return () => {
+      if (subscription) subscription.unsubscribe();
+    };
+  }, []);
 
   // Modal Actions
   const openAuthModal = () => setIsAuthModalOpen(true);
   const closeAuthModal = () => {
     setIsAuthModalOpen(false);
-    setPendingAction(null);
+    pendingActionRef.current = null;
   };
 
   const requireAuth = (action) => {
     if (user) {
       action();
     } else {
-      setPendingAction(() => action);
+      pendingActionRef.current = action;
       openAuthModal();
     }
   };
-
-  // Execute pending action after login
-  useEffect(() => {
-    if (user && pendingAction) {
-      pendingAction();
-      setPendingAction(null);
-    }
-  }, [user, pendingAction]);
 
   // Auth Operations
   const signInWithGoogle = async () => {
@@ -213,7 +217,7 @@ export function AuthProvider({ children }) {
   const isAdmin = user?.email?.toLowerCase() === (import.meta.env.VITE_ADMIN_EMAIL?.toLowerCase() || 'bizleap1@gmail.com');
 
   return (
-    <AuthContext.Provider value={{ user, profile, setProfile, isAdmin, loading, signInWithGoogle, signInWithGithub, signInWithFigma, signIn, signUp, verifyOtp, resetPassword, updatePassword, signOut, openAuthModal, closeAuthModal, requireAuth }}>
+    <AuthContext.Provider value={{ user, session, profile, setProfile, isAdmin, loading, signInWithGoogle, signInWithGithub, signInWithFigma, signIn, signUp, verifyOtp, resetPassword, updatePassword, signOut, openAuthModal, closeAuthModal, requireAuth }}>
       {children}
       <AuthModal isOpen={isAuthModalOpen} onClose={closeAuthModal} />
     </AuthContext.Provider>

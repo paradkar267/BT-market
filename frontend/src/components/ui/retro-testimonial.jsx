@@ -26,6 +26,28 @@ const useOutsideClick = (ref, onOutsideClick) => {
 };
 
 // ===== Components =====
+const CarouselItem = ({ item, index, onCardClose }) => (
+	<motion.div
+		initial={{ opacity: 0, y: 20 }}
+		animate={{
+			opacity: 1,
+			y: 0,
+			transition: {
+				duration: 0.5,
+				delay: 0.2 * index,
+				ease: "easeOut",
+				once: true,
+			},
+		}}
+		key={`card-${index}`}
+		className="last:pr-[5%] md:last:pr-[33%] rounded-3xl"
+	>
+		{React.cloneElement(item, {
+			onCardClose: () => onCardClose(index),
+		})}
+	</motion.div>
+);
+
 const Carousel = ({ items, initialScroll = 0 }) => {
 	const carouselRef = React.useRef(null);
 	const [canScrollLeft, setCanScrollLeft] = React.useState(false);
@@ -53,18 +75,14 @@ const Carousel = ({ items, initialScroll = 0 }) => {
 
 	const handleCardClose = (index) => {
 		if (carouselRef.current) {
-			const cardWidth = isMobile() ? 230 : 384;
-			const gap = isMobile() ? 4 : 8;
+			const cardWidth = window && window.innerWidth < 768 ? 230 : 384;
+			const gap = window && window.innerWidth < 768 ? 4 : 8;
 			const scrollPosition = (cardWidth + gap) * (index + 1);
 			carouselRef.current.scrollTo({
 				left: scrollPosition,
 				behavior: "smooth",
 			});
 		}
-	};
-
-	const isMobile = () => {
-		return window && window.innerWidth < 768;
 	};
 
 	useEffect(() => {
@@ -98,31 +116,14 @@ const Carousel = ({ items, initialScroll = 0 }) => {
 						"max-w-5xl mx-auto",
 					)}
 				>
-					{items.map((item, index) => {
-						return (
-							<motion.div
-								initial={{ opacity: 0, y: 20 }}
-								animate={{
-									opacity: 1,
-									y: 0,
-									transition: {
-										duration: 0.5,
-										delay: 0.2 * index,
-										ease: "easeOut",
-										once: true,
-									},
-								}}
-								key={`card-${index}`}
-								className="last:pr-[5%] md:last:pr-[33%] rounded-3xl"
-							>
-								{React.cloneElement(item, {
-									onCardClose: () => {
-										return handleCardClose(index);
-									},
-								})}
-							</motion.div>
-						);
-					})}
+					{items.map((item, index) => (
+						<CarouselItem
+							key={`item-${index}`}
+							item={item}
+							index={index}
+							onCardClose={handleCardClose}
+						/>
+					))}
 				</div>
 			</div>
 			<div className="flex justify-end gap-2 mt-4">
@@ -147,10 +148,9 @@ const Carousel = ({ items, initialScroll = 0 }) => {
 
 const TestimonialCard = ({
 	testimonial,
-	index,
+	_index,
 	layout = false,
 	onCardClose = () => {},
-	backgroundImage = "https://images.unsplash.com/photo-1686806372726-388d03ff49c8?q=80&w=3087&auto=format&fit=crop&ixlib=rb-4.1.0",
 }) => {
 	const [isExpanded, setIsExpanded] = useState(false);
 	const containerRef = useRef(null);
@@ -158,10 +158,10 @@ const TestimonialCard = ({
 	const handleExpand = () => {
 		return setIsExpanded(true);
 	};
-	const handleCollapse = () => {
+	const handleCollapse = React.useCallback(() => {
 		setIsExpanded(false);
 		onCardClose();
-	};
+	}, [onCardClose]);
 
 	useEffect(() => {
 		const handleEscapeKey = (event) => {
@@ -190,7 +190,7 @@ const TestimonialCard = ({
 		return () => {
 			return window.removeEventListener("keydown", handleEscapeKey);
 		};
-	}, [isExpanded]);
+	}, [isExpanded, handleCollapse]);
 
 	useOutsideClick(containerRef, handleCollapse);
 

@@ -3,26 +3,17 @@
 import * as React from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
-import { Textarea } from "@/components/ui/textarea"
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { Moon, Send, Sun } from "lucide-react"
+import { Send } from "lucide-react"
 import { FaFacebook, FaInstagram, FaLinkedin, FaTwitter } from "react-icons/fa"
 import { Link } from "react-router-dom"
 
-import { useTheme } from "../../ThemeContext"
-
 function Footerdemo() {
-  const { theme, setTheme } = useTheme();
-  const isDarkMode = theme === 'dark';
-  const setIsDarkMode = (checked) => setTheme(checked ? 'dark' : 'light');
-  const [isChatOpen, setIsChatOpen] = React.useState(false)
 
   return (
     <footer className="relative border-t border-black/5 dark:border-white/5 bg-gray-50/50 dark:bg-[#050505] text-foreground transition-colors duration-300 overflow-hidden">

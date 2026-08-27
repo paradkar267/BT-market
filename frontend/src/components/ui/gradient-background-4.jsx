@@ -1,4 +1,3 @@
-import { cn } from "@/lib/utils";
 import { useTheme } from "../../ThemeContext";
 
 export const GradientBackground = () => {

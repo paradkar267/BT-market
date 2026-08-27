@@ -23,9 +23,13 @@ export default function TemplatesPage() {
   const isDark = theme === 'dark';
   const { formatPrice, convertPrice, currency } = useCurrency();
   
+  const searchParams = new URLSearchParams(location.search);
+  const paramTech = searchParams.get('tech');
+  const paramTag = searchParams.get('tag') || "";
+
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedTechs, setSelectedTechs] = useState([]);
-  const [selectedTag, setSelectedTag] = useState("");
+  const [selectedTechs, setSelectedTechs] = useState(() => paramTech ? [paramTech] : []);
+  const [selectedTag, setSelectedTag] = useState(() => paramTag);
   const [priceRange, setPriceRange] = useState("all");
   const [sortOrder, setSortOrder] = useState("newest");
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
@@ -34,19 +38,8 @@ export default function TemplatesPage() {
     window.scrollTo(0, 0);
   }, []);
 
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const tech = params.get('tech');
-    const tag = params.get('tag');
-    if (tech) {
-      setSelectedTechs([tech]);
-    }
-    if (tag) {
-      setSelectedTag(tag);
-    } else {
-      setSelectedTag(""); // reset if tag is removed
-    }
-  }, [location.search]);
+  const activeTag = selectedTag || paramTag;
+  const activeTechs = selectedTechs.length > 0 ? selectedTechs : (paramTech ? [paramTech] : []);
 
   const { templates, loading } = useTemplates();
 
@@ -65,13 +58,13 @@ export default function TemplatesPage() {
 
   const filteredTemplates = useMemo(() => {
     return templates.filter(t => {
-      // Tech filter
-      const matchesTech = selectedTechs.length === 0 || selectedTechs.includes(t.category);
-      
-      // Tag / Business Category filter (smart matching)
+      // Tech category filter (multi-select)
+      const matchesTech = activeTechs.length === 0 || activeTechs.includes(t.category);
+
+      // Tag filter (Single-select OR smart search)
       let matchesTag = true;
-      if (selectedTag) {
-        const tagLower = selectedTag.toLowerCase();
+      if (activeTag) {
+        const tagLower = activeTag.toLowerCase();
         const tagWords = tagLower.split(/[\s&,-]+/).filter(w => w.length > 2);
         
         const titleL = (t.title || '').toLowerCase();
@@ -109,7 +102,7 @@ export default function TemplatesPage() {
       if (sortOrder === 'popular') return (b.sales * b.rating) - (a.sales * a.rating);
       return b.id - a.id;
     });
-  }, [templates, selectedTechs, selectedTag, priceRange, searchQuery, sortOrder, currency]);
+  }, [templates, activeTechs, activeTag, priceRange, searchQuery, sortOrder, currency, convertPrice]);
 
   const sidebarContent = (
     <div className="space-y-8">

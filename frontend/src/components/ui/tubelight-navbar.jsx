@@ -1,22 +1,10 @@
-import React, { useEffect, useState } from "react"
+import React, { useState } from "react"
 import { motion } from "framer-motion"
-import { Link } from "react-router-dom"
 import { cn } from "@/lib/utils"
 
 export function NavBar({ items, className, activeTab: externalActiveTab, onChange, children }) {
   const [internalActiveTab, setInternalActiveTab] = useState(items[0].name)
-  const [isMobile, setIsMobile] = useState(false)
   const activeTab = externalActiveTab !== undefined ? externalActiveTab : internalActiveTab;
-
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 768)
-    }
-
-    handleResize()
-    window.addEventListener("resize", handleResize)
-    return () => window.removeEventListener("resize", handleResize)
-  }, [])
 
   return (
     <div

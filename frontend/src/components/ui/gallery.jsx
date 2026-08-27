@@ -167,14 +167,9 @@ const MotionImage = motion(
 );
 
 export const Photo = ({ src, alt, title, className, direction, width, height, ...props }) => {
-  const [rotation, setRotation] = useState(0);
+  const [rotation] = useState(() => getRandomNumberInRange(1, 4) * (direction === "left" ? -1 : 1));
   const x = useMotionValue(200);
   const y = useMotionValue(200);
-
-  useEffect(() => {
-    const randomRotation = getRandomNumberInRange(1, 4) * (direction === "left" ? -1 : 1);
-    setRotation(randomRotation);
-  }, []);
 
   function handleMouse(event) {
     const rect = event.currentTarget.getBoundingClientRect();

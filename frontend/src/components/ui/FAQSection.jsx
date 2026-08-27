@@ -29,8 +29,8 @@ export function FAQSection() {
   };
 
   return (
-    <div className="max-w-[800px] mx-auto mt-24 mb-12">
-      <h3 className="text-3xl font-black text-center mb-10 text-gray-900 dark:text-white">
+    <div className="max-w-[800px] mx-auto py-6">
+      <h3 className="text-3xl font-black text-center mb-8 text-gray-900 dark:text-white">
         Frequently Asked Questions
       </h3>
       

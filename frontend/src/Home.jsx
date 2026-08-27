@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, Star, MoveRight, Layers, Zap, Infinity, ArrowUpRight, ShoppingCart, Code, LayoutTemplate, Palette, User, Smartphone, Box, Headset } from 'lucide-react';
-import { NavBar } from './components/ui/tubelight-navbar';
+import { Layers, Zap, Infinity as InfinityIcon, ShoppingCart, Search, MoveRight, Headset, Code2, ShieldCheck, Download, Sparkles, Gauge, CheckCircle2 } from 'lucide-react';
 import { useCart } from './CartContext';
 import { useTemplates } from './useTemplates';
 import { useAuth } from './AuthContext';
@@ -22,20 +21,17 @@ import { FAQSection } from './components/ui/FAQSection';
 
 import { Logo } from './components/ui/Logo';
 
-
 // DenseCard delegates to InteractiveProductCard
 export const DenseCard = ({ template }) => (
   <InteractiveProductCard template={template} />
 );
 
-
-export default function Home({ mountSpline }) {
-  const { cartItems, isLoggedIn } = useCart();
+export default function Home() {
+  const { cartItems } = useCart();
   const { requireAuth } = useAuth();
   const navigate = useNavigate();
   const filters = ["All", "Figma", "Next.js", "React", "Webflow", "Tailwind", "HTML", "Shopify", "React Native", "Framer"];
   const [activeFilter, setActiveFilter] = useState("All");
-
 
   const { templates: marketplaceTemplates, loading } = useTemplates();
   const filteredTemplates = activeFilter === "All" 
@@ -126,11 +122,11 @@ export default function Home({ mountSpline }) {
       <div className={`w-full relative z-50 pointer-events-auto flex flex-col items-center bg-white dark:bg-black text-black dark:text-white`}>
 
          {/* A. FEATURED THEMES - Moved to Top priority */}
-         <div className={`py-20 md:py-24 px-8 md:px-16 w-full max-w-[1600px] mx-auto`}>
-            <div className="flex justify-between items-end mb-16">
+         <div className={`pt-10 md:pt-14 pb-8 md:pb-10 px-6 md:px-16 w-full max-w-[1600px] mx-auto`}>
+            <div className="flex justify-between items-end mb-8 md:mb-10">
                <div>
-                  <h2 className="text-5xl md:text-6xl font-black tracking-tight mb-4 text-gray-900 dark:text-gray-100">Featured Themes</h2>
-                  <p className="text-gray-500 font-medium text-xl">Our highest-rated and meticulously crafted templates.</p>
+                  <h2 className="text-4xl md:text-5xl lg:text-6xl font-black tracking-tight mb-2 text-gray-900 dark:text-gray-100">Featured Themes</h2>
+                  <p className="text-gray-500 font-medium text-lg md:text-xl">Our highest-rated and meticulously crafted templates.</p>
                </div>
                <Link to="/templates" className={`hidden md:flex items-center gap-2 font-bold hover:gap-4 transition-all px-6 py-3 rounded-full bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:bg-gray-800 text-black dark:text-white border border-black/[0.05]`}>
                   View all featured <MoveRight className="w-5 h-5" />
@@ -143,27 +139,30 @@ export default function Home({ mountSpline }) {
              </div>
          </div>
 
-         {/* B. CATEGORY DIRECTORY - Art Gallery Style */}
-         <div className={`py-20 md:py-24 w-full border-y border-black/[0.03] dark:border-white/5 bg-gray-50/50 dark:bg-black`}>
-            <div className="max-w-[1600px] mx-auto px-8 md:px-16 overflow-hidden">
-               <div className="text-center mb-20 relative z-10">
-                  <h2 className={`text-5xl md:text-6xl font-black tracking-tight mb-6 text-gray-900 dark:text-gray-100`}>Explore Categories</h2>
-                  <p className="text-gray-500 font-medium text-xl max-w-2xl mx-auto">Discover industry-leading templates, curated perfectly for modern digital businesses.</p>
-               </div>
-               <div className="relative z-20">
-                 <ExploreCategories />
-               </div>
-            </div>
-         </div>
+          {/* B. CATEGORY DIRECTORY */}
+          <div className={`py-10 md:py-14 w-full border-y border-gray-100 dark:border-white/5 bg-gray-50/50 dark:bg-black relative overflow-hidden`}>
+             <div className="max-w-[1600px] mx-auto px-6 md:px-16">
+                <div className="text-center mb-8 md:mb-10 relative z-10">
+                   <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-cyan-50 dark:bg-cyan-500/10 border border-cyan-200 dark:border-cyan-500/20 text-cyan-600 dark:text-cyan-400 text-xs font-bold uppercase tracking-wider mb-3">
+                      Curated Architecture
+                   </div>
+                   <h2 className={`text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight mb-3 text-gray-900 dark:text-gray-100`}>Explore Categories</h2>
+                   <p className="text-gray-500 dark:text-gray-400 font-normal text-base sm:text-lg max-w-2xl mx-auto">Discover industry-leading templates, curated perfectly for modern digital businesses and engineers.</p>
+                </div>
+                <div className="relative z-20">
+                  <ExploreCategories />
+                </div>
+             </div>
+          </div>
 
          {/* C. CATALOG FILTER & TEMPLATES GRID */}
-         <div id="catalog" className={`pt-20 md:pt-24 pb-8 md:pb-10 px-8 md:px-16 w-full max-w-[1600px] mx-auto border-b border-black/[0.03] relative`}>
+         <div id="catalog" className={`pt-10 md:pt-14 pb-8 md:pb-10 px-6 md:px-16 w-full max-w-[1600px] mx-auto border-b border-black/[0.03] relative`}>
             
             {/* Soft Aurora Glow behind catalog */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-indigo-100/60 dark:bg-indigo-900/20 aurora-blob pointer-events-none"></div>
 
-            <div className="flex flex-col md:flex-row justify-between items-center mb-16 gap-6 relative z-10">
-               <h2 className="text-5xl md:text-6xl font-black tracking-tight text-gray-900 dark:text-gray-100">Newest Arrivals</h2>
+            <div className="flex flex-col md:flex-row justify-between items-center mb-8 md:mb-10 gap-6 relative z-10">
+               <h2 className="text-4xl md:text-5xl lg:text-6xl font-black tracking-tight text-gray-900 dark:text-gray-100">Newest Arrivals</h2>
                <Link to="/templates" className={`flex items-center gap-2 font-bold hover:gap-4 transition-all px-6 py-3 rounded-full bg-gray-50 dark:bg-gray-900 hover:bg-gray-100 dark:bg-gray-800 text-black dark:text-white border border-black/[0.05]`}>
                   Browse all <MoveRight className="w-5 h-5" />
                </Link>
@@ -188,153 +187,174 @@ export default function Home({ mountSpline }) {
             </div>
          </div>
 
-         {/* D. VALUE PROPOSITION — Premium Feature Showcase */}
-         <div className="pt-16 md:pt-24 pb-24 md:pb-32 w-full bg-white dark:bg-black relative overflow-hidden">
-            {/* Ambient background orbs */}
-            <div className="absolute top-1/4 -left-32 w-[500px] h-[500px] bg-violet-500/[0.07] rounded-full blur-[120px] pointer-events-none" />
-            <div className="absolute bottom-0 right-0 w-[400px] h-[400px] bg-cyan-500/[0.05] rounded-full blur-[100px] pointer-events-none" />
+         {/* D. VALUE PROPOSITION — High-Impact Modern Bento Grid */}
+         <section className="pt-14 md:pt-20 pb-8 md:pb-12 w-full bg-white dark:bg-black relative overflow-hidden">
+            {/* Subtle ambient lighting */}
+            <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[800px] h-[350px] bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-cyan-500/10 rounded-full blur-[140px] pointer-events-none" />
 
             <div className="max-w-[1400px] mx-auto px-6 md:px-16 relative z-10">
-               {/* Header */}
-               <motion.div
-                 className="mb-20 md:mb-24"
-                 initial={{ opacity: 0, y: 30 }}
-                 whileInView={{ opacity: 1, y: 0 }}
-                 viewport={{ once: true, margin: '-80px' }}
-                 transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-               >
-                  <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-full bg-violet-500/[0.08] dark:bg-violet-500/[0.12] border border-violet-500/20 mb-8">
-                     <span className="relative flex h-2.5 w-2.5">
-                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-violet-400 opacity-75"></span>
-                       <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-violet-500"></span>
-                     </span>
-                     <span className="text-sm font-semibold tracking-wide uppercase text-violet-600 dark:text-violet-400">Why Bizleap</span>
+               {/* Section Header */}
+               <div className="max-w-3xl mb-12 md:mb-16">
+                  <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-xs font-bold uppercase tracking-wider mb-4">
+                     <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
+                     Built for Developers, Creators & Agencies
                   </div>
-                  <h2 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter text-gray-900 dark:text-white leading-[0.9]">
-                     Built for<br/>
-                     <span className="text-transparent bg-clip-text bg-gradient-to-r from-violet-600 via-fuchsia-500 to-cyan-400">perfectionists.</span>
+                  
+                  <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-gray-900 dark:text-white leading-[1.05]">
+                     Ship production apps in <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500">hours</span>, not weeks.
                   </h2>
-                  <p className="mt-6 text-lg md:text-xl text-gray-500 dark:text-gray-400 max-w-xl font-medium leading-relaxed">
-                     Premium design assets crafted with obsessive attention to detail. Every pixel, every interaction, every component.
+                  
+                  <p className="mt-4 text-base sm:text-lg text-gray-600 dark:text-gray-400 leading-relaxed font-normal">
+                     Skip months of repetitive frontend scaffolding. Get unminified source code, clean responsive design systems, and lifetime commercial usage rights.
                   </p>
-               </motion.div>
-
-               {/* Feature Cards */}
-               <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6 mb-20 md:mb-28">
-                  {[
-                    {
-                      icon: Layers,
-                      title: 'Pixel Perfect',
-                      desc: 'Every layer is meticulously organized. Components are built with strict design systems to ensure flawless aesthetics at every breakpoint.',
-                      gradient: 'from-violet-600 to-fuchsia-600',
-                      glow: 'violet',
-                      border: 'hover:border-violet-500/40',
-                      iconBg: 'bg-violet-500/10 dark:bg-violet-500/20',
-                    },
-                    {
-                      icon: Zap,
-                      title: 'Production Ready',
-                      desc: 'Stop translating designs to code. Our kits ship with clean, responsive React & Tailwind code — ready to deploy instantly.',
-                      gradient: 'from-cyan-500 to-blue-600',
-                      glow: 'cyan',
-                      border: 'hover:border-cyan-500/40',
-                      iconBg: 'bg-cyan-500/10 dark:bg-cyan-500/20',
-                    },
-                    {
-                      icon: Infinity,
-                      title: 'Lifetime Updates',
-                      desc: 'Pay once, use forever. Future updates, new components, and continuous design upgrades — all included at no extra cost.',
-                      gradient: 'from-pink-500 to-rose-600',
-                      glow: 'pink',
-                      border: 'hover:border-pink-500/40',
-                      iconBg: 'bg-pink-500/10 dark:bg-pink-500/20',
-                    },
-                  ].map((feature, i) => (
-                    <motion.div
-                      key={feature.title}
-                      initial={{ opacity: 0, y: 40 }}
-                      whileInView={{ opacity: 1, y: 0 }}
-                      viewport={{ once: true, margin: '-60px' }}
-                      transition={{ duration: 0.6, delay: i * 0.15, ease: [0.22, 1, 0.36, 1] }}
-                      className={`group relative p-8 md:p-10 rounded-3xl border border-gray-200/60 dark:border-white/[0.06] ${feature.border} transition-all duration-500 bg-gray-50/50 dark:bg-white/[0.02] hover:bg-white dark:hover:bg-white/[0.04] cursor-default`}
-                    >
-                      {/* Hover glow */}
-                      <div className={`absolute -inset-px rounded-3xl bg-gradient-to-b ${feature.gradient} opacity-0 group-hover:opacity-[0.08] transition-opacity duration-500 pointer-events-none`} />
-                      
-                      {/* Floating glow orb */}
-                      <div className={`absolute top-6 right-6 w-24 h-24 bg-${feature.glow}-500/20 rounded-full blur-2xl opacity-0 group-hover:opacity-100 transition-all duration-700 group-hover:scale-150 pointer-events-none`} />
-
-                      <div className="relative z-10">
-                        {/* Icon */}
-                        <div className={`w-14 h-14 rounded-2xl ${feature.iconBg} flex items-center justify-center mb-8 group-hover:scale-110 transition-transform duration-500`}>
-                          <feature.icon className={`w-7 h-7 bg-gradient-to-br ${feature.gradient} bg-clip-text`} style={{ color: feature.glow === 'violet' ? '#8b5cf6' : feature.glow === 'cyan' ? '#06b6d4' : '#ec4899' }} />
-                        </div>
-                        
-                        {/* Content */}
-                        <h3 className="text-xl md:text-2xl font-bold mb-3 text-gray-900 dark:text-white tracking-tight">{feature.title}</h3>
-                        <p className="text-gray-500 dark:text-gray-400 leading-relaxed text-[15px]">{feature.desc}</p>
-                        
-                        {/* Bottom accent line */}
-                        <div className={`mt-8 h-[2px] w-0 group-hover:w-16 bg-gradient-to-r ${feature.gradient} transition-all duration-500 rounded-full`} />
-                      </div>
-                    </motion.div>
-                  ))}
                </div>
 
-               {/* Stats Section */}
-               <motion.div
-                 initial={{ opacity: 0, y: 40 }}
-                 whileInView={{ opacity: 1, y: 0 }}
-                 viewport={{ once: true, margin: '-60px' }}
-                 transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-                 className="relative rounded-3xl overflow-hidden"
-               >
-                 {/* Gradient border effect */}
-                 <div className="absolute inset-0 bg-gradient-to-r from-violet-600 via-fuchsia-500 to-cyan-400 rounded-3xl" />
-                 <div className="absolute inset-[1px] bg-white dark:bg-[#0a0a0a] rounded-[calc(1.5rem-1px)]" />
-                 
-                 {/* Inner glow */}
-                 <div className="absolute inset-0 rounded-3xl overflow-hidden pointer-events-none">
-                   <div className="absolute top-0 left-1/4 w-[500px] h-[200px] bg-violet-500/[0.06] rounded-full blur-[80px]" />
-                   <div className="absolute bottom-0 right-1/4 w-[400px] h-[200px] bg-cyan-500/[0.06] rounded-full blur-[80px]" />
-                 </div>
-                 
-                 <div className="relative z-10 grid grid-cols-2 md:grid-cols-4 gap-px">
-                   {[
-                     { value: '2,400+', label: 'Templates', gradient: 'from-violet-600 to-fuchsia-500' },
-                     { value: '98%', label: 'Satisfaction', gradient: 'from-fuchsia-500 to-pink-500' },
-                     { value: '50K+', label: 'Creators', gradient: 'from-pink-500 to-cyan-500' },
-                     { value: '4.9 ★', label: 'Avg. Rating', gradient: 'from-cyan-500 to-blue-500' },
-                   ].map((stat, i) => (
-                     <motion.div
-                       key={stat.label}
-                       initial={{ opacity: 0, scale: 0.9 }}
-                       whileInView={{ opacity: 1, scale: 1 }}
-                       viewport={{ once: true }}
-                       transition={{ duration: 0.5, delay: 0.1 + i * 0.1 }}
-                       className="group text-center py-10 md:py-14 px-4 relative hover:bg-white/50 dark:hover:bg-white/[0.02] transition-colors duration-300"
-                     >
-                       {/* Divider */}
-                       {i > 0 && <div className="hidden md:block absolute left-0 top-1/2 -translate-y-1/2 w-px h-12 bg-gradient-to-b from-transparent via-gray-300/50 dark:via-white/10 to-transparent" />}
-                       {i === 2 && <div className="md:hidden absolute left-0 top-1/2 -translate-y-1/2 w-px h-12 bg-gradient-to-b from-transparent via-gray-300/50 dark:via-white/10 to-transparent" />}
-                       
-                       <div className={`text-4xl md:text-5xl lg:text-6xl font-black tracking-tighter mb-3 text-transparent bg-clip-text bg-gradient-to-br ${stat.gradient} group-hover:scale-105 transition-transform duration-300 inline-block`}>
-                         {stat.value}
-                       </div>
-                       <div className="text-xs md:text-sm font-bold text-gray-400 dark:text-gray-500 uppercase tracking-[0.2em]">{stat.label}</div>
-                     </motion.div>
-                   ))}
-                 </div>
-               </motion.div>
+               {/* Bento Grid */}
+               <div className="grid grid-cols-1 md:grid-cols-12 gap-5 md:gap-6 mb-12">
+                  
+                  {/* ── CARD 1: Clean Modular Source Code (Span 7) ── */}
+                  <div className="md:col-span-7 group relative rounded-3xl border border-gray-200 dark:border-white/10 bg-gradient-to-b from-gray-50/80 to-white dark:from-[#111114] dark:to-[#09090b] p-8 md:p-10 overflow-hidden shadow-sm hover:border-indigo-500/40 transition-all duration-500">
+                     <div className="relative z-10 flex flex-col justify-between h-full">
+                        <div>
+                           <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mb-6">
+                              <Code2 className="w-6 h-6" />
+                           </div>
+                           <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                              Clean, Unminified Source Code
+                           </h3>
+                           <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed max-w-md">
+                              No obfuscation or proprietary lock-in. Every kit ships with clean component hierarchies, documented props, and Tailwind utility classes ready for instant customization.
+                           </p>
+                        </div>
+
+                        {/* Interactive Code Mockup Snippet */}
+                        <div className="mt-6 rounded-2xl bg-[#09090b] border border-white/10 p-4 font-mono text-xs text-gray-300 shadow-2xl overflow-hidden">
+                           <div className="flex items-center justify-between pb-3 border-b border-white/10 mb-3 text-[11px] text-gray-500">
+                              <div className="flex items-center gap-1.5">
+                                 <span className="w-2.5 h-2.5 rounded-full bg-red-500/80"></span>
+                                 <span className="w-2.5 h-2.5 rounded-full bg-yellow-500/80"></span>
+                                 <span className="w-2.5 h-2.5 rounded-full bg-green-500/80"></span>
+                                 <span className="ml-2 text-gray-400">src/components/HeroSection.jsx</span>
+                              </div>
+                              <span className="text-emerald-400 font-semibold">100% React & Tailwind</span>
+                           </div>
+                           <pre className="text-[12px] leading-relaxed text-gray-300 overflow-x-auto">
+                              <code>
+                                 <span className="text-purple-400">export function</span> <span className="text-blue-400">Hero</span>() &#123;<br/>
+                                 &nbsp;&nbsp;<span className="text-purple-400">return</span> (<br/>
+                                 &nbsp;&nbsp;&nbsp;&nbsp;&lt;<span className="text-red-400">div</span> <span className="text-yellow-300">className</span>=<span className="text-green-300">"grid grid-cols-1 md:grid-cols-2 gap-8"</span>&gt;<br/>
+                                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&lt;<span className="text-cyan-400">Heading</span> <span className="text-yellow-300">size</span>=<span className="text-green-300">"xl"</span>&gt;Launch Faster&lt;/<span className="text-cyan-400">Heading</span>&gt;<br/>
+                                 &nbsp;&nbsp;&nbsp;&nbsp;&lt;/<span className="text-red-400">div</span>&gt;<br/>
+                                 &nbsp;&nbsp;);<br/>
+                                 &#125;
+                              </code>
+                           </pre>
+                        </div>
+                     </div>
+                  </div>
+
+                  {/* ── CARD 2: Performance (Span 5) ── */}
+                  <div className="md:col-span-5 group relative rounded-3xl border border-gray-200 dark:border-white/10 bg-gradient-to-b from-gray-50/80 to-white dark:from-[#111114] dark:to-[#09090b] p-8 md:p-10 overflow-hidden shadow-sm hover:border-cyan-500/40 transition-all duration-500 flex flex-col justify-between">
+                     <div>
+                        <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 flex items-center justify-center mb-6">
+                           <Gauge className="w-6 h-6" />
+                        </div>
+                        <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                           99+ Lighthouse Scores
+                        </h3>
+                        <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
+                           Engineered with zero dependency bloat. Super fast load times, optimized image pipelines, and crisp accessibility standards out of the box.
+                        </p>
+                     </div>
+
+                     {/* Metric Badges */}
+                     <div className="mt-8 grid grid-cols-3 gap-2.5">
+                        <div className="p-3 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 text-center">
+                           <div className="text-xl font-black text-emerald-600 dark:text-emerald-400">99</div>
+                           <div className="text-[9px] uppercase font-bold text-gray-500 mt-0.5">Speed</div>
+                        </div>
+                        <div className="p-3 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 text-center">
+                           <div className="text-xl font-black text-indigo-600 dark:text-indigo-400">100</div>
+                           <div className="text-[9px] uppercase font-bold text-gray-500 mt-0.5">SEO</div>
+                        </div>
+                        <div className="p-3 rounded-2xl bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 text-center">
+                           <div className="text-xl font-black text-blue-600 dark:text-blue-400">100</div>
+                           <div className="text-[9px] uppercase font-bold text-gray-500 mt-0.5">Best Pr.</div>
+                        </div>
+                     </div>
+                  </div>
+
+                  {/* ── CARD 3: Unlimited Commercial License (Span 5) ── */}
+                  <div className="md:col-span-5 group relative rounded-3xl border border-gray-200 dark:border-white/10 bg-gradient-to-b from-gray-50/80 to-white dark:from-[#111114] dark:to-[#09090b] p-8 md:p-10 overflow-hidden shadow-sm hover:border-pink-500/40 transition-all duration-500 flex flex-col justify-between">
+                     <div>
+                        <div className="w-12 h-12 rounded-2xl bg-pink-500/10 text-pink-600 dark:text-pink-400 flex items-center justify-center mb-6">
+                           <ShieldCheck className="w-6 h-6" />
+                        </div>
+                        <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                           Commercial Freedom
+                        </h3>
+                        <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed">
+                           Use for unlimited personal and client projects. No recurring subscription fees, no royalties, and no attribution required.
+                        </p>
+                     </div>
+
+                     <div className="mt-8 p-4 rounded-2xl bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 flex items-center gap-3">
+                        <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
+                        <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                           Pay once &bull; Deploy for client projects forever
+                        </span>
+                     </div>
+                  </div>
+
+                  {/* ── CARD 4: Instant Download & Lifetime Access (Span 7) ── */}
+                  <div className="md:col-span-7 group relative rounded-3xl border border-gray-200 dark:border-white/10 bg-gradient-to-b from-gray-50/80 to-white dark:from-[#111114] dark:to-[#09090b] p-8 md:p-10 overflow-hidden shadow-sm hover:border-purple-500/40 transition-all duration-500 flex flex-col justify-between">
+                     <div>
+                        <div className="w-12 h-12 rounded-2xl bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center mb-6">
+                           <Download className="w-6 h-6" />
+                        </div>
+                        <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                           Direct Instant ZIP Download
+                        </h3>
+                        <p className="text-gray-600 dark:text-gray-400 text-sm leading-relaxed max-w-lg">
+                           Immediate access upon checkout. Re-download your templates from your dashboard anytime, or use direct download links delivered straight to your email.
+                        </p>
+                     </div>
+
+                     <div className="mt-8 flex flex-wrap items-center gap-2.5">
+                        {['React / Next.js', 'Tailwind CSS', 'Figma UI Kits', 'HTML & Webflow', 'Free Minor Updates'].map((tag) => (
+                           <span key={tag} className="px-3 py-1.5 rounded-xl bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-xs font-bold text-gray-800 dark:text-gray-200">
+                              ✓ {tag}
+                           </span>
+                        ))}
+                     </div>
+                  </div>
+
+               </div>
+
+               {/* Clean Metrics Strip */}
+               <div className="rounded-3xl border border-gray-200 dark:border-white/10 bg-gray-50/50 dark:bg-[#111114]/50 p-6 md:p-8 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+                  <div>
+                     <div className="text-3xl md:text-4xl font-black text-gray-900 dark:text-white">100+</div>
+                     <div className="text-xs uppercase tracking-wider font-bold text-gray-500 mt-1">Curated Templates</div>
+                  </div>
+                  <div>
+                     <div className="text-3xl md:text-4xl font-black text-indigo-600 dark:text-indigo-400">100%</div>
+                     <div className="text-xs uppercase tracking-wider font-bold text-gray-500 mt-1">Source Code Included</div>
+                  </div>
+                  <div>
+                     <div className="text-3xl md:text-4xl font-black text-gray-900 dark:text-white">0%</div>
+                     <div className="text-xs uppercase tracking-wider font-bold text-gray-500 mt-1">Recurring Lock-in</div>
+                  </div>
+                  <div>
+                     <div className="text-3xl md:text-4xl font-black text-emerald-600 dark:text-emerald-400">Lifetime</div>
+                     <div className="text-xs uppercase tracking-wider font-bold text-gray-500 mt-1">Commercial License</div>
+                  </div>
+               </div>
             </div>
-         </div>
-
-
-
-
+         </section>
 
          {/* E. FAQ SECTION */}
-         <div className="py-20 md:py-24 px-8 md:px-16 w-full max-w-[1600px] mx-auto">
+         <div className="pt-2 pb-16 md:pb-20 px-6 md:px-12 w-full max-w-[1400px] mx-auto">
            <FAQSection />
          </div>
 

@@ -13,14 +13,28 @@ dotenv.config({ path: path.resolve(__dirname, '../../.env.local') });
 const router = express.Router();
 
 router.post('/send-receipt', async (req, res) => {
-  const { to, orderDetails, frontendUrl } = req.body;
+  const { to, email, orderDetails, cartItems, totalAmount, paymentId, frontendUrl, invoicePdfBase64 } = req.body || {};
 
-  if (!to || !orderDetails) {
-    return res.status(400).json({ error: 'Missing recipient email or order details' });
+  const recipientEmail = to || email;
+  if (!recipientEmail) {
+    return res.status(400).json({ error: 'Missing recipient email' });
+  }
+
+  let normalizedOrderDetails = orderDetails;
+  if (!normalizedOrderDetails) {
+    if (cartItems && cartItems.length) {
+      normalizedOrderDetails = {
+        orderId: paymentId || 'ORD_' + Math.random().toString(36).substring(7).toUpperCase(),
+        total: totalAmount ? String(totalAmount) : '0.00',
+        items: cartItems
+      };
+    } else {
+      return res.status(400).json({ error: 'Missing order details or cart items' });
+    }
   }
 
   try {
-    const info = await sendReceiptEmail(to, orderDetails, frontendUrl);
+    const info = await sendReceiptEmail(recipientEmail, normalizedOrderDetails, frontendUrl, invoicePdfBase64);
     console.log("Message sent: %s", info.messageId);
     res.status(200).json({ success: true, messageId: info.messageId });
   } catch (error) {
@@ -182,8 +196,18 @@ router.post('/generate-download', requireAuth, async (req, res) => {
       .single();
 
     if (mappingError || !mapping) {
-      console.log(`No mapping found for template ${templateId}, falling back to demo file`);
-      mapping = { file_path: 'demo-template.zip' };
+      const { data: tmpl } = await supabaseAdmin
+        .from('templates')
+        .select('title')
+        .eq('id', templateId)
+        .single();
+
+      if (tmpl?.title) {
+        mapping = { file_path: `templates/${tmpl.title}.zip` };
+      } else {
+        console.log(`No mapping found for template ${templateId}, falling back to demo file`);
+        mapping = { file_path: 'demo-template.zip' };
+      }
     }
 
     // Generate Signed URL (valid for 60 seconds)
@@ -202,6 +226,120 @@ router.post('/generate-download', requireAuth, async (req, res) => {
   } catch (error) {
     console.error('Error generating download:', error);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.post('/validate-coupon', async (req, res) => {
+  try {
+    const { code, cartTotal, userId, userEmail } = req.body;
+    if (!code) {
+      return res.status(400).json({ valid: false, error: 'Please enter a coupon code' });
+    }
+
+    const cleanCode = code.trim().toUpperCase();
+    const totalAmount = parseFloat(cartTotal) || 0;
+
+    // Check if user has already used this coupon (via coupon_redemptions table OR user_metadata)
+    if (userId || userEmail) {
+      try {
+        let query = supabaseAdmin
+          .from('coupon_redemptions')
+          .select('id')
+          .ilike('coupon_code', cleanCode);
+
+        if (userId && userEmail) {
+          query = query.or(`user_id.eq.${userId},user_email.eq.${userEmail}`);
+        } else if (userId) {
+          query = query.eq('user_id', userId);
+        } else if (userEmail) {
+          query = query.eq('user_email', userEmail);
+        }
+
+        const { data: existingRedemptions, error: redemptionError } = await query;
+        if (!redemptionError && existingRedemptions && existingRedemptions.length > 0) {
+          return res.status(400).json({
+            valid: false,
+            error: `You have already redeemed coupon '${cleanCode}'. It can only be used once per customer.`
+          });
+        }
+      } catch (checkErr) {
+        console.warn('Coupon redemptions check note:', checkErr?.message);
+      }
+
+      // Double-check user_metadata for robust 1-per-user enforcement
+      if (userId && supabaseAdmin.auth?.admin?.getUserById) {
+        try {
+          const { data: uData, error: uErr } = await supabaseAdmin.auth.admin.getUserById(userId);
+          if (!uErr && uData?.user?.user_metadata?.used_coupons) {
+            const usedList = Array.isArray(uData.user.user_metadata.used_coupons)
+              ? uData.user.user_metadata.used_coupons.map(c => String(c).toUpperCase())
+              : [];
+            if (usedList.includes(cleanCode)) {
+              return res.status(400).json({
+                valid: false,
+                error: `You have already redeemed coupon '${cleanCode}'. It can only be used once per customer.`
+              });
+            }
+          }
+        } catch (uMetaErr) {
+          console.warn('User metadata coupon check note:', uMetaErr?.message);
+        }
+      }
+    }
+
+    const { data: coupon, error } = await supabaseAdmin
+      .from('coupons')
+      .select('*')
+      .ilike('code', cleanCode)
+      .single();
+
+    if (error || !coupon) {
+      return res.status(404).json({ valid: false, error: 'Invalid coupon code' });
+    }
+
+    if (!coupon.is_active) {
+      return res.status(400).json({ valid: false, error: 'This coupon is currently inactive' });
+    }
+
+    if (coupon.expires_at && new Date(coupon.expires_at) < new Date()) {
+      return res.status(400).json({ valid: false, error: 'This coupon has expired' });
+    }
+
+    if (coupon.usage_limit && coupon.times_used >= coupon.usage_limit) {
+      return res.status(400).json({ valid: false, error: 'Coupon usage limit has been reached' });
+    }
+
+    if (coupon.min_order_amount && totalAmount < coupon.min_order_amount) {
+      return res.status(400).json({ 
+        valid: false, 
+        error: `Minimum order of ₹${coupon.min_order_amount} required to use this coupon` 
+      });
+    }
+
+    let discount = 0;
+    if (coupon.discount_type === 'percentage') {
+      discount = Math.round((totalAmount * coupon.discount_value) / 100);
+    } else {
+      discount = Math.min(coupon.discount_value, totalAmount);
+    }
+
+    const finalTotal = Math.max(0, totalAmount - discount);
+
+    res.json({
+      valid: true,
+      coupon: {
+        id: coupon.id,
+        code: coupon.code,
+        discount_type: coupon.discount_type,
+        discount_value: coupon.discount_value,
+        min_order_amount: coupon.min_order_amount
+      },
+      discount,
+      finalTotal
+    });
+  } catch (err) {
+    console.error('Coupon validation error:', err);
+    res.status(500).json({ valid: false, error: 'Failed to validate coupon' });
   }
 });
 

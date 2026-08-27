@@ -51,7 +51,7 @@ export function SocialProofToast() {
     };
     
     fetchRealPurchases();
-  }, [isAdmin]);
+  }, [isAdmin, marketplaceTemplates]);
 
   useEffect(() => {
     if (!isAdmin || realPurchases.length === 0) return;
