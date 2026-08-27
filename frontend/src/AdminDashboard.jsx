@@ -56,7 +56,8 @@ import {
   UserCheck,
   UserX,
   Clock,
-  Palette
+  Palette,
+  ArrowRight
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { Logo } from './components/ui/Logo';
