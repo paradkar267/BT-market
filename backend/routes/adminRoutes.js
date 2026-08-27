@@ -588,30 +588,55 @@ router.post('/upload-template', requireAdmin, upload.single('file'), async (req,
 
     const liveDemoUrl = previewUrl || demo_url || req.body.preview_url || `/previews/${slug}/index.html`;
 
-    // Insert into templates
-    const { data: templateData, error: dbError } = await supabaseAdmin
+    // Insert into templates safely
+    const baseTemplateData = {
+      id: nextId,
+      title,
+      description,
+      price,
+      category,
+      tag,
+      image,
+      keywords: parsedKeywords,
+      author: 'Nexus Themes',
+      sales: 0,
+      rating: 5.0,
+      is_sold_out: false
+    };
+
+    let templateData = null;
+    const fullRes = await supabaseAdmin
       .from('templates')
       .insert({
-        id: nextId,
-        title,
-        description,
-        price,
-        category,
-        tag,
-        image,
-        previewUrl: liveDemoUrl,
+        ...baseTemplateData,
         demo_url: liveDemoUrl,
-        keywords: parsedKeywords,
-        author: 'Nexus Themes',
-        sales: 0,
-        rating: 5.0,
-        is_sold_out: false,
-        key_features: [],
-        ideal_for: [],
-        pages_included: []
+        previewUrl: liveDemoUrl
       }).select().single();
 
-    if (dbError) throw dbError;
+    if (!fullRes.error) {
+      templateData = fullRes.data;
+    } else {
+      // Retry with demo_url only or base fields
+      const retry1 = await supabaseAdmin
+        .from('templates')
+        .insert({
+          ...baseTemplateData,
+          demo_url: liveDemoUrl
+        }).select().single();
+
+      if (!retry1.error) {
+        templateData = retry1.data;
+      } else {
+        const retry2 = await supabaseAdmin
+          .from('templates')
+          .insert(baseTemplateData)
+          .select()
+          .single();
+
+        if (retry2.error) throw retry2.error;
+        templateData = retry2.data;
+      }
+    }
 
     // Insert into template_files
     const { error: mappingError } = await supabaseAdmin

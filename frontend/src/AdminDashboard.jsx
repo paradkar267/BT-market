@@ -1628,21 +1628,43 @@ export default function AdminDashboard() {
         const slug = formData.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
         const liveDemoUrl = formData.previewUrl || `/previews/${slug}/index.html`;
 
-        // 4. Insert into templates table
-        const { error: dbErr } = await supabase
+        // 4. Insert into templates table safely
+        const baseInsertData = {
+          id: nextId,
+          title: formData.title,
+          description: formData.description,
+          price: formData.price,
+          category: formData.category,
+          tag: formData.tag,
+          image: formData.image,
+          keywords: parsedKeywords,
+        };
+
+        let dbErr = null;
+        const fullInsert = await supabase
           .from('templates')
           .insert({
-            id: nextId,
-            title: formData.title,
-            description: formData.description,
-            price: formData.price,
-            category: formData.category,
-            tag: formData.tag,
-            image: formData.image,
-            keywords: parsedKeywords,
-            previewUrl: liveDemoUrl,
-            demo_url: liveDemoUrl
+            ...baseInsertData,
+            demo_url: liveDemoUrl,
+            previewUrl: liveDemoUrl
           });
+
+        if (fullInsert.error) {
+          // Retry with demo_url only
+          const retry1 = await supabase
+            .from('templates')
+            .insert({
+              ...baseInsertData,
+              demo_url: liveDemoUrl
+            });
+          if (retry1.error) {
+            // Retry with base columns
+            const retry2 = await supabase.from('templates').insert(baseInsertData);
+            dbErr = retry2.error;
+          }
+        } else {
+          dbErr = null;
+        }
 
         if (dbErr) throw new Error(dbErr.message || 'Failed to save template metadata');
 
