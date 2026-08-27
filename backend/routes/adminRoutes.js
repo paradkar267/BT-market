@@ -555,26 +555,12 @@ router.post('/upload-template', requireAdmin, upload.single('file'), async (req,
 
     if (uploadError) throw uploadError;
 
-    // Unzip, flatten, auto-build if React/Vite, and fix paths synchronously for live preview
-    const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
-    const extractPath = path.resolve(__dirname, '../../frontend/public/previews', slug);
-    
-    try {
-      if (!fs.existsSync(extractPath)) {
-        fs.mkdirSync(extractPath, { recursive: true });
-      }
-      const zip = new AdmZip(file.path);
-      await extractZipAsync(zip, extractPath);
-      // Flatten the extracted zip contents if nested
-      flattenDirectory(extractPath);
-      // Automatically detect & build React/Vite source or process static HTML paths
-      await ensurePreviewBuild(extractPath, slug);
-      // Clean up the uploaded file from disk after successful extraction
-      if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
-    } catch (unzipErr) {
-      console.error('Failed to extract zip for preview:', unzipErr);
-      if (fs.existsSync(file.path)) fs.unlinkSync(file.path);
+    // Clean up the temporary uploaded file from disk immediately
+    if (fs.existsSync(file.path)) {
+      fs.unlinkSync(file.path);
     }
+
+    const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
 
     // Parse keywords safely
     let parsedKeywords = [];
