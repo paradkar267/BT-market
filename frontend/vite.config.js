@@ -76,11 +76,16 @@ function devApiPlugin() {
             req.body = await getBody();
             const handler = await loadApi('contact.js');
             return await handler(req, res);
-          } else if (urlPath.startsWith('/api/admin') || urlPath === '/api/campaigns') {
-            if (req.method === 'POST' || req.method === 'PATCH' || req.method === 'DELETE') {
+          } else if (
+            urlPath.startsWith('/api/admin-') ||
+            urlPath === '/api/admin' ||
+            urlPath === '/api/campaigns' ||
+            urlPath === '/api/announcement-banner'
+          ) {
+            if (req.method === 'POST' || req.method === 'PATCH' || req.method === 'DELETE' || req.method === 'PUT') {
               req.body = await getBody();
             }
-            const handler = await loadApi('admin.js');
+            const handler = await loadApi(urlPath === '/api/announcement-banner' ? 'announcement-banner.js' : 'admin.js');
             return await handler(req, res);
           } else if (urlPath === '/api/request-refund' && req.method === 'POST') {
             req.body = await getBody();

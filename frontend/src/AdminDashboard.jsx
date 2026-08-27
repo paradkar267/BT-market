@@ -1559,7 +1559,72 @@ export default function AdminDashboard() {
         }
       }
 
-      if (!res || !res.ok) throw new Error(errorMsg);
+      if (!res || !res.ok) {
+        // Resilient Fallback: Direct upload to Supabase Storage & Database
+        const fileName = `${Date.now()}-${selectedFile.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+        const filePath = `templates/${fileName}`;
+
+        // 1. Upload ZIP directly to Supabase Storage bucket 'secure_templates'
+        const { error: storageErr } = await supabase.storage
+          .from('secure_templates')
+          .upload(filePath, selectedFile, {
+            contentType: selectedFile.type || 'application/zip',
+            upsert: true
+          });
+
+        if (storageErr) throw new Error(storageErr.message || errorMsg || 'Failed to upload ZIP package to storage');
+
+        // 2. Fetch max ID for sequential integer ID
+        const { data: maxIdData } = await supabase
+          .from('templates')
+          .select('id')
+          .order('id', { ascending: false })
+          .limit(1);
+
+        const nextId = (maxIdData && maxIdData.length > 0 && !isNaN(maxIdData[0].id))
+          ? Number(maxIdData[0].id) + 1
+          : Math.floor(Date.now() % 2000000000);
+
+        // 3. Keywords format
+        let parsedKeywords = [];
+        if (Array.isArray(formData.keywords)) {
+          parsedKeywords = formData.keywords;
+        } else if (typeof formData.keywords === 'string') {
+          parsedKeywords = formData.keywords.split(',').map(k => k.trim()).filter(Boolean);
+        }
+
+        const slug = formData.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+        const liveDemoUrl = formData.previewUrl || `/previews/${slug}/index.html`;
+
+        // 4. Insert into templates table
+        const { error: dbErr } = await supabase
+          .from('templates')
+          .insert({
+            id: nextId,
+            title: formData.title,
+            description: formData.description,
+            price: formData.price,
+            category: formData.category,
+            tag: formData.tag,
+            image: formData.image,
+            keywords: parsedKeywords,
+            previewUrl: liveDemoUrl,
+            demo_url: liveDemoUrl
+          });
+
+        if (dbErr) throw new Error(dbErr.message || 'Failed to save template metadata');
+
+        // 5. Insert file record into template_files table
+        await supabase
+          .from('template_files')
+          .insert({
+            template_id: nextId,
+            file_path: filePath,
+            file_name: selectedFile.name,
+            file_size: selectedFile.size,
+            mime_type: selectedFile.type || 'application/zip'
+          });
+      }
 
       setUploadSuccess(true);
       toast.success('Template published successfully to the store!');
