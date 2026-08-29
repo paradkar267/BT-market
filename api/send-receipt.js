@@ -341,15 +341,29 @@ export default async function handler(req, res) {
       }
     }
 
-    const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'smtp.gmail.com',
-      port: parseInt(process.env.SMTP_PORT || '587'),
-      secure: process.env.SMTP_PORT === '465',
-      auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASSWORD || process.env.SMTP_PASS
-      }
-    });
+    const rawPass = process.env.SMTP_PASSWORD || process.env.SMTP_PASS || '';
+    const cleanPass = rawPass.replace(/\s+/g, '');
+    const isGmail = (process.env.SMTP_HOST || '').includes('gmail') || (process.env.SMTP_USER || '').includes('gmail');
+
+    const transporter = isGmail
+      ? nodemailer.createTransport({
+          service: 'gmail',
+          auth: {
+            user: process.env.SMTP_USER,
+            pass: cleanPass
+          },
+          tls: { rejectUnauthorized: false }
+        })
+      : nodemailer.createTransport({
+          host: process.env.SMTP_HOST || 'smtp.gmail.com',
+          port: parseInt(process.env.SMTP_PORT || '587', 10),
+          secure: process.env.SMTP_PORT === '465',
+          auth: {
+            user: process.env.SMTP_USER,
+            pass: cleanPass
+          },
+          tls: { rejectUnauthorized: false }
+        });
 
     const baseUrl = frontendUrl || 'https://bt-templates.vercel.app';
     const orderDate = new Date().toLocaleDateString('en-IN', {
