@@ -2148,14 +2148,6 @@ export default function AdminDashboard() {
                         <td className="px-6 py-4 text-right">
                           <div className="flex justify-end gap-2">
                             <button
-                              onClick={() => openBroadcastModal(t)}
-                              className="px-3 py-1.5 bg-purple-50 dark:bg-purple-500/10 hover:bg-purple-100 dark:hover:bg-purple-500/20 text-purple-600 dark:text-purple-400 rounded-lg text-sm font-bold transition-colors flex items-center gap-1.5 cursor-pointer shadow-sm shadow-purple-500/5"
-                              title="Broadcast update notification email to buyers"
-                            >
-                              <Megaphone className="w-4 h-4 text-purple-500" />
-                              <span>Notify Buyers</span>
-                            </button>
-                            <button
                               onClick={() => setModalPreviewTemplate(t)}
                               className="px-3 py-1.5 bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/15 text-black dark:text-white rounded-lg text-sm font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
                               title="Open Live Preview"
