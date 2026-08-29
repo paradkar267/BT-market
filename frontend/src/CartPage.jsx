@@ -30,7 +30,7 @@ export default function CartPage() {
   const { cartItems, removeFromCart, checkout, cartTotal, loadPurchasedTemplates } = useCart();
   const { formatPrice, convertPrice, currency } = useCurrency();
   const { theme } = useTheme();
-  const { user } = useAuth();
+  const { user, requireAuth } = useAuth();
   const navigate = useNavigate();
   const isDark = theme === 'dark';
   const [isProcessing, setIsProcessing] = useState(false);
@@ -375,12 +375,24 @@ export default function CartPage() {
 
   const processSuccessfulPayment = async (paymentId) => {
     setIsProcessing(true);
-    toast.loading('Finalizing order & preparing instant delivery...', { id: 'processing-order' });
+    toast.loading('Finalizing order & sending invoice...', { id: 'processing-order' });
+
+    let activeUser = user;
+    if (!activeUser) {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        activeUser = session?.user || null;
+      } catch {}
+    }
+
+    const customerEmail = activeUser?.email || user?.email || '';
+    const customerName = activeUser?.user_metadata?.full_name || user?.user_metadata?.full_name || 'Customer';
+    const userId = activeUser?.id || user?.id;
 
     try {
-      if (user && user.id) {
+      if (userId) {
         const insertPayloads = cartItems.map(item => ({
-          user_id: user.id,
+          user_id: userId,
           template_id: item.id,
           payment_id: paymentId,
         }));
@@ -399,12 +411,12 @@ export default function CartPage() {
             await supabase.from('coupon_redemptions').insert([{
               coupon_id: typeof appliedCoupon.id === 'number' || typeof appliedCoupon.id === 'string' ? appliedCoupon.id : null,
               coupon_code: appliedCoupon.code,
-              user_id: user.id,
-              user_email: user.email,
+              user_id: userId,
+              user_email: customerEmail,
               payment_id: paymentId
             }]);
 
-            const currentUsed = user.user_metadata?.used_coupons || [];
+            const currentUsed = activeUser?.user_metadata?.used_coupons || user?.user_metadata?.used_coupons || [];
             if (!currentUsed.includes(appliedCoupon.code)) {
               await supabase.auth.updateUser({
                 data: { used_coupons: [...currentUsed, appliedCoupon.code] }
@@ -435,70 +447,68 @@ export default function CartPage() {
         loadPurchasedTemplates();
       }
 
-      toast.dismiss('processing-order');
-      toast.success('🎉 Purchase complete! Receipt & invoice sent to your email.');
-      setIsProcessing(false);
-      navigate('/my-templates');
-
-      // 2. Generate PDF & send receipt email asynchronously in background (Non-blocking)
-      (async () => {
-        try {
-          const invoicePdfBase64 = await generateInvoicePDF(paymentId);
-          const emailPayload = {
-            to: user?.email,
-            email: user?.email,
-            customerName: user?.user_metadata?.full_name || 'Customer',
-            paymentId: paymentId,
-            totalAmount: finalPayableTotal,
-            frontendUrl: window.location.origin,
-            orderDetails: {
-              orderId: paymentId,
-              total: finalPayableTotal.toFixed(2),
-              subtotal: cartTotal.toFixed(2),
-              discount: appliedCoupon ? appliedCoupon.discount : 0,
-              couponCode: appliedCoupon ? appliedCoupon.code : null,
-              items: cartItems.map(item => ({
-                id: item.id,
-                title: item.title,
-                price: item.price,
-                author: item.author || 'Bizleap Partner',
-                category: item.category || 'Web',
-                downloadUrl: `${window.location.origin}/my-templates?download=${item.id}&payment_id=${paymentId}`
-              }))
-            },
-            cartItems: cartItems.map(item => ({
+      // 2. Generate PDF & send receipt email
+      try {
+        const invoicePdfBase64 = await generateInvoicePDF(paymentId);
+        const emailPayload = {
+          to: customerEmail,
+          email: customerEmail,
+          customerName: customerName,
+          paymentId: paymentId,
+          totalAmount: finalPayableTotal,
+          frontendUrl: window.location.origin,
+          orderDetails: {
+            orderId: paymentId,
+            total: finalPayableTotal.toFixed(2),
+            subtotal: cartTotal.toFixed(2),
+            discount: appliedCoupon ? appliedCoupon.discount : 0,
+            couponCode: appliedCoupon ? appliedCoupon.code : null,
+            items: cartItems.map(item => ({
               id: item.id,
               title: item.title,
               price: item.price,
               author: item.author || 'Bizleap Partner',
               category: item.category || 'Web',
               downloadUrl: `${window.location.origin}/my-templates?download=${item.id}&payment_id=${paymentId}`
-            })),
-            invoicePdfBase64: invoicePdfBase64
-          };
+            }))
+          },
+          cartItems: cartItems.map(item => ({
+            id: item.id,
+            title: item.title,
+            price: item.price,
+            author: item.author || 'Bizleap Partner',
+            category: item.category || 'Web',
+            downloadUrl: `${window.location.origin}/my-templates?download=${item.id}&payment_id=${paymentId}`
+          })),
+          invoicePdfBase64: invoicePdfBase64
+        };
 
-          const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || '';
-          const targetUrls = [];
-          if (backendUrl) targetUrls.push(`${backendUrl}/api/send-receipt`);
-          targetUrls.push('/api/send-receipt');
+        const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3000' : '');
+        const targetUrls = [];
+        if (backendUrl) targetUrls.push(`${backendUrl}/api/send-receipt`);
+        targetUrls.push('/api/send-receipt');
 
-          for (const url of targetUrls) {
-            try {
-              const res = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(emailPayload)
-              });
-              if (res.ok) break;
-            } catch {
-              // try next
-            }
+        for (const url of targetUrls) {
+          try {
+            const res = await fetch(url, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(emailPayload),
+              keepalive: true
+            });
+            if (res.ok) break;
+          } catch {
+            // try next target
           }
-        } catch (bgErr) {
-          console.warn("Background email dispatch note:", bgErr);
         }
-      })();
+      } catch (emailErr) {
+        console.warn("Invoice email dispatch error:", emailErr);
+      }
 
+      toast.dismiss('processing-order');
+      toast.success('🎉 Purchase complete! Receipt & invoice sent to your email.');
+      setIsProcessing(false);
+      navigate('/my-templates');
     } catch (error) {
       console.error("Post-payment processing failed:", error);
       toast.dismiss('processing-order');
@@ -509,6 +519,20 @@ export default function CartPage() {
   };
 
   const handleCheckout = async () => {
+    let activeUser = user;
+    if (!activeUser) {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        activeUser = session?.user || null;
+      } catch {}
+    }
+
+    if (!activeUser) {
+      toast.info('Please sign in or create an account to proceed with purchase.');
+      requireAuth(() => handleCheckout());
+      return;
+    }
+
     const res = await loadRazorpayScript();
     if (!res) {
       toast.error('Razorpay SDK failed to load. Please check your connection.');
@@ -537,8 +561,8 @@ export default function CartPage() {
         await processSuccessfulPayment(response.razorpay_payment_id);
       },
       prefill: {
-        name: user?.user_metadata?.full_name || '',
-        email: user?.email || '',
+        name: activeUser?.user_metadata?.full_name || '',
+        email: activeUser?.email || '',
       },
       theme: {
         color: isDark ? '#000000' : '#111827',
