@@ -133,57 +133,97 @@ export const sendReceiptEmail = async (to, orderDetails, frontendUrl, invoicePdf
     <title>Your Bizleap Invoice #${orderId}</title>
   </head>
   <body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; color: #0f172a;">
-    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #f8fafc; padding: 40px 16px;">
+    
+    <!-- Preview Text -->
+    <div style="display: none; max-height: 0; overflow: hidden; mso-hide: all;">
+      Payment of ₹${total} confirmed! Click inside to download your templates. Order #${orderId}
+    </div>
+
+    <!-- Outer Wrapper -->
+    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #f8fafc; padding: 36px 16px;">
       <tr>
         <td align="center">
-          <table cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width: 600px; background-color: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
-            <!-- Header -->
+          
+          <table cellpadding="0" cellspacing="0" border="0" width="600" style="max-width: 600px; width: 100%; background-color: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);">
+            
+            <!-- Clean Header -->
             <tr>
-              <td style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%); padding: 32px 32px 28px; text-align: left;">
+              <td style="padding: 28px 32px 20px; border-bottom: 1px solid #f1f5f9; background-color: #ffffff;">
                 <table cellpadding="0" cellspacing="0" border="0" width="100%">
                   <tr>
-                    <td>
-                      <span style="color: #ffffff; font-size: 24px; font-weight: 900; letter-spacing: -0.5px;">BIZLEAP</span>
-                      <span style="color: #818cf8; font-size: 13px; font-weight: 600; margin-left: 8px;">Marketplace</span>
+                    <td style="vertical-align: middle;">
+                      <table cellpadding="0" cellspacing="0" border="0">
+                        <tr>
+                          <td style="width: 36px; height: 36px; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); border-radius: 10px; text-align: center; vertical-align: middle;">
+                            <span style="color: #ffffff; font-size: 17px; font-weight: 900; line-height: 36px;">B</span>
+                          </td>
+                          <td style="padding-left: 12px; vertical-align: middle;">
+                            <span style="font-size: 19px; font-weight: 900; color: #0f172a; letter-spacing: 1.5px;">BIZLEAP</span>
+                            <span style="display: block; font-size: 10px; font-weight: 700; color: #64748b; letter-spacing: 1px; text-transform: uppercase;">Marketplace</span>
+                          </td>
+                        </tr>
+                      </table>
                     </td>
-                    <td align="right">
-                      <span style="background-color: rgba(99, 102, 241, 0.2); border: 1px solid rgba(129, 140, 248, 0.3); color: #c7d2fe; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; text-transform: uppercase;">
-                        ✓ Paid & Confirmed
-                      </span>
+                    <td align="right" style="vertical-align: middle;">
+                      <table cellpadding="0" cellspacing="0" border="0">
+                        <tr>
+                          <td style="background-color: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 20px; padding: 5px 14px;">
+                            <span style="color: #059669; font-size: 11px; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;">
+                              ✓ Paid & Confirmed
+                            </span>
+                          </td>
+                        </tr>
+                      </table>
                     </td>
                   </tr>
                 </table>
-                <h1 style="color: #ffffff; font-size: 22px; font-weight: 800; margin: 20px 0 6px; line-height: 1.2;">
-                  Payment Successful 🎉
+              </td>
+            </tr>
+
+            <!-- Hero Section -->
+            <tr>
+              <td style="padding: 28px 32px 20px; background-color: #ffffff;">
+                <h1 style="margin: 0 0 8px; color: #0f172a; font-size: 22px; font-weight: 800; letter-spacing: -0.4px; line-height: 1.3;">
+                  Payment Receipt & Order Access
                 </h1>
-                <p style="color: #94a3b8; font-size: 13px; margin: 0; line-height: 1.5;">
-                  Thank you for your purchase! Your invoice and download links are ready below.
+                <p style="margin: 0; color: #64748b; font-size: 13.5px; line-height: 1.6;">
+                  Thank you for your purchase. Your source code files, commercial licenses, and tax invoice are ready below.
                 </p>
               </td>
             </tr>
 
-            <!-- Order Metadata Strip -->
+            <!-- Metadata Strip -->
             <tr>
-              <td style="background-color: #f1f5f9; padding: 14px 32px; border-bottom: 1px solid #e2e8f0;">
-                <table cellpadding="0" cellspacing="0" border="0" width="100%">
+              <td style="padding: 0 32px 24px;">
+                <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden;">
                   <tr>
-                    <td>
-                      <span style="color: #64748b; font-size: 11px; font-weight: 600; text-transform: uppercase;">Order ID:</span>
-                      <span style="color: #0f172a; font-size: 12px; font-weight: 700; font-family: monospace;"> #${orderId}</span>
+                    <td style="padding: 12px 18px; width: 50%; border-right: 1px solid #e2e8f0;">
+                      <span style="display: block; font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; margin-bottom: 2px;">Order ID</span>
+                      <span style="font-size: 12.5px; color: #0f172a; font-weight: 700; font-family: monospace;">#${orderId}</span>
                     </td>
-                    <td align="right">
-                      <span style="color: #64748b; font-size: 11px; font-weight: 600; text-transform: uppercase;">Date:</span>
-                      <span style="color: #0f172a; font-size: 12px; font-weight: 700;"> ${orderDate}</span>
+                    <td style="padding: 12px 18px; width: 50%;">
+                      <span style="display: block; font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; margin-bottom: 2px;">Date & Time</span>
+                      <span style="font-size: 12.5px; color: #0f172a; font-weight: 600;">${orderDate}, ${orderTime}</span>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 12px 18px; width: 50%; border-top: 1px solid #e2e8f0; border-right: 1px solid #e2e8f0;">
+                      <span style="display: block; font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; margin-bottom: 2px;">Billed To</span>
+                      <span style="font-size: 12px; color: #0f172a; font-weight: 600; word-break: break-all;">${customerEmail}</span>
+                    </td>
+                    <td style="padding: 12px 18px; width: 50%; border-top: 1px solid #e2e8f0;">
+                      <span style="display: block; font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.8px; font-weight: 700; margin-bottom: 2px;">Payment Status</span>
+                      <span style="font-size: 12px; color: #059669; font-weight: 700;">● Captured via Razorpay</span>
                     </td>
                   </tr>
                 </table>
               </td>
             </tr>
 
-            <!-- Purchased Items -->
+            <!-- Purchased Assets Section -->
             <tr>
-              <td style="padding: 28px 32px 16px;">
-                <h3 style="color: #0f172a; font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 16px;">
+              <td style="padding: 0 32px 16px;">
+                <h3 style="color: #0f172a; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; margin: 0 0 14px;">
                   Purchased Assets (${items.length})
                 </h3>
                 ${itemsHtml}
@@ -192,7 +232,7 @@ export const sendReceiptEmail = async (to, orderDetails, frontendUrl, invoicePdf
 
             <!-- Financial Summary -->
             <tr>
-              <td style="padding: 0 32px 28px;">
+              <td style="padding: 0 32px 20px;">
                 <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 18px 20px;">
                   <tr>
                     <td style="color: #64748b; font-size: 13px; padding-bottom: 8px;">Subtotal</td>
@@ -200,39 +240,54 @@ export const sendReceiptEmail = async (to, orderDetails, frontendUrl, invoicePdf
                   </tr>
                   <tr>
                     <td style="color: #64748b; font-size: 13px; padding-bottom: 8px;">Taxes & GST (0%)</td>
-                    <td align="right" style="color: #059669; font-size: 13px; font-weight: 700; padding-bottom: 8px;">FREE</td>
+                    <td align="right" style="color: #059669; font-size: 13px; font-weight: 700; padding-bottom: 8px;">FREE (Included)</td>
                   </tr>
                   <tr style="border-top: 1px solid #e2e8f0;">
-                    <td style="color: #0f172a; font-size: 16px; font-weight: 900; padding-top: 10px;">Total Paid</td>
-                    <td align="right" style="color: #4f46e5; font-size: 20px; font-weight: 900; padding-top: 10px;">₹${total}</td>
+                    <td style="color: #0f172a; font-size: 15px; font-weight: 900; padding-top: 10px;">Total Paid</td>
+                    <td align="right" style="color: #0f172a; font-size: 20px; font-weight: 900; padding-top: 10px;">₹${total}</td>
                   </tr>
                 </table>
               </td>
             </tr>
 
-            <!-- Direct Dashboard Access CTA -->
+            <!-- PDF Invoice Note -->
             <tr>
-              <td style="padding: 0 32px 32px; text-align: center;">
+              <td style="padding: 0 32px 22px;">
+                <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 12px 16px;">
+                  <tr>
+                    <td style="vertical-align: middle;">
+                      <p style="margin: 0; font-size: 12px; color: #166534; line-height: 1.5; font-weight: 600;">
+                        📄 Official Tax Invoice PDF has been attached to this email for your legal & accounting records.
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+            <!-- Main Dashboard CTA Button -->
+            <tr>
+              <td style="padding: 0 32px 28px; text-align: center;">
                 <table cellpadding="0" cellspacing="0" border="0" width="100%">
                   <tr>
-                    <td style="background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%); border-radius: 12px; text-align: center;">
-                      <a href="${baseUrl}/dashboard?tab=templates" target="_blank" style="display: block; padding: 14px 28px; color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 800; letter-spacing: 0.3px;">
-                        Open My Templates Dashboard &rarr;
+                    <td style="background-color: #0f172a; border-radius: 12px; text-align: center;">
+                      <a href="${baseUrl}/my-templates" target="_blank" style="display: block; padding: 14px 28px; color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 800; letter-spacing: 0.3px;">
+                        Access My Templates in Dashboard &rarr;
                       </a>
                     </td>
                   </tr>
                 </table>
                 <p style="color: #94a3b8; font-size: 11px; margin: 12px 0 0;">
-                  Need help? Contact our support team anytime at <a href="mailto:support@bizleap.in" style="color: #6366f1; text-decoration: none;">support@bizleap.in</a>
+                  Need help? Contact our support team anytime at <a href="mailto:support@bizleap.in" style="color: #4f46e5; text-decoration: none; font-weight: 600;">support@bizleap.in</a>
                 </p>
               </td>
             </tr>
 
-            <!-- Footer -->
+            <!-- Clean Footer -->
             <tr>
-              <td style="background-color: #f1f5f9; padding: 18px 32px; text-align: center; border-top: 1px solid #e2e8f0;">
-                <p style="color: #64748b; font-size: 11px; margin: 0;">
-                  © ${new Date().getFullYear()} Bizleap Marketplace Inc. All rights reserved.
+              <td style="background-color: #f8fafc; padding: 16px 32px; text-align: center; border-top: 1px solid #f1f5f9;">
+                <p style="color: #94a3b8; font-size: 11px; margin: 0; line-height: 1.5;">
+                  © ${new Date().getFullYear()} Bizleap Marketplace Inc. All rights reserved. • 100% Satisfaction & Security Guarantee.
                 </p>
               </td>
             </tr>
