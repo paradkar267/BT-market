@@ -447,66 +447,15 @@ export default function CartPage() {
         loadPurchasedTemplates();
       }
 
-      // 2. Generate PDF & send receipt email
+      // 2. Generate and download PDF Invoice locally in browser for the customer
       try {
-        const invoicePdfBase64 = await generateInvoicePDF(paymentId);
-        const emailPayload = {
-          to: customerEmail,
-          email: customerEmail,
-          customerName: customerName,
-          paymentId: paymentId,
-          totalAmount: finalPayableTotal,
-          frontendUrl: window.location.origin,
-          orderDetails: {
-            orderId: paymentId,
-            total: finalPayableTotal.toFixed(2),
-            subtotal: cartTotal.toFixed(2),
-            discount: appliedCoupon ? appliedCoupon.discount : 0,
-            couponCode: appliedCoupon ? appliedCoupon.code : null,
-            items: cartItems.map(item => ({
-              id: item.id,
-              title: item.title,
-              price: item.price,
-              author: item.author || 'Bizleap Partner',
-              category: item.category || 'Web',
-              downloadUrl: `${window.location.origin}/my-templates?download=${item.id}&payment_id=${paymentId}`
-            }))
-          },
-          cartItems: cartItems.map(item => ({
-            id: item.id,
-            title: item.title,
-            price: item.price,
-            author: item.author || 'Bizleap Partner',
-            category: item.category || 'Web',
-            downloadUrl: `${window.location.origin}/my-templates?download=${item.id}&payment_id=${paymentId}`
-          })),
-          invoicePdfBase64: invoicePdfBase64
-        };
-
-        const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3000' : '');
-        const targetUrls = [];
-        if (backendUrl) targetUrls.push(`${backendUrl}/api/send-receipt`);
-        targetUrls.push('/api/send-receipt');
-
-        for (const url of targetUrls) {
-          try {
-            const res = await fetch(url, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(emailPayload),
-              keepalive: true
-            });
-            if (res.ok) break;
-          } catch {
-            // try next target
-          }
-        }
-      } catch (emailErr) {
-        console.warn("Invoice email dispatch error:", emailErr);
+        await generateInvoicePDF(paymentId);
+      } catch (pdfErr) {
+        console.warn("Invoice PDF generation note:", pdfErr);
       }
 
       toast.dismiss('processing-order');
-      toast.success('🎉 Purchase complete! Receipt & invoice sent to your email.');
+      toast.success('🎉 Purchase complete! Your templates are now available.');
       setIsProcessing(false);
       navigate('/my-templates');
     } catch (error) {
