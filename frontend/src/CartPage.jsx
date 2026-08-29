@@ -374,9 +374,6 @@ export default function CartPage() {
   };
 
   const processSuccessfulPayment = async (paymentId) => {
-    setIsProcessing(true);
-    toast.loading('Finalizing order & sending invoice...', { id: 'processing-order' });
-
     let activeUser = user;
     if (!activeUser) {
       try {
@@ -389,67 +386,81 @@ export default function CartPage() {
     const customerName = activeUser?.user_metadata?.full_name || user?.user_metadata?.full_name || 'Customer';
     const userId = activeUser?.id || user?.id;
 
+    // 1. INSTANT Checkout & Immediate Redirect (0ms UI wait)
     try {
-      if (userId) {
-        const insertPayloads = cartItems.map(item => ({
-          user_id: userId,
-          template_id: item.id,
-          payment_id: paymentId,
-        }));
-
-        const { error: dbError } = await supabase
-          .from('purchases')
-          .insert(insertPayloads);
-
-        if (dbError) {
-          console.error("Database sync error (purchases):", dbError);
-        }
-
-        // Record Coupon Redemption for per-user 1-time enforcement
-        if (appliedCoupon) {
-          try {
-            await supabase.from('coupon_redemptions').insert([{
-              coupon_id: typeof appliedCoupon.id === 'number' || typeof appliedCoupon.id === 'string' ? appliedCoupon.id : null,
-              coupon_code: appliedCoupon.code,
-              user_id: userId,
-              user_email: customerEmail,
-              payment_id: paymentId
-            }]);
-
-            const currentUsed = activeUser?.user_metadata?.used_coupons || user?.user_metadata?.used_coupons || [];
-            if (!currentUsed.includes(appliedCoupon.code)) {
-              await supabase.auth.updateUser({
-                data: { used_coupons: [...currentUsed, appliedCoupon.code] }
-              });
-            }
-
-            if (appliedCoupon.id) {
-              const { data: cData } = await supabase
-                .from('coupons')
-                .select('times_used')
-                .eq('id', appliedCoupon.id)
-                .single();
-
-              await supabase
-                .from('coupons')
-                .update({ times_used: (cData?.times_used || 0) + 1 })
-                .eq('id', appliedCoupon.id);
-            }
-          } catch (couponRedeemErr) {
-            console.warn("Coupon redemption sync note:", couponRedeemErr?.message);
-          }
-        }
-      }
-
-      // 1. Instantly complete checkout & clear cart locally
       await checkout(paymentId, cartItems);
       if (loadPurchasedTemplates) {
         loadPurchasedTemplates();
       }
+    } catch (e) {
+      console.warn("Local checkout note:", e);
+    }
 
-      // 2. Generate PDF & send receipt email
+    toast.success('🎉 Purchase complete! Your templates are ready.');
+    navigate('/my-templates');
+
+    // 2. Asynchronous Background Task: DB Record Sync & Invoice Email Dispatch
+    (async () => {
       try {
-        const invoicePdfBase64 = await generateInvoicePDF(paymentId);
+        if (userId) {
+          const insertPayloads = cartItems.map(item => ({
+            user_id: userId,
+            template_id: item.id,
+            payment_id: paymentId,
+          }));
+
+          const { error: dbError } = await supabase
+            .from('purchases')
+            .insert(insertPayloads);
+
+          if (dbError) {
+            console.error("Database sync error (purchases):", dbError);
+          }
+
+          // Record Coupon Redemption for per-user 1-time enforcement
+          if (appliedCoupon) {
+            try {
+              await supabase.from('coupon_redemptions').insert([{
+                coupon_id: typeof appliedCoupon.id === 'number' || typeof appliedCoupon.id === 'string' ? appliedCoupon.id : null,
+                coupon_code: appliedCoupon.code,
+                user_id: userId,
+                user_email: customerEmail,
+                payment_id: paymentId
+              }]);
+
+              const currentUsed = activeUser?.user_metadata?.used_coupons || user?.user_metadata?.used_coupons || [];
+              if (!currentUsed.includes(appliedCoupon.code)) {
+                await supabase.auth.updateUser({
+                  data: { used_coupons: [...currentUsed, appliedCoupon.code] }
+                });
+              }
+
+              if (appliedCoupon.id) {
+                const { data: cData } = await supabase
+                  .from('coupons')
+                  .select('times_used')
+                  .eq('id', appliedCoupon.id)
+                  .single();
+
+                await supabase
+                  .from('coupons')
+                  .update({ times_used: (cData?.times_used || 0) + 1 })
+                  .eq('id', appliedCoupon.id);
+              }
+            } catch (couponRedeemErr) {
+              console.warn("Coupon redemption sync note:", couponRedeemErr?.message);
+            }
+          }
+        }
+
+        // Generate PDF & Send Receipt Email in Background
+        let invoicePdfBase64 = null;
+        try {
+          invoicePdfBase64 = await generateInvoicePDF(paymentId);
+        } catch (pdfErr) {
+          console.warn("PDF generation note:", pdfErr?.message);
+        }
+
         const emailPayload = {
           to: customerEmail,
           email: customerEmail,
@@ -501,21 +512,10 @@ export default function CartPage() {
             // try next target
           }
         }
-      } catch (emailErr) {
-        console.warn("Invoice email dispatch error:", emailErr);
+      } catch (bgErr) {
+        console.warn("Background order/email dispatch note:", bgErr);
       }
-
-      toast.dismiss('processing-order');
-      toast.success('🎉 Purchase complete! Receipt & invoice sent to your email.');
-      setIsProcessing(false);
-      navigate('/my-templates');
-    } catch (error) {
-      console.error("Post-payment processing failed:", error);
-      toast.dismiss('processing-order');
-      await checkout(paymentId, cartItems);
-      setIsProcessing(false);
-      navigate('/my-templates');
-    }
+    })();
   };
 
   const handleCheckout = async () => {
