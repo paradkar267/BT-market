@@ -1,14 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { api } from './lib/api';
+import { FALLBACK_TEMPLATES } from './data/fallbackTemplates';
 
 export function useTemplates() {
-  const [templates, setTemplates] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [templates, setTemplates] = useState(FALLBACK_TEMPLATES);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const fetchTemplates = useCallback(async () => {
     try {
-      setLoading(true);
       const data = await api.get('/api/templates');
 
       if (Array.isArray(data) && data.length > 0) {
@@ -20,12 +20,11 @@ export function useTemplates() {
           return { ...t, price: currentPrice.toString(), previewUrl };
         });
         setTemplates(adjustedData);
-      } else {
-        setTemplates([]);
       }
     } catch (err) {
-      console.warn('Backend templates fetch error:', err.message);
+      console.warn('Live backend templates fetch note:', err.message);
       setError(err);
+      // Preserves FALLBACK_TEMPLATES so UI never shows a blank screen
     } finally {
       setLoading(false);
     }

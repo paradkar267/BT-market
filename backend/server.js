@@ -133,6 +133,34 @@ app.use('/uploads', (req, res, next) => {
   maxAge: '7d'
 }));
 
+// Health and Database Diagnostics Check
+app.get('/api/health', async (req, res) => {
+  try {
+    const hasDbUrl = Boolean(process.env.DATABASE_URL);
+    if (!hasDbUrl) {
+      return res.status(500).json({
+        status: 'error',
+        message: 'DATABASE_URL is not configured in Render environment variables',
+        database_connected: false
+      });
+    }
+    const { rows } = await query('SELECT count(*)::int as count FROM templates');
+    res.json({
+      status: 'ok',
+      database_connected: true,
+      template_count: rows[0]?.count || 0,
+      timestamp: new Date().toISOString()
+    });
+  } catch (err) {
+    res.status(500).json({
+      status: 'error',
+      message: 'Failed to connect to Neon Postgres',
+      error: err.message,
+      database_connected: false
+    });
+  }
+});
+
 // Mount API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
