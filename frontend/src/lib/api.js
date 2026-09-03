@@ -20,7 +20,10 @@ export async function request(endpoint, options = {}) {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const url = endpoint.startsWith('http') ? endpoint : endpoint;
+  const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  const rawBackend = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || '';
+  const backendBase = rawBackend ? rawBackend.replace(/\/$/, '') : '';
+  const url = endpoint.startsWith('http') ? endpoint : `${backendBase}${cleanEndpoint}`;
 
   const response = await fetch(url, {
     ...options,

@@ -295,8 +295,11 @@ router.put('/password', requireAuth, async (req, res) => {
 
     const existingHash = rows[0].password_hash;
 
-    // If user already has a password and currentPassword was provided, verify it
-    if (existingHash && currentPassword) {
+    // If user already has a password, current password is strictly required
+    if (existingHash) {
+      if (!currentPassword) {
+        return res.status(400).json({ error: 'Current password is required to update your password' });
+      }
       const isMatch = await bcrypt.compare(String(currentPassword), existingHash);
       if (!isMatch) {
         return res.status(400).json({ error: 'Current password does not match' });

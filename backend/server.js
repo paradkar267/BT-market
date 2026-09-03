@@ -30,15 +30,17 @@ app.set('trust proxy', 1);
 
 // Security Middlewares
 app.use(helmet({
-  crossOriginResourcePolicy: false // Allow loading local uploads & images
+  crossOriginResourcePolicy: false, // Allow loading local uploads & images
+  noSniff: true,
+  xssFilter: true,
+  hidePoweredBy: true
 }));
 
-// Rate Limiter: Generous limits for single page applications & admin operations
+// Rate Limiter: General API
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 5000, // 5,000 requests per 15 minutes
   skip: (req) => {
-    // Never rate-limit localhost / development traffic
     const ip = req.ip || req.connection?.remoteAddress || '';
     const host = req.get('host') || '';
     return (
@@ -54,18 +56,82 @@ const apiLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-app.use('/api/', apiLimiter);
+// Strict Rate Limiter for Authentication & Passwords (Anti-Brute Force)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20, // Max 20 attempts per IP per 15 minutes
+  skip: (req) => {
+    const ip = req.ip || req.connection?.remoteAddress || '';
+    return ip === '127.0.0.1' || ip === '::1' || ip.includes('127.0.0.1');
+  },
+  message: { error: 'Too many authentication attempts. Please try again after 15 minutes for security.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
-// Strict CORS
+// Contact Form Limiter (Anti-Spam)
+const contactLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 6, // Max 6 messages per 15 mins per IP
+  message: { error: 'Too many messages sent. Please wait before submitting again.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+app.use('/api/', apiLimiter);
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
+app.use('/api/auth/password', authLimiter);
+app.use('/api/contact', contactLimiter);
+
+// Flexible & Secure CORS
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:5174',
+  'http://localhost:3000',
+  process.env.FRONTEND_URL,
+].filter(Boolean);
+
 app.use(cors({
-  origin: process.env.FRONTEND_URL ? [process.env.FRONTEND_URL, 'http://localhost:5173', 'http://localhost:5174'] : ['http://localhost:5173', 'http://localhost:5174'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    if (
+      allowedOrigins.includes(origin) ||
+      origin.endsWith('.vercel.app') ||
+      origin.endsWith('.onrender.com') ||
+      origin.includes('bizleap.in')
+    ) {
+      return callback(null, true);
+    }
+    if (process.env.NODE_ENV !== 'production') {
+      return callback(null, true);
+    }
+    return callback(new Error('Blocked by CORS policy'));
+  },
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'X-Requested-With']
 }));
 
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 
-// Serve local uploads statically (covers, avatars, images)
-app.use('/uploads', express.static(path.resolve(__dirname, 'uploads')));
+// Secure Static Uploads: Serve ONLY safe image assets; block ZIP, code, scripts, and executables
+const ALLOWED_IMAGE_EXTS = new Set(['.jpg', '.jpeg', '.png', '.webp', '.gif', '.avif', '.ico']);
+app.use('/uploads', (req, res, next) => {
+  const ext = path.extname(req.path).toLowerCase();
+  // Block any non-image file access directly from static uploads
+  if (!ALLOWED_IMAGE_EXTS.has(ext)) {
+    return res.status(403).json({ error: 'Access denied: Direct access to this file type is prohibited' });
+  }
+  // Prevent directory traversal attacks
+  if (req.path.includes('..') || req.path.includes('//')) {
+    return res.status(400).json({ error: 'Invalid file path' });
+  }
+  next();
+}, express.static(path.resolve(__dirname, 'uploads'), {
+  dotfiles: 'ignore',
+  etag: true,
+  maxAge: '7d'
+}));
 
 // Mount API Routes
 app.use('/api/auth', authRoutes);
@@ -119,10 +185,13 @@ app.use((req, res, next) => {
   res.status(404).json({ error: 'Endpoint not found' });
 });
 
-// Global Error Handler
+// Global Error Handler (Sanitized for security)
 app.use((err, req, res, next) => {
   console.error('Unhandled Backend Error:', err);
-  res.status(500).json({ error: 'Internal Server Error', details: err.message });
+  const isProd = process.env.NODE_ENV === 'production';
+  res.status(err.status || 500).json({ 
+    error: isProd ? 'Internal Server Error' : (err.message || 'Internal Server Error')
+  });
 });
 
 app.listen(PORT, () => {

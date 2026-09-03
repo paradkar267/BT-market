@@ -12,14 +12,15 @@ const router = express.Router();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Ensure uploads directory exists
+// Ensure uploads and private_storage directories exist
 const uploadsDir = path.resolve(__dirname, '../../backend/uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-}
+const privateStorageDir = path.resolve(__dirname, '../../backend/private_storage/templates');
 
-// Disk storage for uploads (covers, zip templates, assets)
-const storage = multer.diskStorage({
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+if (!fs.existsSync(privateStorageDir)) fs.mkdirSync(privateStorageDir, { recursive: true });
+
+// Safe image upload storage (strictly validated)
+const imageStorage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, uploadsDir);
   },
@@ -29,7 +30,54 @@ const storage = multer.diskStorage({
   }
 });
 
-const upload = multer({ storage: storage });
+const imageFileFilter = (req, file, cb) => {
+  const allowedMimes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif'];
+  const allowedExts = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.avif'];
+  const ext = path.extname(file.originalname).toLowerCase();
+  if (allowedMimes.includes(file.mimetype) && allowedExts.includes(ext)) {
+    cb(null, true);
+  } else {
+    cb(new Error('Security Error: Only valid image files (JPG, PNG, WebP, GIF, AVIF) are allowed'));
+  }
+};
+
+const uploadImage = multer({
+  storage: imageStorage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max
+  fileFilter: imageFileFilter
+});
+
+// Private template ZIP upload storage (Never accessible via public static URLs)
+const templateStorage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (ext === '.zip') {
+      cb(null, privateStorageDir);
+    } else {
+      cb(null, uploadsDir);
+    }
+  },
+  filename: function (req, file, cb) {
+    const cleanName = file.originalname.replace(/[^a-zA-Z0-9.-]/g, '_');
+    cb(null, `${Date.now()}-${cleanName}`);
+  }
+});
+
+const templateFileFilter = (req, file, cb) => {
+  const ext = path.extname(file.originalname).toLowerCase();
+  const allowedExts = ['.zip', '.jpg', '.jpeg', '.png', '.webp', '.gif', '.avif'];
+  if (allowedExts.includes(ext)) {
+    cb(null, true);
+  } else {
+    cb(new Error('Security Error: Only .zip archives and valid images are allowed'));
+  }
+};
+
+const upload = multer({
+  storage: templateStorage,
+  limits: { fileSize: 250 * 1024 * 1024 }, // 250MB max
+  fileFilter: templateFileFilter
+});
 
 // ==========================================
 // 1. STATS & ANALYTICS
@@ -1082,7 +1130,7 @@ router.get('/announcement-banner', handleGetStoreAnnouncement);
 router.post('/store-announcements', requireAdmin, handleStoreAnnouncement);
 router.post('/announcement-banner', requireAdmin, handleStoreAnnouncement);
 
-router.post('/upload-image', requireAdmin, upload.single('image'), (req, res) => {
+router.post('/upload-image', requireAdmin, uploadImage.single('image'), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: 'No image file uploaded' });
   }

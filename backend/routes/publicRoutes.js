@@ -366,6 +366,14 @@ router.post('/verify-payment', requireAuth, async (req, res) => {
   }
 
   try {
+    // Replay attack prevention: check if this paymentId was already recorded
+    if (!paymentId.startsWith('sim_') && !paymentId.startsWith('admin_')) {
+      const existingPayment = await query('SELECT id FROM purchases WHERE payment_id = $1 LIMIT 1', [paymentId]);
+      if (existingPayment.rows.length > 0) {
+        return res.status(400).json({ error: 'This payment transaction has already been processed.' });
+      }
+    }
+
     const templateIds = cartItems.map(item => parseInt(item.id, 10));
 
     // 1. Insert records into Neon purchases table
@@ -437,23 +445,24 @@ const getTemplateZipPath = async (templateId) => {
   const { rows } = await query('SELECT title FROM templates WHERE id = $1', [templateId]);
   const templateTitle = rows[0]?.title || `Template_${templateId}`;
 
-  const uploadsDir = path.resolve(__dirname, '../uploads');
+  const privateStorageDir = path.resolve(__dirname, '../private_storage/templates');
+  if (!fs.existsSync(privateStorageDir)) fs.mkdirSync(privateStorageDir, { recursive: true });
   const templatesRootDir = path.resolve(__dirname, '../../templates');
 
   // Check 1: Explicit zip in templates directory
   const directZip = path.join(templatesRootDir, `${templateTitle}.zip`);
   if (fs.existsSync(directZip)) return directZip;
 
-  // Check 2: Zip in uploads
-  const uploadZip = path.join(uploadsDir, `${templateTitle}.zip`);
-  if (fs.existsSync(uploadZip)) return uploadZip;
+  // Check 2: Zip in private storage
+  const storageZip = path.join(privateStorageDir, `${templateTitle}.zip`);
+  if (fs.existsSync(storageZip)) return storageZip;
 
   // Check 3: Check folder matching template title, and create zip on the fly
   const templateFolder = path.join(templatesRootDir, templateTitle);
   if (fs.existsSync(templateFolder) && fs.lstatSync(templateFolder).isDirectory()) {
     const zip = new AdmZip();
     zip.addLocalFolder(templateFolder);
-    const generatedZipPath = path.join(uploadsDir, `${templateTitle}.zip`);
+    const generatedZipPath = path.join(privateStorageDir, `${templateTitle}.zip`);
     zip.writeZip(generatedZipPath);
     return generatedZipPath;
   }
@@ -467,14 +476,14 @@ const getTemplateZipPath = async (templateId) => {
     if (fs.lstatSync(fullPath).isDirectory()) {
       const zip = new AdmZip();
       zip.addLocalFolder(fullPath);
-      const generatedZipPath = path.join(uploadsDir, `${templateTitle}.zip`);
+      const generatedZipPath = path.join(privateStorageDir, `${templateTitle}.zip`);
       zip.writeZip(generatedZipPath);
       return generatedZipPath;
     }
   }
 
   // Fallback: Default starter template package
-  const fallbackZip = path.join(uploadsDir, `${templateTitle}.zip`);
+  const fallbackZip = path.join(privateStorageDir, `${templateTitle}.zip`);
   const zip = new AdmZip();
   zip.addFile('README.txt', Buffer.from(`Thank you for purchasing ${templateTitle} from Bizleap Marketplace!\n\nFor support, contact support@bizleap.in\n`));
   zip.writeZip(fallbackZip);
