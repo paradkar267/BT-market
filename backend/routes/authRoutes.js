@@ -247,7 +247,10 @@ router.post('/google', async (req, res) => {
     });
   } catch (error) {
     console.error('Google auth error:', error);
-    res.status(500).json({ error: 'Google authentication failed' });
+    const msg = error.message?.includes('DATABASE_URL')
+      ? 'Database not configured: Please add DATABASE_URL in Render Dashboard Environment'
+      : (error.message || 'Google authentication failed');
+    res.status(500).json({ error: msg });
   }
 });
 
