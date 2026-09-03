@@ -8,6 +8,7 @@
     "build": "vite build frontend",
     "lint": "eslint frontend",
     "preview": "vite preview frontend",
+    "start": "node backend/server.js",
     "server": "node backend/server.js"
   },
   "dependencies": {
