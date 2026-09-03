@@ -4,7 +4,6 @@ import { Lock, Loader2, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { useAuth } from './AuthContext';
-import { supabase } from './lib/supabase';
 
 export default function ResetPasswordPage() {
   const [password, setPassword] = useState('');
@@ -16,13 +15,10 @@ export default function ResetPasswordPage() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check if we have a session. If not, the recovery link might be invalid or expired.
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
-        toast.error("Invalid or expired password reset link.");
-        navigate('/');
-      }
-    });
+    const token = localStorage.getItem('bizleap_token');
+    if (!token) {
+      toast.info("Please log in or request a new reset link.");
+    }
   }, [navigate]);
 
   const handleSubmit = async (e) => {

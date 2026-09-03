@@ -11,7 +11,7 @@ import { useAuth } from './AuthContext';
 import { useTemplates } from './useTemplates';
 import { useCurrency } from './CurrencyContext';
 import { Logo } from './components/ui/Logo';
-import { supabase } from './lib/supabase';
+import { api } from './lib/api';
 
 // Data initialized from actual fetching
 const COLORS = ['#8b5cf6', '#3b82f6', '#ec4899', '#10b981'];
@@ -144,106 +144,47 @@ export default function DashboardPage() {
         let formattedTransactions = [];
         let fetchedUsersCount = 0;
 
-        // Try fetching through authenticated Admin API
-        const { data: { session: currentSession } } = await supabase.auth.getSession();
-        let adminOrdersData = null;
+        // Fetch from authenticated Admin API backed by Neon
+        try {
+          const [ordersRes, statsRes] = await Promise.all([
+            api.get('/api/admin/orders'),
+            api.get('/api/admin/stats').catch(() => null)
+          ]);
 
-        if (currentSession) {
-          const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || '';
-          const targetUrls = [];
-          if (backendUrl) targetUrls.push(`${backendUrl}/api/admin/orders`);
-          targetUrls.push('/api/admin/orders');
-          targetUrls.push('/api/admin-orders');
+          if (statsRes?.totalUsers) {
+            fetchedUsersCount = statsRes.totalUsers;
+          }
 
-          for (const url of targetUrls) {
-            try {
-              const res = await fetch(url, {
-                headers: { 'Authorization': `Bearer ${currentSession.access_token}` }
-              });
-              if (res.ok) {
-                adminOrdersData = await res.json();
-                break;
-              }
-            } catch {
-              // fallback
+          if (ordersRes && ordersRes.orders) {
+            let filteredOrders = ordersRes.orders;
+            if (dateFilter === '7days') {
+              const d = new Date();
+              d.setDate(d.getDate() - 7);
+              filteredOrders = filteredOrders.filter(o => new Date(o.created_at) >= d);
+            } else if (dateFilter === '30days') {
+              const d = new Date();
+              d.setDate(d.getDate() - 30);
+              filteredOrders = filteredOrders.filter(o => new Date(o.created_at) >= d);
             }
-          }
-        }
 
-        if (adminOrdersData && adminOrdersData.orders) {
-          fetchedUsersCount = adminOrdersData.stats?.totalUsers || adminOrdersData.stats?.totalCustomers || 0;
-          
-          let filteredOrders = adminOrdersData.orders;
-          if (dateFilter === '7days') {
-            const d = new Date();
-            d.setDate(d.getDate() - 7);
-            filteredOrders = filteredOrders.filter(o => new Date(o.createdAt) >= d);
-          } else if (dateFilter === '30days') {
-            const d = new Date();
-            d.setDate(d.getDate() - 30);
-            filteredOrders = filteredOrders.filter(o => new Date(o.createdAt) >= d);
-          }
-
-          filteredOrders.forEach(o => {
-            totalRevenue += o.amount || 0;
-            formattedTransactions.push({
-              id: o.paymentId,
-              user: `${o.customer.name} (${o.customer.email})`,
-              customerEmail: o.customer.email,
-              customerName: o.customer.name,
-              amount: o.amount,
-              status: 'Completed',
-              date: new Date(o.createdAt).toLocaleString(),
-              template: o.template.title,
-              avatar: o.customer.name.charAt(0).toUpperCase()
-            });
-          });
-        } else {
-          // Fallback: Fetch via Supabase client directly
-          const { count: usersCount } = await supabase
-            .from('profiles')
-            .select('*', { count: 'exact', head: true });
-          fetchedUsersCount = usersCount || 0;
-
-          let query = supabase
-            .from('purchases')
-            .select('id, user_id, template_id, created_at, payment_id')
-            .order('created_at', { ascending: false });
-
-          if (dateFilter === '7days') {
-            const d = new Date();
-            d.setDate(d.getDate() - 7);
-            query = query.gte('created_at', d.toISOString());
-          } else if (dateFilter === '30days') {
-            const d = new Date();
-            d.setDate(d.getDate() - 30);
-            query = query.gte('created_at', d.toISOString());
-          }
-          
-          const { data: purchases } = await query;
-
-          if (purchases && purchases.length > 0) {
-            const { data: allProfiles } = await supabase.from('profiles').select('id, full_name');
-            
-            purchases.forEach(p => {
-              const template = marketplaceTemplates.find(t => t.id === p.template_id);
-              const price = template ? parseFloat(template.price) : 0;
-              totalRevenue += price;
-
-              const userProfile = allProfiles?.find(prof => prof.id === p.user_id);
-              const userName = userProfile?.full_name || 'Customer';
-
+            filteredOrders.forEach(o => {
+              const orderAmount = parseFloat(o.template?.price || o.amount || 0);
+              totalRevenue += orderAmount;
               formattedTransactions.push({
-                id: p.payment_id || p.id.split('-')[0].toUpperCase(),
-                user: userName,
-                amount: price,
-                status: 'Completed',
-                date: new Date(p.created_at).toLocaleString(),
-                template: template?.title || 'Template #' + p.template_id,
-                avatar: userName.charAt(0).toUpperCase()
+                id: o.paymentId || o.id,
+                user: `${o.customer?.fullName || 'Customer'} (${o.customer?.email || 'N/A'})`,
+                customerEmail: o.customer?.email,
+                customerName: o.customer?.fullName,
+                amount: orderAmount,
+                status: o.status || 'Completed',
+                date: new Date(o.created_at).toLocaleString(),
+                template: o.template?.title || 'Template',
+                avatar: (o.customer?.fullName || 'C').charAt(0).toUpperCase()
               });
             });
           }
+        } catch (adminErr) {
+          console.warn("Admin data fetch note:", adminErr.message);
         }
 
         if (!isMounted) return;
@@ -346,10 +287,6 @@ export default function DashboardPage() {
 
   return (
     <div className={`min-h-screen flex font-sans transition-colors duration-1000 relative overflow-hidden ${isDark ? 'bg-[#050505] text-white' : 'bg-[#fafafa] text-gray-900'}`}>
-      
-      {/* Ambient Glowing Background */}
-      <div className={`absolute top-[-20%] left-[-10%] w-[50%] h-[50%] rounded-full blur-[150px] pointer-events-none transition-opacity duration-1000 ${isDark ? 'bg-blue-500/10' : 'bg-blue-500/5'}`} />
-      <div className={`absolute bottom-[-20%] right-[-10%] w-[50%] h-[50%] rounded-full blur-[150px] pointer-events-none transition-opacity duration-1000 ${isDark ? 'bg-purple-500/10' : 'bg-purple-500/5'}`} />
 
       {/* Sidebar Navigation */}
       <aside className={`w-[260px] hidden lg:flex flex-col shrink-0 sticky top-0 h-screen transition-colors duration-1000 z-40 ${isDark ? 'bg-black/20 backdrop-blur-2xl border-r border-white/5' : 'bg-white/40 backdrop-blur-2xl border-r border-black/5'}`}>
@@ -891,7 +828,7 @@ function PremiumStatCard({ title, value, icon, trend, isPositive, color, isDark 
 
   const bgMap = {
     blue: 'bg-blue-500/10 text-blue-500',
-    purple: 'bg-purple-500/10 text-purple-500',
+    purple: 'bg-black/10 dark:bg-white/10 text-black dark:text-white',
     emerald: 'bg-emerald-500/10 text-emerald-500',
     pink: 'bg-pink-500/10 text-pink-500'
   };
@@ -899,7 +836,7 @@ function PremiumStatCard({ title, value, icon, trend, isPositive, color, isDark 
   return (
     <motion.div variants={itemVariant} className={`relative group p-6 rounded-3xl border transition-all duration-500 overflow-hidden ${isDark ? 'bg-white/[0.02] border-white/[0.05] hover:border-white/[0.1] hover:bg-white/[0.04]' : 'bg-white border-black/[0.05] shadow-sm hover:shadow-md hover:border-black/[0.1]'}`}>
       
-      <div className={`absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r opacity-50 group-hover:opacity-100 transition-opacity duration-500 ${color === 'blue' ? 'from-blue-500' : color === 'purple' ? 'from-purple-500' : color === 'emerald' ? 'from-emerald-500' : 'from-pink-500'} to-transparent`} />
+      <div className={`absolute top-0 left-0 w-full h-[2px] bg-gradient-to-r opacity-50 group-hover:opacity-100 transition-opacity duration-500 ${color === 'blue' ? 'from-blue-500' : color === 'purple' ? 'from-black dark:from-white' : color === 'emerald' ? 'from-emerald-500' : 'from-pink-500'} to-transparent`} />
 
       <div className="flex justify-between items-start mb-6">
         <div>

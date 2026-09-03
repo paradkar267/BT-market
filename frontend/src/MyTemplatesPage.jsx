@@ -3,7 +3,6 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import confetti from 'canvas-confetti';
 import { Download, LayoutTemplate, ArrowLeft, Loader2, CheckCircle2, Eye, RotateCcw, X } from 'lucide-react';
 import { useCart } from './CartContext';
-import { supabase } from './lib/supabase';
 import UserMenu from './UserMenu';
 import { toast } from 'sonner';
 import { Logo } from './components/ui/Logo';
@@ -16,26 +15,64 @@ export default function MyTemplatesPage() {
 
   // Refund request state
   const [refundTarget, setRefundTarget] = useState(null); // template object
-  const [refundReason, setRefundReason] = useState('');
+  const [refundReasonCategory, setRefundReasonCategory] = useState('');
+  const [refundReasonDetails, setRefundReasonDetails] = useState('');
   const [refundSubmitting, setRefundSubmitting] = useState(false);
 
   const handleRequestRefund = async () => {
-    if (!refundTarget || !refundReason.trim()) return;
+    const combinedReason = [refundReasonCategory, refundReasonDetails.trim()].filter(Boolean).join(': ');
+    if (!refundTarget || !combinedReason.trim()) {
+      toast.error('Please select or describe a reason for your refund request.');
+      return;
+    }
+
     setRefundSubmitting(true);
+    const toastId = toast.loading('Submitting refund request to support...');
+
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      const res = await fetch('/api/request-refund', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session?.access_token}` },
-        body: JSON.stringify({ templateId: refundTarget.id, reason: refundReason.trim() })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error);
-      toast.success('Refund request submitted! We\'ll review it within 1–2 business days.');
+      const token = localStorage.getItem('bizleap_token') || localStorage.getItem('sb-access-token') || '';
+      if (!token) throw new Error('Please log in to submit a refund request');
+
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || '';
+      const targetUrls = [];
+      if (backendUrl) targetUrls.push(`${backendUrl}/api/request-refund`);
+      targetUrls.push('/api/request-refund');
+
+      let response = null;
+      let data = {};
+
+      for (const url of targetUrls) {
+        try {
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ 
+              templateId: refundTarget.id, 
+              reason: combinedReason.trim() 
+            })
+          });
+          const text = await res.text();
+          data = text ? JSON.parse(text) : {};
+          if (res.ok) {
+            response = res;
+            break;
+          }
+        } catch {
+          // try next
+        }
+      }
+
+      if (!response || !response.ok) {
+        throw new Error(data.error || 'Failed to submit refund request.');
+      }
+
+      toast.success(data.message || 'Refund request submitted! We\'ll review it within 1–2 business days.', { id: toastId });
       setRefundTarget(null);
-      setRefundReason('');
+      setRefundReasonCategory('');
+      setRefundReasonDetails('');
+      loadPurchasedTemplates();
     } catch (err) {
-      toast.error(err.message || 'Failed to submit refund request.');
+      toast.error(err.message || 'Failed to submit refund request.', { id: toastId });
     } finally {
       setRefundSubmitting(false);
     }
@@ -57,8 +94,8 @@ export default function MyTemplatesPage() {
     }, 400);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error("Not authenticated");
+      const token = localStorage.getItem('bizleap_token');
+      if (!token) throw new Error("Please log in to download");
 
       const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || '';
       const targetUrls = [];
@@ -74,7 +111,7 @@ export default function MyTemplatesPage() {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${session.access_token}`
+              'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify({ templateId })
           });
@@ -128,6 +165,40 @@ export default function MyTemplatesPage() {
     }
   }, [downloading]);
 
+  const handleExecuteDownload = async (templateId, templateTitle, link) => {
+    const toastId = toast.loading(`Downloading ${templateTitle} ZIP package...`);
+    try {
+      const token = localStorage.getItem('bizleap_token') || '';
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      
+      const res = await fetch(link, { headers });
+      if (!res.ok) {
+        const errText = await res.text();
+        let errMsg = 'Failed to download file';
+        try { errMsg = JSON.parse(errText).error || errMsg; } catch {}
+        throw new Error(errMsg);
+      }
+
+      const blob = await res.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      const cleanTitle = templateTitle.replace(/[^a-zA-Z0-9_-]/g, '_');
+      a.download = `${cleanTitle}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(blobUrl);
+
+      toast.success(`${templateTitle} downloaded successfully!`, { id: toastId });
+    } catch (err) {
+      console.error('Blob download error, falling back to direct link:', err);
+      // Fallback to direct navigation since link has signed token
+      window.location.href = link;
+      toast.dismiss(toastId);
+    }
+  };
+
   useEffect(() => {
     window.scrollTo(0, 0);
     loadPurchasedTemplates();
@@ -179,9 +250,7 @@ export default function MyTemplatesPage() {
       </nav>
 
       <div className="max-w-[1200px] mx-auto px-8 md:px-16 mt-12 relative">
-        <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-purple-500/10 rounded-full blur-3xl pointer-events-none mix-blend-screen" />
-        
-        <Link to="/" className="inline-flex items-center gap-2 text-gray-500 font-bold hover:text-black dark:text-white mb-8 transition-colors">
+        <Link to="/templates" className="inline-flex items-center gap-2 text-gray-500 font-bold hover:text-black dark:text-white mb-8 transition-colors">
           <ArrowLeft className="w-5 h-5" /> Back to Market
         </Link>
 
@@ -234,15 +303,12 @@ export default function MyTemplatesPage() {
                       <div className="flex gap-2 w-full">
                         {isDone ? (
                           <div className="flex-1 flex flex-col gap-2">
-                            <a 
-                              href={downloading[template.id].link}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              onClick={() => toast.success("Download started via secure signed URL.")}
-                              className="w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-md bg-green-500 text-white hover:bg-green-600"
+                            <button 
+                              onClick={() => handleExecuteDownload(template.id, template.title, downloading[template.id].link)}
+                              className="w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-md bg-green-500 text-white hover:bg-green-600 cursor-pointer"
                             >
                               <CheckCircle2 className="w-5 h-5" /> Download Ready
-                            </a>
+                            </button>
                             <p className="text-[10px] text-gray-500 dark:text-gray-400 text-center font-medium">
                               Link expires in 60 seconds.
                             </p>
@@ -268,7 +334,7 @@ export default function MyTemplatesPage() {
                         {/* Request Refund */}
                         {!isDownloading && !isDone && (
                           <button
-                            onClick={() => { setRefundTarget(template); setRefundReason(''); }}
+                            onClick={() => { setRefundTarget(template); setRefundReasonCategory("Technical issue / can't open files"); setRefundReasonDetails(''); }}
                             className="px-3 py-4 rounded-xl border border-gray-200 dark:border-white/10 text-gray-400 hover:text-red-500 hover:border-red-300 dark:hover:border-red-500/40 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all cursor-pointer"
                             title="Request a Refund"
                           >
@@ -309,21 +375,22 @@ export default function MyTemplatesPage() {
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1.5">Reason for Refund *</label>
                 <select
-                  value={refundReason}
-                  onChange={e => setRefundReason(e.target.value)}
+                  value={refundReasonCategory}
+                  onChange={e => setRefundReasonCategory(e.target.value)}
                   className="w-full bg-gray-50 dark:bg-black border border-gray-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 mb-2"
                 >
                   <option value="">— Select a reason —</option>
+                  <option value="Technical issue / can't open files">Technical issue / can't open files</option>
                   <option value="Accidental purchase">Accidental purchase</option>
                   <option value="Not as described">Not as described</option>
-                  <option value="Technical issue">Technical issue / can't open files</option>
                   <option value="Duplicate purchase">Duplicate purchase</option>
                   <option value="Changed my mind">Changed my mind</option>
+                  <option value="Other reason">Other reason</option>
                 </select>
                 <textarea
-                  value={refundReason}
-                  onChange={e => setRefundReason(e.target.value)}
-                  placeholder="Or describe your issue in more detail..."
+                  value={refundReasonDetails}
+                  onChange={e => setRefundReasonDetails(e.target.value)}
+                  placeholder="Describe your issue or additional details..."
                   rows={3}
                   className="w-full bg-gray-50 dark:bg-black border border-gray-200 dark:border-white/10 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 resize-none"
                 />
@@ -343,7 +410,7 @@ export default function MyTemplatesPage() {
               </button>
               <button
                 onClick={handleRequestRefund}
-                disabled={refundSubmitting || !refundReason.trim()}
+                disabled={refundSubmitting || (!refundReasonCategory && !refundReasonDetails.trim())}
                 className="px-6 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-sm font-black flex items-center gap-2 transition-colors cursor-pointer disabled:opacity-50"
               >
                 {refundSubmitting ? (

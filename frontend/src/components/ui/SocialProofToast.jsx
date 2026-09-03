@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { ShoppingBag, X } from 'lucide-react';
 import { useTheme } from '../../ThemeContext';
 import { useAuth } from '../../AuthContext';
-import { supabase } from '../../lib/supabase';
+import { api } from '../../lib/api';
 import { useTemplates } from '../../useTemplates';
 
 export function SocialProofToast() {
@@ -21,32 +21,22 @@ export function SocialProofToast() {
     
     const fetchRealPurchases = async () => {
       try {
-        const { data: purchasesData } = await supabase
-          .from('purchases')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(10);
-          
-        if (purchasesData && purchasesData.length > 0) {
-          const { data: profilesData } = await supabase.from('profiles').select('id, full_name');
-          
-          const formatted = purchasesData.map(p => {
-            const tmpl = marketplaceTemplates.find(t => t.id === p.template_id);
-            const prof = profilesData?.find(pr => pr.id === p.user_id);
-            
+        const res = await api.get('/api/admin/orders');
+        if (res?.orders && res.orders.length > 0) {
+          const formatted = res.orders.slice(0, 10).map(p => {
             const diff = Math.floor((new Date() - new Date(p.created_at)) / 60000);
             let timeStr = diff < 1 ? "Just now" : diff < 60 ? `${diff} mins ago` : diff < 1440 ? `${Math.floor(diff/60)} hours ago` : `${Math.floor(diff/1440)} days ago`;
 
             return {
-              name: prof?.full_name || "A User",
-              item: tmpl?.title || "A Template",
+              name: p.customer?.fullName || "A User",
+              item: p.template?.title || "A Template",
               time: timeStr
             };
           });
           setRealPurchases(formatted);
         }
       } catch (err) {
-        console.error("Error fetching toast purchases", err);
+        // Fallback: silent ignore
       }
     };
     
@@ -63,66 +53,50 @@ export function SocialProofToast() {
 
       setTimeout(() => {
         setIsVisible(false);
-        const nextDelay = Math.floor(Math.random() * (30000 - 15000 + 1) + 15000);
-        timerRef.current = setTimeout(showRandomPurchase, nextDelay);
       }, 5000);
     };
 
-    const initialTimer = setTimeout(() => {
-      showRandomPurchase();
-    }, 5000);
+    const initialTimeout = setTimeout(showRandomPurchase, 8000);
+    timerRef.current = setInterval(showRandomPurchase, 20000);
 
     return () => {
-      clearTimeout(initialTimer);
-      if (timerRef.current) clearTimeout(timerRef.current);
+      clearTimeout(initialTimeout);
+      if (timerRef.current) clearInterval(timerRef.current);
     };
   }, [isAdmin, realPurchases]);
 
-  if (!isAdmin) return null;
+  if (!isAdmin || !isVisible || !currentPurchase) return null;
 
   return (
     <AnimatePresence>
-      {isVisible && currentPurchase && (
-        <motion.div
-          initial={{ opacity: 0, y: 50, x: -20, scale: 0.9 }}
-          animate={{ opacity: 1, y: 0, x: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 20, scale: 0.9 }}
-          transition={{ type: "spring", damping: 20, stiffness: 200 }}
-          className={`fixed bottom-6 left-6 z-[9999] flex items-center gap-4 p-4 pr-10 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.12)] border cursor-pointer hover:scale-105 transition-transform backdrop-blur-xl ${
-            isDark 
-              ? 'bg-black/60 border-white/10 text-white shadow-[0_10px_40px_rgba(0,0,0,0.5)]' 
-              : 'bg-white/80 border-gray-200 text-black'
-          }`}
+      <motion.div
+        initial={{ opacity: 0, y: 50, scale: 0.9 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 20, scale: 0.9 }}
+        transition={{ duration: 0.3 }}
+        className="fixed bottom-6 left-6 z-50 flex items-center gap-3 bg-white/95 dark:bg-[#111111]/95 backdrop-blur-md p-3.5 pr-8 rounded-2xl shadow-xl border border-black/10 dark:border-white/10 max-w-sm"
+      >
+        <div className="w-10 h-10 rounded-xl bg-black text-white dark:bg-white dark:text-black flex items-center justify-center shrink-0 shadow-md">
+          <ShoppingBag className="w-5 h-5" />
+        </div>
+        <div className="flex flex-col">
+          <span className="text-xs font-semibold text-gray-900 dark:text-white">
+            <strong className="text-black dark:text-white font-bold">{currentPurchase.name}</strong> just purchased
+          </span>
+          <span className="text-xs font-medium text-gray-600 dark:text-gray-300 truncate max-w-[180px]">
+            {currentPurchase.item}
+          </span>
+          <span className="text-[10px] text-gray-400 mt-0.5">{currentPurchase.time}</span>
+        </div>
+        <button
           onClick={() => setIsVisible(false)}
+          className="absolute top-2.5 right-2.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
         >
-          <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 shadow-inner ${
-            isDark ? 'bg-white/10 text-white' : 'bg-black/5 text-black'
-          }`}>
-            <ShoppingBag className="w-5 h-5" />
-          </div>
-          
-          <div>
-            <p className="text-sm font-bold leading-tight mb-1">
-              {currentPurchase.name}
-            </p>
-            <p className={`text-xs font-medium mb-1 ${isDark ? 'text-gray-400' : 'text-gray-500'}`}>
-              purchased <span className={`font-bold ${isDark ? 'text-white' : 'text-black'}`}>{currentPurchase.item}</span>
-            </p>
-            <p className={`text-[10px] uppercase tracking-wider font-bold ${isDark ? 'text-gray-500' : 'text-gray-400'}`}>
-              {currentPurchase.time}
-            </p>
-          </div>
-
-          <button 
-            onClick={(e) => { e.stopPropagation(); setIsVisible(false); }}
-            className={`absolute top-3 right-3 p-1 rounded-full transition-colors ${
-              isDark ? 'hover:bg-white/10 text-gray-400 hover:text-white' : 'hover:bg-black/5 text-gray-400 hover:text-black'
-            }`}
-          >
-            <X className="w-3.5 h-3.5" />
-          </button>
-        </motion.div>
-      )}
+          <X className="w-3.5 h-3.5" />
+        </button>
+      </motion.div>
     </AnimatePresence>
   );
 }
+
+export default SocialProofToast;

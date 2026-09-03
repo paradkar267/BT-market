@@ -124,7 +124,7 @@ export default function PreviewPage() {
     return (
       <div className="h-screen w-full flex flex-col items-center justify-center bg-black text-white gap-4">
         <h1 className="text-2xl font-bold">Template Not Found</h1>
-        <Link to="/" className="text-indigo-400 hover:underline">Back to Home</Link>
+        <Link to="/" className="text-white hover:underline">Back to Home</Link>
       </div>
     );
   }
@@ -165,7 +165,7 @@ export default function PreviewPage() {
               {template.title}
             </h1>
             <span className="text-gray-500 text-xs font-medium">
-              by <span className="text-indigo-400">{template.author}</span>
+              by <span className="text-white">{template.author}</span>
             </span>
           </div>
         </div>
@@ -231,7 +231,7 @@ export default function PreviewPage() {
               ? 'bg-white/5 text-gray-500 cursor-not-allowed'
               : inCart 
               ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
-              : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-[0_0_20px_-5px_rgba(79,70,229,0.5)]'
+              : 'bg-white hover:bg-zinc-200 text-black shadow-lg font-black'
             }`}
           >
             {template.is_sold_out ? (
@@ -286,7 +286,7 @@ export default function PreviewPage() {
           {/* Loading Spinner */}
           {!iframeLoaded && previewUrl && (
             <div className="absolute inset-0 z-0 flex items-center justify-center bg-gray-50/80 backdrop-blur-sm">
-               <Loader2 className="w-10 h-10 animate-spin text-indigo-500" />
+               <Loader2 className="w-10 h-10 animate-spin text-black" />
             </div>
           )}
 

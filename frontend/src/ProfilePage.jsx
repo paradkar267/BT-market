@@ -9,7 +9,7 @@ import { useAuth } from './AuthContext';
 import UserMenu from './UserMenu';
 import { toast } from 'sonner';
 import { Logo } from './components/ui/Logo';
-import { supabase } from './lib/supabase';
+import { api } from './lib/api';
 
 export default function ProfilePage() {
   const { user, profile, setProfile, isAdmin } = useAuth();
@@ -36,23 +36,7 @@ export default function ProfilePage() {
     if (!user) return;
     try {
       const finalName = currentName;
-      const { error: authError } = await supabase.auth.updateUser({
-        data: { full_name: finalName }
-      });
-
-      if (authError) throw authError;
-
-      try {
-        await supabase
-          .from('profiles')
-          .upsert({
-            id: user.id,
-            full_name: finalName,
-            updated_at: new Date().toISOString()
-          });
-      } catch {
-        // Ignore table errors
-      }
+      await api.put('/api/auth/profile', { fullName: finalName });
 
       setProfile(prev => ({ ...prev, full_name: finalName }));
       setName(null);
@@ -79,7 +63,7 @@ export default function ProfilePage() {
       <div className="max-w-[1000px] mx-auto px-6 md:px-12 mt-12 relative">
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-3xl pointer-events-none mix-blend-screen" />
         
-        <Link to="/" className="inline-flex items-center gap-2 text-gray-500 font-bold hover:text-black dark:text-white mb-8 transition-colors">
+        <Link to="/templates" className="inline-flex items-center gap-2 text-gray-500 font-bold hover:text-black dark:text-white mb-8 transition-colors">
           <ArrowLeft className="w-5 h-5" /> Back to Market
         </Link>
 

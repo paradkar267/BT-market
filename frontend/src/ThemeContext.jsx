@@ -5,9 +5,15 @@ const ThemeContext = createContext();
 export const ThemeProvider = ({ children }) => {
   const [theme, setTheme] = useState(() => {
     try {
-      return localStorage.getItem("theme") || "dark";
+      const stored = localStorage.getItem("theme");
+      // Default to light if not set or was dark
+      if (!stored || stored === "dark") {
+        localStorage.setItem("theme", "light");
+        return "light";
+      }
+      return stored;
     } catch {
-      return "dark";
+      return "light";
     }
   });
 
@@ -18,12 +24,12 @@ export const ThemeProvider = ({ children }) => {
     try {
       localStorage.setItem("theme", theme);
     } catch {
-      // Ignore localStorage errors
+      // ignore
     }
   }, [theme]);
 
   const toggleTheme = () => {
-    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+    setTheme(prev => prev === "dark" ? "light" : "dark");
   };
 
   return (

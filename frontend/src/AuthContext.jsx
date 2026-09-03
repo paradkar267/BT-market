@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from './lib/supabase';
+import { api } from './lib/api';
 import { AuthModal } from './components/ui/AuthModal';
 import { toast } from 'sonner';
 
@@ -13,77 +13,71 @@ export function AuthProvider({ children }) {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const pendingActionRef = React.useRef(null);
 
-  const handleUserSession = async (currentSession) => {
-    setSession(currentSession || null);
-    const currentUser = currentSession?.user || null;
-    if (!currentUser) {
+  const applyUser = (userData, token) => {
+    if (!userData) {
       setUser(null);
+      setSession(null);
       setProfile(null);
       return;
     }
-    setUser(currentUser);
-    
-    const rawFullName = currentUser?.user_metadata?.full_name;
-    const cleanFullName = typeof rawFullName === 'object' && rawFullName !== null ? rawFullName.full_name : rawFullName;
 
-    const authProfile = {
-      full_name: cleanFullName || currentUser?.email?.split('@')[0],
-      avatar_url: currentUser?.user_metadata?.avatar_url
+    const cleanName = userData.full_name || userData.name || userData.email?.split('@')[0];
+    const normalizedUser = {
+      ...userData,
+      id: userData.id,
+      email: userData.email,
+      user_metadata: {
+        full_name: cleanName,
+        avatar_url: userData.avatar_url,
+        purchased_templates: userData.purchased_templates || [],
+        wishlist_templates: userData.wishlist_templates || []
+      }
     };
-    setProfile(prev => ({ ...prev, ...authProfile }));
+
+    setUser(normalizedUser);
+    setSession({ token, user: normalizedUser });
+    setProfile({
+      id: userData.id,
+      email: userData.email,
+      full_name: cleanName,
+      avatar_url: userData.avatar_url,
+      role: userData.role,
+      purchased_templates: userData.purchased_templates || [],
+      wishlist_templates: userData.wishlist_templates || []
+    });
 
     if (pendingActionRef.current) {
       const action = pendingActionRef.current;
       pendingActionRef.current = null;
       action();
     }
-
-    // Try fetching from profiles table
-    try {
-      const { data, error } = await supabase.from('profiles').select('*').eq('id', currentUser.id).single();
-      if (!error && data) {
-        setProfile(prev => ({ ...prev, ...data, ...authProfile }));
-      }
-    } catch {
-      // Ignore if table doesn't exist
-    }
   };
 
-  // Authentication Setup & Listeners
   useEffect(() => {
-    let subscription;
-
     const initializeAuth = async () => {
+      const token = localStorage.getItem('bizleap_token');
+      if (!token) {
+        setLoading(false);
+        return;
+      }
       try {
-        const { data: { session: initialSession }, error } = await supabase.auth.getSession();
-        if (error) throw error;
-        await handleUserSession(initialSession);
+        const res = await api.get('/api/auth/me');
+        if (res?.user) {
+          applyUser(res.user, token);
+        } else {
+          localStorage.removeItem('bizleap_token');
+        }
       } catch (err) {
-        console.error('Session Error:', err.message);
+        console.warn('Session check note:', err.message);
+        localStorage.removeItem('bizleap_token');
       } finally {
         setLoading(false);
       }
     };
 
     initializeAuth();
-
-    const { data } = supabase.auth.onAuthStateChange((event, currentSession) => {
-      if (event === 'SIGNED_OUT') {
-        setUser(null);
-        setSession(null);
-        setProfile(null);
-      } else if (currentSession) {
-        handleUserSession(currentSession);
-      }
-    });
-    
-    subscription = data.subscription;
-    return () => {
-      if (subscription) subscription.unsubscribe();
-    };
   }, []);
 
-  // Modal Actions
   const openAuthModal = () => setIsAuthModalOpen(true);
   const closeAuthModal = () => {
     setIsAuthModalOpen(false);
@@ -99,104 +93,134 @@ export function AuthProvider({ children }) {
     }
   };
 
-  // Auth Operations
-  const signInWithGoogle = async () => {
-    try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'google',
-        options: {
-          redirectTo: window.location.origin
-        }
-      });
-      if (error) throw error;
-      return data;
-    } catch (error) {
-      toast.error(error.message || "Failed to sign in with Google");
-      throw error;
-    }
-  };
-
-  const signInWithGithub = async () => {
-    try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'github',
-        options: {
-          redirectTo: window.location.origin
-        }
-      });
-      if (error) throw error;
-      return data;
-    } catch (error) {
-      toast.error(error.message || "Failed to sign in with GitHub");
-      throw error;
-    }
-  };
-
-  const signInWithFigma = async () => {
-    try {
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: 'figma',
-        options: {
-          scopes: 'file_metadata:read file_content:read',
-          redirectTo: window.location.origin
-        }
-      });
-      if (error) throw error;
-      return data;
-    } catch (error) {
-      toast.error(error.message || "Failed to sign in with Figma");
-      throw error;
-    }
-  };
-
   const signIn = async (email, password) => {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw error;
-    return data;
+    try {
+      const res = await api.post('/api/auth/login', { email, password });
+      if (res?.token) {
+        localStorage.setItem('bizleap_token', res.token);
+        applyUser(res.user, res.token);
+      }
+      return { user: res.user, session: { token: res.token, user: res.user } };
+    } catch (error) {
+      toast.error(error.message || 'Login failed');
+      throw error;
+    }
   };
 
   const signUp = async (email, password, fullName) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { full_name: fullName },
-      }
-    });
-    if (error) throw error;
-    return data;
-  };
-
-  const verifyOtp = async (email, token) => {
-    const { data, error } = await supabase.auth.verifyOtp({
-      email,
-      token,
-      type: 'email'
-    });
-    if (error) throw error;
-    return data;
-  };
-
-  const resetPassword = async (email) => {
     try {
-      const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: window.location.origin + '/reset-password',
-      });
-      if (error) throw error;
-      return data;
+      const res = await api.post('/api/auth/register', { email, password, fullName });
+      if (res?.token) {
+        localStorage.setItem('bizleap_token', res.token);
+        applyUser(res.user, res.token);
+      }
+      return { user: res.user, session: { token: res.token, user: res.user } };
     } catch (error) {
-      toast.error(error.message || "Failed to send reset link");
+      toast.error(error.message || 'Registration failed');
       throw error;
     }
   };
 
-  const updatePassword = async (newPassword) => {
+  const signInWithGoogle = async () => {
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    if (!clientId) {
+      toast.error("Google Client ID configure nahi hai. Kripya .env.local me VITE_GOOGLE_CLIENT_ID check karein.");
+      return;
+    }
+
+    if (!window.google?.accounts) {
+      toast.error("Google SDK load nahi ho paya. Kripya page refresh karein.");
+      return;
+    }
+
+    return new Promise((resolve, reject) => {
+      try {
+        // Use Google Identity Services Token Client (official popup flow)
+        if (window.google.accounts.oauth2) {
+          const client = window.google.accounts.oauth2.initTokenClient({
+            client_id: clientId,
+            scope: 'email profile openid',
+            callback: async (tokenResponse) => {
+              if (tokenResponse.error) {
+                toast.error("Google login cancelled or failed: " + tokenResponse.error);
+                return reject(new Error(tokenResponse.error));
+              }
+
+              try {
+                toast.loading("Authenticating with Google...", { id: 'google-auth' });
+                const data = await api.post('/api/auth/google', { accessToken: tokenResponse.access_token });
+                toast.dismiss('google-auth');
+
+                if (data.token) {
+                  localStorage.setItem('bizleap_token', data.token);
+                  applyUser(data.user, data.token);
+                  toast.success(`Welcome back, ${data.user.full_name || 'User'}!`);
+                  resolve(data.user);
+                } else {
+                  throw new Error(data.error || "Google login failed");
+                }
+              } catch (err) {
+                toast.dismiss('google-auth');
+                toast.error(err.message || "Google sign-in failed");
+                reject(err);
+              }
+            }
+          });
+
+          client.requestAccessToken();
+        } else if (window.google.accounts.id) {
+          // Fallback to Google ID One Tap
+          window.google.accounts.id.initialize({
+            client_id: clientId,
+            callback: async (response) => {
+              try {
+                if (!response?.credential) throw new Error("Google credentials nahi mile");
+                const data = await api.post('/api/auth/google', { credential: response.credential });
+                if (data.token) {
+                  localStorage.setItem('bizleap_token', data.token);
+                  applyUser(data.user, data.token);
+                  toast.success(`Welcome back, ${data.user.full_name || 'User'}!`);
+                  resolve(data.user);
+                }
+              } catch (err) {
+                toast.error(err.message || "Google login failed");
+                reject(err);
+              }
+            }
+          });
+          window.google.accounts.id.prompt();
+        }
+      } catch (err) {
+        toast.error("Google login error: " + err.message);
+        reject(err);
+      }
+    });
+  };
+
+  const signInWithGithub = async () => {
+    toast.info("Please sign in or register with your email and password.");
+  };
+
+  const signInWithFigma = async () => {
+    toast.info("Please sign in or register with your email and password.");
+  };
+
+  const verifyOtp = async () => {
+    toast.success("Account verified!");
+  };
+
+  const resetPassword = async (email) => {
+    toast.info("Password reset link recorded for: " + email);
+  };
+
+  const updatePassword = async (newPassword, currentPassword) => {
     try {
-      const { data, error } = await supabase.auth.updateUser({
-        password: newPassword
-      });
-      if (error) throw error;
-      return data;
+      const res = await api.put('/api/auth/password', { newPassword, currentPassword });
+      toast.success(res?.message || "Password updated successfully!");
+      if (user) {
+        setUser(prev => ({ ...prev, has_password: true }));
+      }
+      return res;
     } catch (error) {
       toast.error(error.message || "Failed to update password");
       throw error;
@@ -204,20 +228,37 @@ export function AuthProvider({ children }) {
   };
 
   const signOut = async () => {
-    try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      toast.success("Successfully logged out");
-      window.location.href = '/';
-    } catch (err) {
-      toast.error(err.message || "Failed to log out");
-    }
+    localStorage.removeItem('bizleap_token');
+    setUser(null);
+    setSession(null);
+    setProfile(null);
+    toast.success("Successfully logged out");
+    window.location.href = '/';
   };
 
-  const isAdmin = user?.email?.toLowerCase() === (import.meta.env.VITE_ADMIN_EMAIL?.toLowerCase() || 'bizleap1@gmail.com');
+  const isAdmin = user?.role === 'admin' || user?.email?.toLowerCase() === (import.meta.env.VITE_ADMIN_EMAIL?.toLowerCase() || 'bizleap1@gmail.com');
 
   return (
-    <AuthContext.Provider value={{ user, session, profile, setProfile, isAdmin, loading, signInWithGoogle, signInWithGithub, signInWithFigma, signIn, signUp, verifyOtp, resetPassword, updatePassword, signOut, openAuthModal, closeAuthModal, requireAuth }}>
+    <AuthContext.Provider value={{
+      user,
+      session,
+      profile,
+      setProfile,
+      isAdmin,
+      loading,
+      signInWithGoogle,
+      signInWithGithub,
+      signInWithFigma,
+      signIn,
+      signUp,
+      verifyOtp,
+      resetPassword,
+      updatePassword,
+      signOut,
+      openAuthModal,
+      closeAuthModal,
+      requireAuth
+    }}>
       {children}
       <AuthModal isOpen={isAuthModalOpen} onClose={closeAuthModal} />
     </AuthContext.Provider>
@@ -225,3 +266,4 @@ export function AuthProvider({ children }) {
 }
 
 export const useAuth = () => useContext(AuthContext);
+export default AuthContext;

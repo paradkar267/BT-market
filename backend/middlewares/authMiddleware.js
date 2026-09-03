@@ -1,62 +1,78 @@
-import { supabaseAdmin } from '../config/supabase.js';
+import jwt from 'jsonwebtoken';
+import { query } from '../config/db.js';
+import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+dotenv.config({ path: path.resolve(__dirname, '../../.env.local') });
+
+const JWT_SECRET = process.env.JWT_SECRET || 'bizleap_jwt_secret_key_neon_2026_super_secure';
 
 export const requireAuth = async (req, res, next) => {
   const authHeader = req.headers.authorization;
+  const queryToken = req.query?.token || req.query?.auth;
+  const token = authHeader ? authHeader.replace(/^Bearer\s+/i, '') : queryToken;
 
-  if (!supabaseAdmin) {
-    return res.status(500).json({ error: 'Server misconfiguration: Missing SUPABASE_SERVICE_ROLE_KEY' });
+  if (!token) {
+    return res.status(401).json({ error: 'Missing authorization header or token' });
   }
-
-  if (!authHeader) {
-    return res.status(401).json({ error: 'Missing authorization header' });
-  }
-
-  const token = authHeader.replace('Bearer ', '');
 
   try {
-    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
-
-    if (userError || !user) {
-      return res.status(401).json({ error: 'Invalid or expired token' });
+    const decoded = jwt.verify(token, JWT_SECRET);
+    if (!decoded || !decoded.id) {
+      return res.status(401).json({ error: 'Invalid or expired authentication token' });
     }
 
-    req.user = user;
+    // Fetch user from Neon database
+    const { rows } = await query('SELECT id, email, password_hash, full_name, avatar_url, role, purchased_templates, wishlist_templates FROM users WHERE id = $1', [decoded.id]);
+    
+    if (!rows.length) {
+      return res.status(401).json({ error: 'User account not found' });
+    }
+
+    req.user = rows[0];
     next();
   } catch (error) {
-    console.error('Auth error:', error);
-    res.status(500).json({ error: 'Internal server error during authentication' });
+    console.error('Auth verification error:', error.message);
+    return res.status(401).json({ error: 'Invalid or expired authentication token' });
   }
 };
 
 export const requireAdmin = async (req, res, next) => {
   const authHeader = req.headers.authorization;
+  const queryToken = req.query?.token || req.query?.auth;
+  const token = authHeader ? authHeader.replace(/^Bearer\s+/i, '') : queryToken;
 
-  if (!supabaseAdmin) {
-    return res.status(500).json({ error: 'Server misconfiguration' });
+  if (!token) {
+    return res.status(401).json({ error: 'Missing authorization header or token' });
   }
-
-  if (!authHeader) {
-    return res.status(401).json({ error: 'Missing authorization header' });
-  }
-
-  const token = authHeader.replace('Bearer ', '');
 
   try {
-    const { data: { user }, error: userError } = await supabaseAdmin.auth.getUser(token);
-
-    if (userError || !user) {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    if (!decoded || !decoded.id) {
       return res.status(401).json({ error: 'Invalid or expired token' });
     }
 
-    const adminEmail = process.env.ADMIN_EMAIL?.toLowerCase() || 'bizleap1@gmail.com';
-    if (user.email?.toLowerCase() !== adminEmail) {
-      return res.status(403).json({ error: 'Forbidden: Admin access required' });
+    const { rows } = await query('SELECT id, email, full_name, avatar_url, role FROM users WHERE id = $1', [decoded.id]);
+    if (!rows.length) {
+      return res.status(401).json({ error: 'User not found' });
     }
 
-    req.user = user;
-    next();
+    const user = rows[0];
+    const adminEmail = (process.env.ADMIN_EMAIL || 'bizleap1@gmail.com').toLowerCase();
+
+    if (user.role === 'admin' || user.email.toLowerCase() === adminEmail) {
+      req.user = user;
+      return next();
+    }
+
+    return res.status(403).json({ error: 'Forbidden: Administrator privileges required' });
   } catch (error) {
-    console.error('Admin Auth error:', error);
-    res.status(500).json({ error: 'Internal server error during authentication' });
+    console.error('Admin auth error:', error.message);
+    return res.status(401).json({ error: 'Invalid or expired authentication token' });
   }
 };
+
+export default { requireAuth, requireAdmin };

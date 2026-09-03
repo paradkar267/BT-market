@@ -41,8 +41,8 @@ function ProtectedRoute({ children }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-indigo-500"></div>
+      <div className="min-h-screen bg-white dark:bg-black flex items-center justify-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-black dark:border-white"></div>
       </div>
     );
   }
@@ -63,8 +63,8 @@ function AdminRoute({ children }) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-indigo-500"></div>
+      <div className="min-h-screen bg-white dark:bg-black flex items-center justify-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-black dark:border-white"></div>
       </div>
     );
   }
@@ -104,7 +104,7 @@ createRoot(document.getElementById('root')).render(
                       <Route path="/featured" element={<FeaturedPage />} />
                       <Route path="/my-templates" element={<ProtectedRoute><MyTemplatesPage /></ProtectedRoute>} />
                       <Route path="/wishlist" element={<ProtectedRoute><WishlistPage /></ProtectedRoute>} />
-                      <Route path="/profile" element={<ProtectedRoute><ProfilePage /></ProtectedRoute>} />
+                      <Route path="/profile" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
                       <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
                       <Route path="/dashboard" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
                       <Route path="/contact" element={<ContactPage />} />

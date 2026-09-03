@@ -153,7 +153,7 @@ export function LivePreviewModal({ isOpen, onClose, template }) {
             {/* Loading Spinner */}
             {!iframeLoaded && previewUrl && (
               <div className="absolute inset-0 z-0 flex items-center justify-center bg-gray-50/80 backdrop-blur-sm">
-                 <Loader2 className="w-10 h-10 animate-spin text-indigo-500" />
+                 <Loader2 className="w-10 h-10 animate-spin text-black" />
               </div>
             )}
 

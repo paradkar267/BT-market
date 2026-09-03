@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from './AuthContext';
 import { useTemplates } from './useTemplates';
 import { useCurrency } from './CurrencyContext';
@@ -57,7 +57,8 @@ import {
   UserX,
   Clock,
   Palette,
-  ArrowRight
+  ArrowRight,
+  RotateCcw
 } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { Logo } from './components/ui/Logo';
@@ -99,6 +100,7 @@ export default function AdminDashboard() {
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [orderStats, setOrderStats] = useState({ totalOrders: 0, totalRevenue: 0, totalCustomers: 0, totalUsers: 0 });
   const [orderSearchQuery, setOrderSearchQuery] = useState('');
+  const [orderFilterTab, setOrderFilterTab] = useState('all'); // 'all' | 'paid' | 'requested' | 'refunded'
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [dateFilter, setDateFilter] = useState('all'); // '7days' | '30days' | 'all'
   const [chartRevenueData, setChartRevenueData] = useState([]);
@@ -172,6 +174,32 @@ export default function AdminDashboard() {
   });
   const [bannerLoading, setBannerLoading] = useState(false);
   const [bannerSaving, setBannerSaving] = useState(false);
+  const [bannerTimeLeft, setBannerTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0, isExpired: false });
+
+  useEffect(() => {
+    if (!bannerConfig.end_time) return;
+    const updateTimer = () => {
+      const target = new Date(bannerConfig.end_time).getTime();
+      const now = Date.now();
+      const diff = target - now;
+
+      if (isNaN(target) || diff <= 0) {
+        setBannerTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0, isExpired: true });
+        return;
+      }
+
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+      const minutes = Math.floor((diff / 1000 / 60) % 60);
+      const seconds = Math.floor((diff / 1000) % 60);
+
+      setBannerTimeLeft({ days, hours, minutes, seconds, isExpired: false });
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
+  }, [bannerConfig.end_time]);
 
   // Upload state
   const [uploadLoading, setUploadLoading] = useState(false);
@@ -217,12 +245,40 @@ export default function AdminDashboard() {
     }
   }, [session, isAdmin, navigate]);
 
+  // Lock background body scroll whenever any admin modal is open
+  const isAnyModalOpen = Boolean(
+    editingTemplate ||
+    selectedOrder ||
+    selectedCustomerProfile ||
+    isGrantAccessOpen ||
+    directEmailModalOpen ||
+    isCreateCouponOpen ||
+    isCreateCampaignOpen ||
+    previewingCampaignEmail ||
+    broadcastModalOpen ||
+    modalPreviewTemplate ||
+    refundTarget ||
+    deleteTemplateId ||
+    userToDelete ||
+    revokeTarget
+  );
+
+  useEffect(() => {
+    if (isAnyModalOpen) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = originalOverflow;
+      };
+    }
+  }, [isAnyModalOpen]);
+
   // Fetch Customer Orders & Analytics Data
   const fetchOrdersAndAnalytics = useCallback(async () => {
     setOrdersLoading(true);
     try {
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
-      if (!currentSession) return;
+      const currentToken = localStorage.getItem('bizleap_token') || session?.access_token || '';
+      if (!currentToken) return;
 
       const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || '';
       const targetUrls = [];
@@ -235,7 +291,7 @@ export default function AdminDashboard() {
         try {
           const res = await fetch(url, {
             headers: {
-              'Authorization': `Bearer ${currentSession.access_token}`
+              'Authorization': `Bearer ${currentToken}`
             }
           });
           if (res.ok) {
@@ -248,9 +304,25 @@ export default function AdminDashboard() {
       }
 
       if (data && data.orders) {
-        setOrders(data.orders);
+        const cleanOrders = (data.orders || []).map(o => ({
+          ...o,
+          amount: Number(parseFloat(o.amount) || 0)
+        }));
+        setOrders(cleanOrders);
+
+        const calculatedRevenue = cleanOrders.reduce((acc, o) => acc + (o.status !== 'Refunded' ? o.amount : 0), 0);
+        const calculatedCompleted = cleanOrders.filter(o => o.status !== 'Refunded').length;
+        const uniqueBuyers = new Set(cleanOrders.map(o => o.customer?.id || o.customer?.email).filter(Boolean)).size;
+
         if (data.stats) {
           setOrderStats(data.stats);
+        } else {
+          setOrderStats({
+            totalRevenue: calculatedRevenue,
+            totalOrders: calculatedCompleted,
+            totalCustomers: uniqueBuyers,
+            totalUsers: uniqueBuyers
+          });
         }
 
         // Aggregate 7-Day Revenue Trend
@@ -268,26 +340,31 @@ export default function AdminDashboard() {
         // Category Map
         const categoryMap = {};
 
-        data.orders.forEach(o => {
-          const oDate = new Date(o.createdAt);
-          const dayMatch = last7Days.find(d => 
-            d.dateObj.getDate() === oDate.getDate() && 
-            d.dateObj.getMonth() === oDate.getMonth() &&
-            d.dateObj.getFullYear() === oDate.getFullYear()
-          );
-          if (dayMatch) {
-            dayMatch.revenue += o.amount || 0;
-            dayMatch.orders += 1;
+        cleanOrders.forEach(o => {
+          if (o.status === 'Refunded') return;
+          const orderAmt = Number(parseFloat(o.amount) || 0);
+
+          const oDate = new Date(o.createdAt || o.created_at);
+          if (!isNaN(oDate.getTime())) {
+            const dayMatch = last7Days.find(d => 
+              d.dateObj.getDate() === oDate.getDate() && 
+              d.dateObj.getMonth() === oDate.getMonth() &&
+              d.dateObj.getFullYear() === oDate.getFullYear()
+            );
+            if (dayMatch) {
+              dayMatch.revenue += orderAmt;
+              dayMatch.orders += 1;
+            }
           }
 
           const cat = o.template?.category || 'Other';
-          categoryMap[cat] = (categoryMap[cat] || 0) + (o.amount || 0);
+          categoryMap[cat] = (Number(categoryMap[cat]) || 0) + orderAmt;
         });
 
         setChartRevenueData(last7Days);
 
         const categoryArray = Object.entries(categoryMap)
-          .map(([name, value]) => ({ name, value }))
+          .map(([name, value]) => ({ name, value: Number(value) }))
           .sort((a, b) => b.value - a.value)
           .slice(0, 6);
 
@@ -308,12 +385,13 @@ export default function AdminDashboard() {
       const res = await fetch(`/api/announcement-banner?t=${Date.now()}`);
       if (res.ok) {
         const data = await res.json();
-        if (data?.banner) {
-          const formattedEndTime = data.banner.end_time
-            ? new Date(data.banner.end_time).toISOString().slice(0, 16)
+        const banner = data?.banner || (data?.id ? data : null);
+        if (banner) {
+          const formattedEndTime = banner.end_time
+            ? new Date(banner.end_time).toISOString().slice(0, 16)
             : new Date(Date.now() + 48 * 3600 * 1000).toISOString().slice(0, 16);
           setBannerConfig({
-            ...data.banner,
+            ...banner,
             end_time: formattedEndTime
           });
         }
@@ -328,12 +406,12 @@ export default function AdminDashboard() {
   const handleIssueRefund = async () => {
     if (!refundTarget) return;
     setRefundSubmitting(true);
-    const toastId = toast.loading(`Processing refund for ${refundTarget.customer.name}...`);
+    const toastId = toast.loading(`Processing refund for ${(refundTarget?.customer?.name || refundTarget?.customer?.fullName || 'Customer')}...`);
     try {
-      const { data: { session: s } } = await supabase.auth.getSession();
+      const currentToken = localStorage.getItem('bizleap_token') || session?.access_token || '';
       const res = await fetch('/api/admin-refund', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${s?.access_token}` },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${currentToken}` },
         body: JSON.stringify({
           purchaseId: refundTarget.id,
           reason: refundReason || 'Refund issued by admin',
@@ -359,7 +437,7 @@ export default function AdminDashboard() {
     setBannerConfig(prev => ({ ...prev, is_enabled: newStatus }));
 
     try {
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      const currentToken = localStorage.getItem('bizleap_token') || session?.access_token || '';
       const payload = {
         ...bannerConfig,
         is_enabled: newStatus,
@@ -370,7 +448,7 @@ export default function AdminDashboard() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentSession?.access_token}`
+          'Authorization': `Bearer ${currentToken}`
         },
         body: JSON.stringify(payload)
       });
@@ -394,7 +472,7 @@ export default function AdminDashboard() {
     const toastId = toast.loading('Saving flash sale banner settings...');
 
     try {
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      const currentToken = localStorage.getItem('bizleap_token') || session?.access_token || '';
       const payload = {
         ...bannerConfig,
         end_time: new Date(bannerConfig.end_time).toISOString()
@@ -404,7 +482,7 @@ export default function AdminDashboard() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${currentSession?.access_token}`
+          'Authorization': `Bearer ${currentToken}`
         },
         body: JSON.stringify(payload)
       });
@@ -460,8 +538,8 @@ export default function AdminDashboard() {
   const fetchCoupons = useCallback(async () => {
     setCouponsLoading(true);
     try {
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
-      if (!currentSession) return;
+      const currentToken = localStorage.getItem('bizleap_token') || session?.access_token || '';
+      if (!currentToken) return;
 
       const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || '';
       const targetUrls = [];
@@ -473,7 +551,7 @@ export default function AdminDashboard() {
       for (const url of targetUrls) {
         try {
           const res = await fetch(url, {
-            headers: { 'Authorization': `Bearer ${currentSession.access_token}` }
+            headers: { 'Authorization': `Bearer ${currentToken}` }
           });
           if (res.ok) {
             data = await res.json();
@@ -509,19 +587,20 @@ export default function AdminDashboard() {
   const fetchCampaigns = useCallback(async () => {
     setCampaignsLoading(true);
     try {
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      const currentToken = localStorage.getItem('bizleap_token') || session?.access_token || '';
       const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || '';
       const targetUrls = [];
-      if (backendUrl) targetUrls.push(`${backendUrl}/api/admin/campaigns`);
-      targetUrls.push('/api/admin-campaigns');
+      targetUrls.push('/api/admin/campaigns');
       targetUrls.push('/api/campaigns');
+      targetUrls.push('/api/admin-campaigns');
+      if (backendUrl) targetUrls.push(`${backendUrl}/api/admin/campaigns`);
 
       let data = null;
       for (const url of targetUrls) {
         try {
           const res = await fetch(url, {
             headers: {
-              'Authorization': `Bearer ${currentSession?.access_token}`
+              'Authorization': `Bearer ${currentToken}`
             }
           });
           if (res.ok) {
@@ -561,7 +640,7 @@ export default function AdminDashboard() {
   const fetchCustomers = useCallback(async () => {
     setCustomersLoading(true);
     try {
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      const currentToken = localStorage.getItem('bizleap_token') || session?.access_token || '';
       const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || '';
       const targetUrls = [];
       if (backendUrl) targetUrls.push(`${backendUrl}/api/admin/customers`);
@@ -573,7 +652,7 @@ export default function AdminDashboard() {
         try {
           const res = await fetch(url, {
             headers: {
-              'Authorization': `Bearer ${currentSession?.access_token}`
+              'Authorization': `Bearer ${currentToken}`
             }
           });
           if (res.ok) {
@@ -620,10 +699,12 @@ export default function AdminDashboard() {
     const toastId = toast.loading('Granting free license and sending gift email...');
 
     try {
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      const currentToken = localStorage.getItem('bizleap_token') || session?.access_token || '';
       const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || '';
       const targetUrls = [];
       if (backendUrl) targetUrls.push(`${backendUrl}/api/admin/customers/grant`);
+      targetUrls.push('/api/admin/customers/grant');
+      targetUrls.push('/api/admin-customers/grant');
       targetUrls.push('/api/admin-customers');
 
       let response = null;
@@ -635,7 +716,7 @@ export default function AdminDashboard() {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${currentSession?.access_token}`
+              'Authorization': `Bearer ${currentToken}`
             },
             body: JSON.stringify({
               action: 'grant',
@@ -658,14 +739,46 @@ export default function AdminDashboard() {
         throw new Error(resJson?.error || 'Failed to grant license');
       }
 
-      toast.success(resJson?.message || '🎁 Free template access successfully granted to customer!', { id: toastId });
+      const giftedTemplate = resJson?.grantedTemplate || (() => {
+        const found = templates.find(t => String(t.id) === String(grantForm.template_id));
+        return {
+          id: parseInt(grantForm.template_id, 10),
+          title: found?.title || `Template #${grantForm.template_id}`,
+          price: 0,
+          category: found?.category || 'General',
+          image: found?.image || '',
+          payment_id: `admin_grant_${Date.now()}`,
+          purchased_at: new Date().toISOString()
+        };
+      })();
+
+      const successMsg = resJson?.message || '🎁 Free template access successfully granted to customer!';
+      toast.success(`${successMsg} 📧 Email notification sent to user!`, { id: toastId });
       setIsGrantAccessOpen(false);
+
+      // Instant local state update for opened customer profile modal
+      if (selectedCustomerProfile && selectedCustomerProfile.id === grantForm.user_id) {
+        setSelectedCustomerProfile(prev => prev ? {
+          ...prev,
+          total_purchases: (prev.total_purchases || 0) + 1,
+          purchased_templates: [giftedTemplate, ...(prev.purchased_templates || [])]
+        } : null);
+      }
+
+      // Instant local state update for customers list
+      setCustomers(prev => prev.map(c => {
+        if (c.id === grantForm.user_id) {
+          return {
+            ...c,
+            total_purchases: (c.total_purchases || 0) + 1,
+            purchased_templates: [giftedTemplate, ...(c.purchased_templates || [])]
+          };
+        }
+        return c;
+      }));
+
       setGrantForm({ user_id: '', user_email: '', template_id: '', note: '' });
       fetchCustomers();
-      if (selectedCustomerProfile) {
-        const updatedCustomer = customers.find(c => c.id === grantForm.user_id);
-        if (updatedCustomer) setSelectedCustomerProfile(updatedCustomer);
-      }
     } catch (err) {
       console.error(err);
       toast.error(err.message || 'Failed to grant template access', { id: toastId });
@@ -680,58 +793,12 @@ export default function AdminDashboard() {
     const toastId = toast.loading(`Revoking license for ${title || 'template'}...`);
 
     try {
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      const currentToken = localStorage.getItem('bizleap_token') || session?.access_token || '';
       const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || '';
       const targetUrls = [];
       if (backendUrl) targetUrls.push(`${backendUrl}/api/admin/customers/revoke`);
-      targetUrls.push('/api/admin-customers');
-
-      for (const url of targetUrls) {
-        try {
-          const res = await fetch(url, {
-            method: 'DELETE',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${currentSession?.access_token}`
-            },
-            body: JSON.stringify({
-              purchase_id: purchaseId,
-              user_id: userId,
-              template_id: templateId
-            })
-          });
-          if (res.ok) break;
-        } catch {
-          // fallback
-        }
-      }
-
-      toast.success(`Access to '${title || 'Template'}' has been permanently revoked.`, { id: toastId });
-      setRevokeTarget(null);
-      fetchCustomers();
-
-      if (selectedCustomerProfile) {
-        setSelectedCustomerProfile(prev => prev ? {
-          ...prev,
-          purchased_templates: prev.purchased_templates.filter(t => (purchaseId && t.purchase_id && t.purchase_id !== purchaseId) && (templateId && String(t.id) !== String(templateId))),
-          total_purchases: Math.max(0, prev.total_purchases - 1)
-        } : null);
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error('Failed to revoke template access', { id: toastId });
-    }
-  };
-
-  const handleDeleteUserAccount = async (targetUser) => {
-    if (!targetUser) return;
-    const toastId = toast.loading(`Permanently deleting account for ${targetUser.email}...`);
-
-    try {
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || '';
-      const targetUrls = [];
-      if (backendUrl) targetUrls.push(`${backendUrl}/api/admin/customers/delete-user`);
+      targetUrls.push('/api/admin/customers/revoke');
+      targetUrls.push('/api/admin-customers/revoke');
       targetUrls.push('/api/admin-customers');
 
       let response = null;
@@ -743,7 +810,98 @@ export default function AdminDashboard() {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${currentSession?.access_token}`
+              'Authorization': `Bearer ${currentToken}`
+            },
+            body: JSON.stringify({
+              action: 'revoke',
+              purchase_id: purchaseId,
+              user_id: userId,
+              template_id: templateId
+            })
+          });
+          resJson = await res.json().catch(() => ({}));
+          if (res.ok) {
+            response = res;
+            break;
+          } else if (resJson.error) {
+            throw new Error(resJson.error);
+          }
+        } catch (err) {
+          if (err.message && !err.message.includes('fetch')) throw err;
+        }
+      }
+
+      if (!response || !response.ok) {
+        throw new Error(resJson?.error || 'Failed to revoke license');
+      }
+
+      toast.success(`Access to '${title || 'Template'}' has been permanently revoked.`, { id: toastId });
+      setRevokeTarget(null);
+
+      // Instant UI update for opened customer profile modal
+      if (selectedCustomerProfile) {
+        setSelectedCustomerProfile(prev => {
+          if (!prev) return null;
+          const filtered = (prev.purchased_templates || []).filter(t => 
+            String(t.id) !== String(templateId) && (!purchaseId || String(t.purchase_id) !== String(purchaseId))
+          );
+          const revokedItem = (prev.purchased_templates || []).find(t => String(t.id) === String(templateId));
+          const revokedPrice = parseFloat(revokedItem?.price) || 0;
+          return {
+            ...prev,
+            purchased_templates: filtered,
+            total_purchases: Math.max(0, (prev.total_purchases || 1) - 1),
+            total_spent: Math.max(0, (prev.total_spent || 0) - revokedPrice)
+          };
+        });
+      }
+
+      // Instant UI update for customers list
+      setCustomers(prev => prev.map(c => {
+        if (c.id === userId) {
+          const filtered = (c.purchased_templates || []).filter(t => 
+            String(t.id) !== String(templateId) && (!purchaseId || String(t.purchase_id) !== String(purchaseId))
+          );
+          return {
+            ...c,
+            purchased_templates: filtered,
+            total_purchases: Math.max(0, (c.total_purchases || 1) - 1)
+          };
+        }
+        return c;
+      }));
+
+      fetchCustomers();
+    } catch (err) {
+      console.error(err);
+      toast.error(err.message || 'Failed to revoke template access', { id: toastId });
+    }
+  };
+
+  const handleDeleteUserAccount = async (targetUser) => {
+    if (!targetUser) return;
+    const toastId = toast.loading(`Permanently deleting account for ${targetUser.email}...`);
+
+    try {
+      const currentToken = localStorage.getItem('bizleap_token') || session?.access_token || '';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || '';
+      const targetUrls = [];
+      if (backendUrl) targetUrls.push(`${backendUrl}/api/admin/customers/delete-user`);
+      targetUrls.push('/api/admin/customers/delete-user');
+      targetUrls.push('/api/admin-customers/delete-user');
+      targetUrls.push('/api/admin-customers');
+      if (targetUser.id) targetUrls.push(`/api/admin/customers/${targetUser.id}`);
+
+      let response = null;
+      let resJson = null;
+
+      for (const url of targetUrls) {
+        try {
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${currentToken}`
             },
             body: JSON.stringify({
               action: 'delete_user',
@@ -771,6 +929,7 @@ export default function AdminDashboard() {
       if (selectedCustomerProfile?.id === targetUser.id) {
         setSelectedCustomerProfile(null);
       }
+      setCustomers(prev => prev.filter(c => c.id !== targetUser.id));
       fetchCustomers();
     } catch (err) {
       console.error(err);
@@ -789,7 +948,7 @@ export default function AdminDashboard() {
     const toastId = toast.loading('Sending direct message to customer...');
 
     try {
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      const currentToken = localStorage.getItem('bizleap_token') || session?.access_token || '';
       const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || '';
       const targetUrls = [];
       if (backendUrl) targetUrls.push(`${backendUrl}/api/admin/customers/email`);
@@ -804,7 +963,7 @@ export default function AdminDashboard() {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${currentSession?.access_token}`
+              'Authorization': `Bearer ${currentToken}`
             },
             body: JSON.stringify({
               action: 'email',
@@ -936,10 +1095,12 @@ export default function AdminDashboard() {
     const toastId = toast.loading('Dispatching campaign emails to target audience...');
 
     try {
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      const currentToken = localStorage.getItem('bizleap_token') || session?.access_token || '';
       const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || '';
       
       const targetUrls = [];
+      targetUrls.push('/api/admin/campaigns/send');
+      targetUrls.push('/api/campaigns/send');
       targetUrls.push('/api/admin-campaigns');
       if (backendUrl) targetUrls.push(`${backendUrl}/api/admin/campaigns/send`);
 
@@ -957,7 +1118,7 @@ export default function AdminDashboard() {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${currentSession?.access_token}`
+              'Authorization': `Bearer ${currentToken}`
             },
             body: JSON.stringify(payload)
           });
@@ -990,18 +1151,20 @@ export default function AdminDashboard() {
 
   const handleDeleteCampaign = async (id) => {
     try {
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      const currentToken = localStorage.getItem('bizleap_token') || session?.access_token || '';
       const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || '';
       const targetUrls = [];
-      if (backendUrl) targetUrls.push(`${backendUrl}/api/admin/campaigns/${id}`);
+      targetUrls.push(`/api/admin/campaigns/${id}`);
+      targetUrls.push(`/api/campaigns/${id}`);
       targetUrls.push(`/api/admin-campaigns?id=${id}`);
+      if (backendUrl) targetUrls.push(`${backendUrl}/api/admin/campaigns/${id}`);
 
       for (const url of targetUrls) {
         try {
           const res = await fetch(url, {
             method: 'DELETE',
             headers: {
-              'Authorization': `Bearer ${currentSession?.access_token}`
+              'Authorization': `Bearer ${currentToken}`
             }
           });
           if (res.ok) break;
@@ -1078,7 +1241,7 @@ export default function AdminDashboard() {
 
     setCouponSubmitting(true);
     try {
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      const currentToken = localStorage.getItem('bizleap_token') || session?.access_token || '';
       const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || '';
       const targetUrls = [];
       if (backendUrl) targetUrls.push(`${backendUrl}/api/admin/coupons`);
@@ -1094,7 +1257,7 @@ export default function AdminDashboard() {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${currentSession?.access_token}`
+              'Authorization': `Bearer ${currentToken}`
             },
             body: JSON.stringify(couponForm)
           });
@@ -1136,7 +1299,7 @@ export default function AdminDashboard() {
 
   const handleToggleCoupon = async (coupon) => {
     try {
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      const currentToken = localStorage.getItem('bizleap_token') || session?.access_token || '';
       const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || '';
       const targetUrls = [];
       if (backendUrl) targetUrls.push(`${backendUrl}/api/admin/coupons/${coupon.id}`);
@@ -1149,7 +1312,7 @@ export default function AdminDashboard() {
             method: 'PATCH',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${currentSession?.access_token}`
+              'Authorization': `Bearer ${currentToken}`
             },
             body: JSON.stringify({ id: coupon.id, is_active: !coupon.is_active })
           });
@@ -1169,7 +1332,7 @@ export default function AdminDashboard() {
   const handleDeleteCoupon = async (couponId) => {
     if (!window.confirm("Are you sure you want to delete this coupon?")) return;
     try {
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      const currentToken = localStorage.getItem('bizleap_token') || session?.access_token || '';
       const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || '';
       const targetUrls = [];
       if (backendUrl) targetUrls.push(`${backendUrl}/api/admin/coupons/${couponId}`);
@@ -1181,7 +1344,7 @@ export default function AdminDashboard() {
           const res = await fetch(url, {
             method: 'DELETE',
             headers: {
-              'Authorization': `Bearer ${currentSession?.access_token}`
+              'Authorization': `Bearer ${currentToken}`
             }
           });
           if (res.ok) break;
@@ -1200,7 +1363,7 @@ export default function AdminDashboard() {
   const filteredCoupons = coupons.filter(c => {
     if (!couponSearchQuery) return true;
     const q = couponSearchQuery.toLowerCase();
-    return c.code?.toLowerCase().includes(q) || c.discount_type?.toLowerCase().includes(q);
+    return (c.code || '').toLowerCase().includes(q) || (c.discount_type || '').toLowerCase().includes(q);
   });
 
   // Export Executive PDF / CSV Reports
@@ -1212,7 +1375,7 @@ export default function AdminDashboard() {
       if (type === 'csv') {
         let csv = "Order ID,Customer Name,Customer Email,Purchased Template,Category,Amount (INR),Date & Time,Status\n";
         orders.forEach(o => {
-          csv += `"${o.paymentId}","${o.customer.name}","${o.customer.email}","${o.template.title}","${o.template.category}","${o.amount}","${new Date(o.createdAt).toLocaleString()}","${o.status}"\n`;
+          csv += `"${o.paymentId || "N/A"}","${o.customer?.name || o.customer?.fullName || "Customer"}","${o.customer?.email || "N/A"}","${o.template?.title || "Template"}","${o.template?.category || "General"}","${o.amount || 0}","${new Date(o.createdAt || o.created_at).toLocaleString()}","${o.status || "Completed"}"\n`;
         });
         const blob = new Blob([csv], { type: 'text/csv' });
         const url = URL.createObjectURL(blob);
@@ -1251,7 +1414,7 @@ export default function AdminDashboard() {
         const tableColumn = ["Order / Payment ID", "Customer", "Product", "Amount", "Status", "Date"];
         const tableRows = orders.map(o => [
           o.paymentId,
-          `${o.customer.name}\n(${o.customer.email})`,
+          `${o.customer?.name || o.customer?.fullName || "Customer"}\n(${o.customer?.email || "N/A"})`,
           o.template.title,
           `INR ${o.amount}`,
           o.status,
@@ -1276,15 +1439,31 @@ export default function AdminDashboard() {
     }, 800);
   };
 
+  // Pending refund requests count
+  const pendingRefundsCount = useMemo(() => {
+    return orders.filter(o => o.refund_status === 'requested' || o.status === 'Refund Requested').length;
+  }, [orders]);
+
   // Filtered orders list
   const filteredOrders = orders.filter(o => {
+    // 1. Tab status filter
+    if (orderFilterTab === 'paid') {
+      if (o.status !== 'Completed' && o.status !== 'Paid') return false;
+    } else if (orderFilterTab === 'requested') {
+      if (o.refund_status !== 'requested' && o.status !== 'Refund Requested') return false;
+    } else if (orderFilterTab === 'refunded') {
+      if (o.refund_status !== 'processed' && o.status !== 'Refunded' && o.status !== 'refunded') return false;
+    }
+
+    // 2. Search query filter
     if (!orderSearchQuery) return true;
     const q = orderSearchQuery.toLowerCase();
     return (
       o.customer?.email?.toLowerCase().includes(q) ||
       o.customer?.name?.toLowerCase().includes(q) ||
       o.template?.title?.toLowerCase().includes(q) ||
-      o.paymentId?.toLowerCase().includes(q)
+      o.paymentId?.toLowerCase().includes(q) ||
+      (o.refund_reason && o.refund_reason.toLowerCase().includes(q))
     );
   });
 
@@ -1312,7 +1491,7 @@ export default function AdminDashboard() {
   const handleSaveEdit = async () => {
     setEditLoading(true);
     try {
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      const currentToken = localStorage.getItem('bizleap_token') || session?.access_token || '';
       const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3000' : '');
       const targetUrls = [];
       if (backendUrl) targetUrls.push(`${backendUrl}/api/admin/template/${editingTemplate.id}`);
@@ -1327,7 +1506,7 @@ export default function AdminDashboard() {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${currentSession?.access_token}`
+              'Authorization': `Bearer ${currentToken}`
             },
             body: JSON.stringify(editForm)
           });
@@ -1364,7 +1543,7 @@ export default function AdminDashboard() {
   const confirmDeleteTemplate = async () => {
     if (!deleteTemplateId) return;
     try {
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      const currentToken = localStorage.getItem('bizleap_token') || session?.access_token || '';
       const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3000' : '');
       const targetUrls = [];
       if (backendUrl) targetUrls.push(`${backendUrl}/api/admin/template/${deleteTemplateId}`);
@@ -1378,7 +1557,7 @@ export default function AdminDashboard() {
           const response = await fetch(url, {
             method: 'DELETE',
             headers: {
-              'Authorization': `Bearer ${currentSession?.access_token}`
+              'Authorization': `Bearer ${currentToken}`
             }
           });
           if (response.ok) {
@@ -1416,7 +1595,7 @@ export default function AdminDashboard() {
     setBroadcastBuyers([]);
 
     try {
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      const currentToken = localStorage.getItem('bizleap_token') || session?.access_token || '';
       const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3000' : '');
       const targetUrls = [];
       if (backendUrl) targetUrls.push(`${backendUrl}/api/admin/templates/${template.id}/buyers`);
@@ -1427,7 +1606,7 @@ export default function AdminDashboard() {
         try {
           const res = await fetch(url, {
             headers: {
-              'Authorization': `Bearer ${currentSession?.access_token}`
+              'Authorization': `Bearer ${currentToken}`
             }
           });
           if (res.ok) {
@@ -1466,7 +1645,7 @@ export default function AdminDashboard() {
     const toastId = toast.loading(`Broadcasting update notification to buyers...`);
 
     try {
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      const currentToken = localStorage.getItem('bizleap_token') || session?.access_token || '';
       const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3000' : '');
       const targetUrls = [];
       if (backendUrl) targetUrls.push(`${backendUrl}/api/admin/broadcast-update`);
@@ -1489,7 +1668,7 @@ export default function AdminDashboard() {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${currentSession?.access_token}`
+              'Authorization': `Bearer ${currentToken}`
             },
             body: JSON.stringify(payload)
           });
@@ -1561,7 +1740,7 @@ export default function AdminDashboard() {
     formPayload.append('demo_url', formData.previewUrl);
 
     try {
-      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      const currentToken = localStorage.getItem('bizleap_token') || session?.access_token || '';
       const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3000' : '');
       const targetUrls = [];
       if (backendUrl) targetUrls.push(`${backendUrl}/api/admin/upload-template`);
@@ -1575,7 +1754,7 @@ export default function AdminDashboard() {
           const response = await fetch(url, {
             method: 'POST',
             headers: {
-              'Authorization': `Bearer ${currentSession?.access_token}`
+              'Authorization': `Bearer ${currentToken}`
             },
             body: formPayload
           });
@@ -1724,9 +1903,18 @@ export default function AdminDashboard() {
           
           <button
             onClick={() => setActiveTab('orders')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-bold transition-all cursor-pointer text-sm ${activeTab === 'orders' ? 'bg-black text-white dark:bg-white dark:text-black shadow-md' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-black dark:hover:text-white'}`}
+            className={`w-full flex items-center justify-between px-4 py-3 rounded-xl font-bold transition-all cursor-pointer text-sm ${activeTab === 'orders' ? 'bg-black text-white dark:bg-white dark:text-black shadow-md' : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-white/5 hover:text-black dark:hover:text-white'}`}
           >
-            <ShoppingBag className="w-4 h-4" /> Customer Purchases
+            <div className="flex items-center gap-3">
+              <ShoppingBag className="w-4 h-4" />
+              <span>Customer Purchases</span>
+            </div>
+            {pendingRefundsCount > 0 && (
+              <span className="px-2 py-0.5 bg-amber-500 text-white text-[10px] font-black rounded-full shadow-sm animate-pulse flex items-center gap-1">
+                <RotateCcw className="w-2.5 h-2.5" />
+                {pendingRefundsCount}
+              </span>
+            )}
           </button>
 
           <button
@@ -1882,6 +2070,40 @@ export default function AdminDashboard() {
               </div>
             </div>
 
+            {/* Pending Refund Requests Alert Banner */}
+            {pendingRefundsCount > 0 && (
+              <div className="p-4 sm:p-5 bg-gradient-to-r from-amber-500/15 via-red-500/10 to-transparent border border-amber-300/50 dark:border-amber-500/30 rounded-2xl flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-sm">
+                <div className="flex items-start sm:items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-xl bg-amber-500 text-white flex items-center justify-center font-bold shadow-md shadow-amber-500/30 shrink-0 mt-0.5 sm:mt-0">
+                    <RotateCcw className="w-5 h-5 animate-pulse" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 bg-amber-500/20 text-amber-800 dark:text-amber-300 rounded text-[10px] font-black uppercase tracking-wider">
+                        Action Required
+                      </span>
+                      <h4 className="font-black text-sm text-gray-900 dark:text-white">
+                        {pendingRefundsCount} Pending Customer Refund Request{pendingRefundsCount > 1 ? 's' : ''}
+                      </h4>
+                    </div>
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+                      Buyers have requested refunds with reasons. Review customer notes and approve or inspect requests.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setActiveTab('orders');
+                    setOrderFilterTab('requested');
+                  }}
+                  className="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-black transition-all shadow-md shadow-amber-500/25 shrink-0 cursor-pointer flex items-center gap-1.5"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  Review Refund Requests ({pendingRefundsCount}) &rarr;
+                </button>
+              </div>
+            )}
+
             {/* KPI Cards Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
               <div className="bg-white dark:bg-[#111111] p-6 rounded-2xl border border-gray-200 dark:border-white/10 shadow-sm flex items-center gap-4">
@@ -1952,7 +2174,20 @@ export default function AdminDashboard() {
                         </linearGradient>
                       </defs>
                       <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} />
-                      <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} tickFormatter={v => `₹${v}`} />
+                      <YAxis 
+                        stroke="#94a3b8" 
+                        fontSize={11} 
+                        tickLine={false} 
+                        axisLine={false} 
+                        tickFormatter={v => {
+                          const num = Number(v);
+                          if (isNaN(num) || num === 0) return '₹0';
+                          if (num >= 10000000) return `₹${(num / 10000000).toFixed(1)}Cr`;
+                          if (num >= 100000) return `₹${(num / 100000).toFixed(1)}L`;
+                          if (num >= 1000) return `₹${(num / 1000).toFixed(0)}k`;
+                          return `₹${Math.round(num)}`;
+                        }} 
+                      />
                       <Tooltip
                         contentStyle={{
                           backgroundColor: '#18181b',
@@ -1962,7 +2197,7 @@ export default function AdminDashboard() {
                           fontSize: '12px',
                           fontWeight: 'bold'
                         }}
-                        formatter={(val) => [`₹${val}`, 'Revenue']}
+                        formatter={(val) => [`₹${Number(val).toLocaleString('en-IN')}`, 'Revenue']}
                       />
                       <Area type="monotone" dataKey="revenue" stroke="#4f46e5" strokeWidth={3} fillOpacity={1} fill="url(#revenueGrad)" />
                     </AreaChart>
@@ -2002,7 +2237,7 @@ export default function AdminDashboard() {
                             color: '#fff',
                             fontSize: '12px'
                           }}
-                          formatter={(val) => [`₹${val}`, 'Sales']}
+                          formatter={(val) => [`₹${Number(val).toLocaleString('en-IN')}`, 'Sales']}
                         />
                       </PieChart>
                     </ResponsiveContainer>
@@ -2018,7 +2253,7 @@ export default function AdminDashboard() {
                         <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: CATEGORY_COLORS[idx % CATEGORY_COLORS.length] }}></span>
                         <span>{cat.name}</span>
                       </div>
-                      <span className="text-gray-500">₹{cat.value.toLocaleString()}</span>
+                      <span className="text-gray-500 font-mono">₹{Number(cat.value).toLocaleString('en-IN')}</span>
                     </div>
                   ))}
                 </div>
@@ -2072,10 +2307,10 @@ export default function AdminDashboard() {
                     <div key={o.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-white/5 rounded-xl border border-gray-200 dark:border-white/10">
                       <div className="flex items-center gap-3 min-w-0">
                         <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-black text-xs flex items-center justify-center shrink-0">
-                          {o.customer.name.charAt(0).toUpperCase()}
+                          {(o.customer?.name || o.customer?.fullName || o.customer?.email || 'C').charAt(0).toUpperCase()}
                         </div>
                         <div className="min-w-0">
-                          <div className="font-bold text-sm truncate">{o.customer.name}</div>
+                          <div className="font-bold text-sm truncate">{o.customer?.name || o.customer?.fullName || "Customer"}</div>
                           <div className="text-xs text-indigo-600 dark:text-indigo-400 truncate">{o.template.title}</div>
                         </div>
                       </div>
@@ -2209,6 +2444,57 @@ export default function AdminDashboard() {
               </div>
             </div>
 
+            {/* Status Filter Tabs */}
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={() => setOrderFilterTab('all')}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  orderFilterTab === 'all'
+                    ? 'bg-black text-white dark:bg-white dark:text-black shadow-sm'
+                    : 'bg-white dark:bg-[#111111] border border-gray-200 dark:border-white/10 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-white/5'
+                }`}
+              >
+                All Orders ({orders.length})
+              </button>
+
+              <button
+                onClick={() => setOrderFilterTab('paid')}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  orderFilterTab === 'paid'
+                    ? 'bg-emerald-600 text-white shadow-sm'
+                    : 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100 dark:hover:bg-emerald-500/20 border border-emerald-200 dark:border-emerald-500/20'
+                }`}
+              >
+                Paid / Completed ({orders.filter(o => o.status === 'Completed' || o.status === 'Paid').length})
+              </button>
+
+              <button
+                onClick={() => setOrderFilterTab('requested')}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ${
+                  orderFilterTab === 'requested'
+                    ? 'bg-amber-500 text-white shadow-sm'
+                    : 'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 hover:bg-amber-100 dark:hover:bg-amber-500/20 border border-amber-300 dark:border-amber-500/30'
+                }`}
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Refund Requests ({pendingRefundsCount})</span>
+                {pendingRefundsCount > 0 && (
+                  <span className="w-2 h-2 rounded-full bg-amber-500 dark:bg-amber-400 animate-ping"></span>
+                )}
+              </button>
+
+              <button
+                onClick={() => setOrderFilterTab('refunded')}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  orderFilterTab === 'refunded'
+                    ? 'bg-red-600 text-white shadow-sm'
+                    : 'bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-500/20 border border-red-200 dark:border-red-500/20'
+                }`}
+              >
+                Refunded ({orders.filter(o => o.status === 'Refunded' || o.status === 'refunded' || o.refund_status === 'processed').length})
+              </button>
+            </div>
+
             {/* Search Filter Strip */}
             <div className="relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -2261,10 +2547,10 @@ export default function AdminDashboard() {
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-3">
                               <div className="w-9 h-9 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-black text-sm flex items-center justify-center shadow-sm shrink-0">
-                                {order.customer.name.charAt(0).toUpperCase()}
+                                {(order.customer?.name || order.customer?.fullName || order.customer?.email || 'C').charAt(0).toUpperCase()}
                               </div>
                               <div className="min-w-0">
-                                <div className="font-bold text-sm truncate">{order.customer.name}</div>
+                                <div className="font-bold text-sm truncate">{order.customer?.name || order.customer?.fullName || "Customer"}</div>
                                 <a
                                   href={`mailto:${order.customer.email}`}
                                   className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline truncate block"
@@ -2291,6 +2577,22 @@ export default function AdminDashboard() {
                                 <span className="inline-block px-1.5 py-0.5 bg-gray-100 dark:bg-white/10 text-[10px] font-bold rounded text-gray-600 dark:text-gray-400">
                                   {order.template.category}
                                 </span>
+                                {/* Download Audit Trail Badge */}
+                                {order.download_count > 0 ? (
+                                  <div className="mt-1 flex items-center gap-1 text-[11px] font-bold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 px-2 py-0.5 rounded-md w-fit">
+                                    <span>⚠️ Downloaded: Yes ({order.download_count}x{order.last_downloaded_at ? ` - ${new Date(order.last_downloaded_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}, ${new Date(order.last_downloaded_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}` : ''})</span>
+                                  </div>
+                                ) : (
+                                  <div className="mt-1 flex items-center gap-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/20 px-2 py-0.5 rounded-md w-fit">
+                                    <span>✅ Never Downloaded (0 times)</span>
+                                  </div>
+                                )}
+                                {order.refund_reason && (
+                                  <div className="mt-1.5 flex items-start gap-1 text-[11px] font-medium text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 px-2 py-1 rounded-lg max-w-[220px]" title={order.refund_reason}>
+                                    <RotateCcw className="w-3 h-3 shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
+                                    <span className="truncate">"{order.refund_reason}"</span>
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </td>
@@ -2319,10 +2621,15 @@ export default function AdminDashboard() {
 
                           {/* Status */}
                           <td className="px-6 py-4">
-                            {order.status === 'refunded' ? (
+                            {order.status === 'Refunded' || order.status === 'refunded' || order.refund_status === 'processed' ? (
                               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400">
                                 <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
                                 Refunded
+                              </span>
+                            ) : order.status === 'Refund Requested' || order.refund_status === 'requested' ? (
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-500/20">
+                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                                Refund Requested
                               </span>
                             ) : (
                               <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
@@ -2335,13 +2642,18 @@ export default function AdminDashboard() {
                           {/* Actions */}
                           <td className="px-6 py-4 text-right">
                             <div className="flex items-center justify-end gap-2">
-                              {order.status !== 'refunded' && (
+                              {order.status !== 'Refunded' && order.status !== 'refunded' && order.refund_status !== 'processed' && (
                                 <button
-                                  onClick={() => { setRefundTarget(order); setRefundReason(''); }}
-                                  className="px-3 py-1.5 bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 text-red-600 dark:text-red-400 rounded-lg text-xs font-bold transition-colors cursor-pointer flex items-center gap-1"
+                                  onClick={() => { setRefundTarget(order); setRefundReason(order.refund_reason || 'Customer requested refund'); }}
+                                  className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer flex items-center gap-1 ${
+                                    order.status === 'Refund Requested' || order.refund_status === 'requested'
+                                      ? 'bg-amber-500 hover:bg-amber-600 text-white shadow-sm'
+                                      : 'bg-red-50 dark:bg-red-500/10 hover:bg-red-100 dark:hover:bg-red-500/20 text-red-600 dark:text-red-400'
+                                  }`}
                                   title="Issue Refund & Revoke License"
                                 >
-                                  <RefreshCw className="w-3.5 h-3.5" /> Refund
+                                  <RefreshCw className="w-3.5 h-3.5" /> 
+                                  {order.status === 'Refund Requested' || order.refund_status === 'requested' ? 'Approve Refund' : 'Refund'}
                                 </button>
                               )}
                               <button
@@ -2387,7 +2699,7 @@ export default function AdminDashboard() {
                 <div className="p-4 rounded-2xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 space-y-2">
                   <div className="flex justify-between items-center">
                     <span className="text-xs text-red-600 dark:text-red-400 font-bold uppercase tracking-wider">Customer</span>
-                    <span className="text-sm font-black">{refundTarget.customer.name}</span>
+                    <span className="text-sm font-black">{(refundTarget?.customer?.name || refundTarget?.customer?.fullName || 'Customer')}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-xs text-red-600 dark:text-red-400 font-bold uppercase tracking-wider">Template</span>
@@ -2402,6 +2714,36 @@ export default function AdminDashboard() {
                     <span className="font-mono text-xs">{refundTarget.paymentId}</span>
                   </div>
                 </div>
+
+                {/* Download Audit Trail Alert */}
+                {refundTarget.download_count > 0 ? (
+                  <div className="p-3.5 bg-amber-50 dark:bg-amber-500/10 border border-amber-300 dark:border-amber-500/30 rounded-2xl text-xs space-y-1">
+                    <div className="font-black text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
+                      <span>⚠️ Downloaded: Yes ({refundTarget.download_count} time{refundTarget.download_count > 1 ? 's' : ''})</span>
+                    </div>
+                    <p className="text-amber-700 dark:text-amber-400 text-[11px] leading-relaxed">
+                      Customer downloaded the source code package{refundTarget.last_downloaded_at ? ` on ${new Date(refundTarget.last_downloaded_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}, ${new Date(refundTarget.last_downloaded_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}` : ''}. Approving this refund will revoke their license, but they possess the downloaded files.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="p-3.5 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-300 dark:border-emerald-500/30 rounded-2xl text-xs space-y-1">
+                    <div className="font-black text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
+                      <span>✅ Never Downloaded (0 times)</span>
+                    </div>
+                    <p className="text-emerald-700 dark:text-emerald-400 text-[11px]">
+                      Safe to refund. The customer has never downloaded or accessed the template package.
+                    </p>
+                  </div>
+                )}
+
+                {refundTarget.refund_reason && (
+                  <div className="p-3 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl text-xs space-y-1">
+                    <div className="font-bold text-amber-700 dark:text-amber-400 flex items-center gap-1">
+                      <span>Customer's Submitted Request:</span>
+                    </div>
+                    <p className="text-gray-700 dark:text-gray-300 font-medium italic">"{refundTarget.refund_reason}"</p>
+                  </div>
+                )}
 
                 {/* Reason */}
                 <div>
@@ -2452,6 +2794,114 @@ export default function AdminDashboard() {
                   ) : (
                     <><RefreshCw className="w-4 h-4" /> Confirm Refund</>
                   )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ══════════════════════════════════════════════
+            INSPECT ORDER & AUDIT MODAL
+        ══════════════════════════════════════════════ */}
+        {selectedOrder && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+            <div className="bg-white dark:bg-[#111111] rounded-3xl shadow-2xl border border-gray-200 dark:border-white/10 w-full max-w-lg animate-fade-in-up">
+              <div className="p-6 border-b border-gray-100 dark:border-white/10 flex items-start justify-between">
+                <div>
+                  <h3 className="font-black text-lg">Purchase & Audit Inspection</h3>
+                  <p className="text-xs text-gray-500 font-mono mt-0.5">Order ID: {selectedOrder.id}</p>
+                </div>
+                <button onClick={() => setSelectedOrder(null)} className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-white/10 transition-colors cursor-pointer">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
+                {/* Customer Details */}
+                <div className="p-4 rounded-2xl bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 space-y-2 text-xs">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-500 font-bold uppercase">Customer</span>
+                    <span className="font-black text-sm">{selectedOrder.customer?.name || selectedOrder.customer?.fullName || 'Customer'}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-500 font-bold uppercase">Email</span>
+                    <span className="font-medium text-indigo-600 dark:text-indigo-400">{selectedOrder.customer?.email}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-500 font-bold uppercase">Template</span>
+                    <span className="font-bold">{selectedOrder.template?.title}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-500 font-bold uppercase">Payment ID</span>
+                    <span className="font-mono">{selectedOrder.paymentId}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-500 font-bold uppercase">Amount Paid</span>
+                    <span className="font-black text-sm text-emerald-600 dark:text-emerald-400">{formatPrice(selectedOrder.amount)}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-500 font-bold uppercase">Purchased On</span>
+                    <span>{new Date(selectedOrder.createdAt).toLocaleString('en-IN')}</span>
+                  </div>
+                </div>
+
+                {/* Download Audit Trail Section */}
+                <div className="p-4 rounded-2xl border border-gray-200 dark:border-white/10 space-y-3">
+                  <h4 className="text-xs font-black uppercase tracking-wider text-gray-500 flex items-center gap-1.5">
+                    <span>📥 Download Audit Trail</span>
+                  </h4>
+                  {selectedOrder.download_count > 0 ? (
+                    <div className="p-3.5 bg-amber-50 dark:bg-amber-500/10 border border-amber-300 dark:border-amber-500/30 rounded-xl space-y-2 text-xs">
+                      <div className="flex justify-between items-center">
+                        <span className="font-bold text-amber-800 dark:text-amber-300">Download Status</span>
+                        <span className="px-2 py-0.5 rounded-full bg-amber-200 dark:bg-amber-500/30 text-amber-900 dark:text-amber-200 font-black">
+                          ⚠️ Files Downloaded
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center text-[11px]">
+                        <span className="text-gray-600 dark:text-gray-400">Total Downloads:</span>
+                        <span className="font-black">{selectedOrder.download_count} times</span>
+                      </div>
+                      {selectedOrder.first_downloaded_at && (
+                        <div className="flex justify-between items-center text-[11px]">
+                          <span className="text-gray-600 dark:text-gray-400">First Downloaded:</span>
+                          <span className="font-medium">{new Date(selectedOrder.first_downloaded_at).toLocaleString('en-IN')}</span>
+                        </div>
+                      )}
+                      {selectedOrder.last_downloaded_at && (
+                        <div className="flex justify-between items-center text-[11px]">
+                          <span className="text-gray-600 dark:text-gray-400">Last Downloaded:</span>
+                          <span className="font-medium">{new Date(selectedOrder.last_downloaded_at).toLocaleString('en-IN')}</span>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="p-3.5 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-300 dark:border-emerald-500/30 rounded-xl space-y-1 text-xs">
+                      <div className="flex items-center gap-1.5 font-bold text-emerald-800 dark:text-emerald-300">
+                        <span>✅ Never Downloaded (0 times)</span>
+                      </div>
+                      <p className="text-[11px] text-emerald-700 dark:text-emerald-400">
+                        The buyer has never downloaded or generated a link for this source code package.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Refund Information */}
+                {selectedOrder.refund_reason && (
+                  <div className="p-3.5 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 rounded-xl text-xs space-y-1">
+                    <span className="font-bold text-amber-800 dark:text-amber-300">Refund Reason Submitted:</span>
+                    <p className="italic text-gray-700 dark:text-gray-300">"{selectedOrder.refund_reason}"</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="p-4 border-t border-gray-100 dark:border-white/10 flex justify-end">
+                <button
+                  onClick={() => setSelectedOrder(null)}
+                  className="px-5 py-2 bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                >
+                  Close
                 </button>
               </div>
             </div>
@@ -3171,7 +3621,10 @@ export default function AdminDashboard() {
                 </div>
 
                 <div className="text-xs text-gray-500 font-bold">
-                  Showing {campaigns.filter(c => c.name?.toLowerCase().includes(campaignSearchQuery.toLowerCase()) || c.subject?.toLowerCase().includes(campaignSearchQuery.toLowerCase())).length} of {campaigns.length} campaigns
+                  Showing {campaigns.filter(c => {
+    const q = (campaignSearchQuery || '').toLowerCase();
+    return !q || (c.name || '').toLowerCase().includes(q) || (c.subject || '').toLowerCase().includes(q);
+  }).length} of {campaigns.length} campaigns
                 </div>
               </div>
 
@@ -3190,7 +3643,10 @@ export default function AdminDashboard() {
                   </thead>
                   <tbody className="divide-y divide-gray-100 dark:divide-white/5">
                     {campaigns
-                      .filter(c => c.name?.toLowerCase().includes(campaignSearchQuery.toLowerCase()) || c.subject?.toLowerCase().includes(campaignSearchQuery.toLowerCase()))
+                      .filter(c => {
+    const q = (campaignSearchQuery || '').toLowerCase();
+    return !q || (c.name || '').toLowerCase().includes(q) || (c.subject || '').toLowerCase().includes(q);
+  })
                       .map((c) => {
                         const typeBadgeClasses = {
                           launch: 'bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-500/20',
@@ -3401,10 +3857,20 @@ export default function AdminDashboard() {
                         {/* Real-time Counter Preview */}
                         <div className="inline-flex items-center gap-1 bg-black/30 backdrop-blur-md px-2.5 py-1 rounded-lg border border-white/20 font-mono font-bold text-white tracking-wider text-xs">
                           <Clock className="w-3.5 h-3.5 text-amber-300" />
-                          <span className="text-amber-200">02d</span>:
-                          <span>08h</span>:
-                          <span>42m</span>:
-                          <span className="text-amber-300">19s</span>
+                          {bannerTimeLeft.days > 0 && (
+                            <>
+                              <span className="text-amber-200">{String(bannerTimeLeft.days).padStart(2, '0')}d</span>
+                              <span className="opacity-60">:</span>
+                            </>
+                          )}
+                          <span>{String(bannerTimeLeft.hours).padStart(2, '0')}h</span>
+                          <span className="opacity-60 animate-pulse">:</span>
+                          <span>{String(bannerTimeLeft.minutes).padStart(2, '0')}m</span>
+                          <span className="opacity-60 animate-pulse">:</span>
+                          <span className="text-amber-300">{String(bannerTimeLeft.seconds).padStart(2, '0')}s</span>
+                          {bannerTimeLeft.isExpired && (
+                            <span className="text-red-300 text-[10px] ml-1 font-sans font-bold">(Expired)</span>
+                          )}
                         </div>
                       </div>
 
@@ -3802,7 +4268,7 @@ export default function AdminDashboard() {
                   </div>
                 </div>
                 <div className="text-3xl font-black mt-3 text-amber-600 dark:text-amber-400">
-                  {customers.filter(c => c.tier.includes('VIP')).length}
+                  {customers.filter(c => (c.tier || '').includes('VIP')).length}
                 </div>
                 <div className="text-xs text-gray-500 mt-1">
                   Platinum & Gold spenders
@@ -3817,10 +4283,10 @@ export default function AdminDashboard() {
                   </div>
                 </div>
                 <div className="text-3xl font-black mt-3 text-emerald-600 dark:text-emerald-400">
-                  {customers.filter(c => c.total_purchases > 0).length}
+                  {customers.filter(c => (c.total_purchases || c.purchases_count || 0) > 0).length}
                 </div>
                 <div className="text-xs text-gray-500 mt-1">
-                  {customers.length > 0 ? `${Math.round((customers.filter(c => c.total_purchases > 0).length / customers.length) * 100)}% conversion rate` : '100% conversion'}
+                  {customers.length > 0 ? `${Math.round((customers.filter(c => (c.total_purchases || c.purchases_count || 0) > 0).length / customers.length) * 100)}% conversion rate` : '100% conversion'}
                 </div>
               </div>
 
@@ -3893,15 +4359,19 @@ export default function AdminDashboard() {
                   <tbody className="divide-y divide-gray-100 dark:divide-white/5">
                     {customers
                       .filter(c => {
-                        const matchesSearch = c.name?.toLowerCase().includes(customerSearchQuery.toLowerCase()) ||
-                          c.email?.toLowerCase().includes(customerSearchQuery.toLowerCase()) ||
-                          c.purchased_templates?.some(t => t.title?.toLowerCase().includes(customerSearchQuery.toLowerCase()));
+                        const q = (customerSearchQuery || '').toLowerCase();
+  const matchesSearch = !q ||
+    (c.name || c.full_name || '').toLowerCase().includes(q) ||
+    (c.email || '').toLowerCase().includes(q) ||
+    (Array.isArray(c.purchased_templates) && c.purchased_templates.some(t => 
+      typeof t === 'object' ? (t?.title || '').toLowerCase().includes(q) : String(t).includes(q)
+    ));
                         
                         if (!matchesSearch) return false;
 
-                        if (customerTierFilter === 'vip') return c.tier?.includes('VIP');
-                        if (customerTierFilter === 'buyers') return c.total_purchases > 0;
-                        if (customerTierFilter === 'leads') return c.total_purchases === 0;
+                        if (customerTierFilter === 'vip') return Boolean(c.tier?.includes('VIP'));
+                        if (customerTierFilter === 'buyers') return (c.total_purchases || c.purchases_count || 0) > 0;
+                        if (customerTierFilter === 'leads') return (c.total_purchases || c.purchases_count || 0) === 0;
                         return true;
                       })
                       .map((c) => {
@@ -4504,7 +4974,7 @@ export default function AdminDashboard() {
                     {/* Body */}
                     <div className="p-5 text-xs text-slate-700 space-y-2 leading-relaxed">
                       {campaignForm.body_text ? (
-                        campaignForm.body_text.split('\n').filter(Boolean).map((line, idx) => (
+                        (campaignForm.body_text || '').split('\n').filter(Boolean).map((line, idx) => (
                           <div key={idx} className="flex items-start gap-1.5">
                             {line.startsWith('•') || line.startsWith('-') ? (
                               <>
@@ -4687,10 +5157,10 @@ export default function AdminDashboard() {
                 <span className="text-[10px] uppercase font-bold text-gray-500 tracking-wider">Customer Profile</span>
                 <div className="flex items-center gap-3 mt-2">
                   <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-white font-bold flex items-center justify-center text-base">
-                    {selectedOrder.customer.name.charAt(0).toUpperCase()}
+                    {(selectedOrder?.customer?.name || selectedOrder?.customer?.fullName || 'C').charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <div className="font-bold text-base">{selectedOrder.customer.name}</div>
+                    <div className="font-bold text-base">{selectedOrder?.customer?.name || selectedOrder?.customer?.fullName || "Customer"}</div>
                     <div className="text-xs text-gray-500 font-mono">User ID: {selectedOrder.customer.id}</div>
                   </div>
                 </div>
@@ -4755,10 +5225,10 @@ export default function AdminDashboard() {
 
       {/* ── Edit Template Modal ── */}
       {editingTemplate && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" onClick={() => setEditingTemplate(null)}>
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 overscroll-none" onClick={() => setEditingTemplate(null)}>
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
           <div
-            className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white dark:bg-[#111111] rounded-2xl shadow-2xl border border-gray-200 dark:border-white/10"
+            className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto overscroll-contain bg-white dark:bg-[#111111] rounded-2xl shadow-2xl border border-gray-200 dark:border-white/10"
             onClick={e => e.stopPropagation()}
           >
             <div className="sticky top-0 bg-white dark:bg-[#111111] border-b border-gray-200 dark:border-white/10 px-8 py-5 flex items-center justify-between z-10">
@@ -5065,7 +5535,7 @@ export default function AdminDashboard() {
 
       {/* ── Customer Profile & Purchase History Modal ── */}
       {selectedCustomerProfile && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" onClick={() => setSelectedCustomerProfile(null)}>
+        <div className="fixed inset-0 z-[9990] flex items-center justify-center p-4" onClick={() => setSelectedCustomerProfile(null)}>
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
           <div
             className="relative w-full max-w-2xl bg-white dark:bg-[#111111] rounded-2xl shadow-2xl border border-gray-200 dark:border-white/10 overflow-hidden flex flex-col max-h-[90vh]"
@@ -5228,7 +5698,7 @@ export default function AdminDashboard() {
 
       {/* ── Grant Custom Template Access / Gift Modal ── */}
       {isGrantAccessOpen && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" onClick={() => setIsGrantAccessOpen(false)}>
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4" onClick={() => setIsGrantAccessOpen(false)}>
           <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
           <div
             className="relative w-full max-w-lg bg-white dark:bg-[#111111] rounded-2xl shadow-2xl border border-gray-200 dark:border-white/10 overflow-hidden"

@@ -7,12 +7,13 @@ import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import dns from 'dns';
 
-// Import our new config, routes, and services
-import { supabaseAdmin } from './config/supabase.js';
+// Import our Neon config, routes, and services
+import { query } from './config/db.js';
 import adminRoutes from './routes/adminRoutes.js';
 import publicRoutes from './routes/publicRoutes.js';
+import authRoutes from './routes/authRoutes.js';
 
-// Force IPv4 for Nodemailer (Fixes ENETUNREACH error on Render)
+// Force IPv4 for Nodemailer
 dns.setDefaultResultOrder('ipv4first');
 
 const __filename = fileURLToPath(import.meta.url);
@@ -24,17 +25,31 @@ dotenv.config({ path: path.resolve(__dirname, '../.env.local') });
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Trust reverse proxy (Fixes X-Forwarded-For warning on Render)
+// Trust reverse proxy
 app.set('trust proxy', 1);
 
 // Security Middlewares
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: false // Allow loading local uploads & images
+}));
 
-// Rate Limiter: max 100 requests per 15 minutes
+// Rate Limiter: Generous limits for single page applications & admin operations
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
-  message: 'Too many requests from this IP, please try again after 15 minutes',
+  max: 5000, // 5,000 requests per 15 minutes
+  skip: (req) => {
+    // Never rate-limit localhost / development traffic
+    const ip = req.ip || req.connection?.remoteAddress || '';
+    const host = req.get('host') || '';
+    return (
+      ip === '127.0.0.1' ||
+      ip === '::1' ||
+      ip.includes('127.0.0.1') ||
+      host.includes('localhost') ||
+      host.includes('127.0.0.1')
+    );
+  },
+  message: { error: 'Too many requests from this IP, please try again after 15 minutes' },
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -49,18 +64,21 @@ app.use(cors({
 
 app.use(express.json());
 
+// Serve local uploads statically (covers, avatars, images)
+app.use('/uploads', express.static(path.resolve(__dirname, 'uploads')));
+
 // Mount API Routes
+app.use('/api/auth', authRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api', adminRoutes);
 app.use('/api', publicRoutes);
 
-// Dynamic Sitemap Generation (Kept in root)
+// Dynamic Sitemap Generation from Neon Postgres
 app.get('/sitemap.xml', async (req, res) => {
   try {
-    if (!supabaseAdmin) throw new Error('Misconfigured');
-    const { data: templates, error } = await supabaseAdmin.from('templates').select('id');
-    if (error) throw error;
+    const { rows: templates } = await query('SELECT id FROM templates');
 
-    const baseUrl = 'https://btmarket.com'; // Replace with actual domain
+    const baseUrl = 'https://btmarket.com';
     const staticPages = ['', '/templates', '/featured', '/ui-kits', '/contact'];
 
     let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
@@ -76,7 +94,7 @@ app.get('/sitemap.xml', async (req, res) => {
     }
 
     // Dynamic product pages
-    if (templates) {
+    if (templates && templates.length) {
       for (const t of templates) {
         xml += `  <url>\n`;
         xml += `    <loc>${baseUrl}/product/${t.id}</loc>\n`;

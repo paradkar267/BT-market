@@ -45,15 +45,15 @@ export function ElegantShape({
                 }}
                 className="relative"
             >
-                <div
+            <div
                     className={cn(
                         "absolute inset-0 rounded-full",
                         "bg-gradient-to-r to-transparent",
                         gradient,
-                        "border-2 border-black/[0.05]",
-                        "shadow-[0_8px_32px_0_rgba(0,0,0,0.02)]",
+                        "border border-gray-200/60",
+                        "shadow-[0_8px_32px_0_rgba(100,100,200,0.06)]",
                         "after:absolute after:inset-0 after:rounded-full",
-                        "after:bg-[radial-gradient(circle_at_50%_50%,rgba(0,0,0,0.02),transparent_70%)]"
+                        "after:bg-[radial-gradient(circle_at_50%_50%,rgba(120,119,198,0.04),transparent_70%)]"
                     )}
                 />
             </motion.div>

@@ -1,7 +1,7 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import { toast } from 'sonner';
 import { useAuth } from './AuthContext';
-import { supabase } from './lib/supabase';
+import { api } from './lib/api';
 import { useTemplates } from './useTemplates';
 
 const WishlistContext = createContext();
@@ -16,7 +16,7 @@ export const WishlistProvider = ({ children }) => {
   const savedIds = React.useMemo(() => {
     if (localWishlistIds !== null) return localWishlistIds;
     if (!user) return [];
-    return (user.user_metadata?.wishlist_templates || []).map(String);
+    return (user.wishlist_templates || user.user_metadata?.wishlist_templates || []).map(String);
   }, [user, localWishlistIds]);
 
   const wishlistItems = React.useMemo(() => {
@@ -39,13 +39,10 @@ export const WishlistProvider = ({ children }) => {
         toast.success(`${product.title} added to wishlist!`);
       }
       
-      const { error } = await supabase.auth.updateUser({
-        data: { wishlist_templates: newIds }
-      });
-      
-      if (error) {
-        console.error("Wishlist error:", error);
-        toast.error("Failed to update wishlist. Please try again.");
+      try {
+        await api.post('/api/auth/sync-wishlist', { wishlistTemplates: newIds });
+      } catch (error) {
+        console.warn("Wishlist sync note:", error.message);
       }
     });
   };
@@ -60,3 +57,5 @@ export const WishlistProvider = ({ children }) => {
     </WishlistContext.Provider>
   );
 };
+
+export default WishlistContext;

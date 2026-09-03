@@ -5,9 +5,14 @@ import { AlertTriangle, Trash2, X } from 'lucide-react';
 export function ConfirmModal({ open, onClose, onConfirm, title, message, confirmText = 'Delete', variant = 'danger' }) {
   useEffect(() => {
     if (!open) return;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
     const handler = (e) => e.key === 'Escape' && onClose();
     document.addEventListener('keydown', handler);
-    return () => document.removeEventListener('keydown', handler);
+    return () => {
+      document.removeEventListener('keydown', handler);
+      document.body.style.overflow = originalOverflow;
+    };
   }, [open, onClose]);
 
   if (!open) return null;
@@ -15,7 +20,7 @@ export function ConfirmModal({ open, onClose, onConfirm, title, message, confirm
   const isDanger = variant === 'danger';
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-[10001] flex items-center justify-center p-4" onClick={onClose}>
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-[fadeIn_150ms_ease-out]" />
 

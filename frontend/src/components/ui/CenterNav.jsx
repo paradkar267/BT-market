@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { NavBar } from './tubelight-navbar';
-import { Home, LayoutTemplate } from 'lucide-react';
+import { Home, LayoutTemplate, MessageCircle } from 'lucide-react';
 import { CategoryDropdown } from './CategoryDropdown';
 
 export function CenterNav() {
@@ -21,20 +21,24 @@ export function CenterNav() {
     activeTab = "UI KITS";
   } else if (location.pathname === "/templates") {
     activeTab = "TEMPLATES";
+  } else if (location.pathname === "/contact") {
+    activeTab = "CONTACT";
   }
 
   return (
-    <div className="hidden lg:flex items-center gap-2 absolute left-1/2 -translate-x-1/2 mt-2">
+    <div className="hidden md:flex items-center justify-center">
       <NavBar 
         activeTab={activeTab}
         onChange={(name) => {
           if (name === "HOME") return navigate("/");
           else if (name === "TEMPLATES") return navigate("/templates");
           else if (name === "UI KITS") return navigate("/ui-kits");
+          else if (name === "CONTACT") return navigate("/contact");
         }}
         items={[
           { name: "HOME", url: "/", icon: Home },
-          { name: "TEMPLATES", url: "/templates", icon: LayoutTemplate }
+          { name: "TEMPLATES", url: "/templates", icon: LayoutTemplate },
+          { name: "CONTACT", url: "/contact", icon: MessageCircle }
         ]} 
       >
         <CategoryDropdown 

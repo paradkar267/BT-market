@@ -589,7 +589,7 @@ export default function CartPage() {
     <>
     {isProcessing && (
       <div className="fixed inset-0 z-[9999] bg-black/70 backdrop-blur-md flex flex-col items-center justify-center text-white">
-        <div className="w-16 h-16 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin mb-6"></div>
+        <div className="w-16 h-16 border-4 border-white/20 border-t-white rounded-full animate-spin mb-6"></div>
         <h2 className="text-2xl font-black mb-2 tracking-tight">Securing Your Order...</h2>
         <p className="text-white/70 text-sm">Generating license keys & invoice. Please don't refresh.</p>
       </div>
@@ -616,7 +616,7 @@ export default function CartPage() {
         {/* Header with Badges */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 pb-6 border-b border-gray-200/80 dark:border-white/10">
           <div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-200 dark:border-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-xs font-bold mb-2">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 text-gray-800 dark:text-gray-200 text-xs font-bold mb-2">
               <Sparkles className="w-3.5 h-3.5" /> Instant Delivery Marketplace
             </div>
             <h1 className="text-3xl sm:text-4xl font-black tracking-tight text-gray-900 dark:text-white flex items-center gap-3">
@@ -635,8 +635,8 @@ export default function CartPage() {
         {cartItems.length === 0 ? (
           <div className="bg-white/70 dark:bg-[#111111]/80 backdrop-blur-xl p-12 md:p-24 rounded-3xl border border-gray-200/80 dark:border-white/10 shadow-sm text-center relative overflow-hidden">
              <div className="relative z-10 flex flex-col items-center">
-               <div className="w-24 h-24 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 rounded-3xl border border-indigo-500/20 flex items-center justify-center mx-auto mb-6">
-                  <ShoppingCart className="w-10 h-10 text-indigo-500" />
+               <div className="w-24 h-24 bg-gray-100 dark:bg-white/5 rounded-3xl border border-gray-200 dark:border-white/10 flex items-center justify-center mx-auto mb-6">
+                  <ShoppingCart className="w-10 h-10 text-black dark:text-white" />
                </div>
                
                <h2 className="text-3xl md:text-4xl font-black tracking-tight text-gray-900 dark:text-white mb-3">Your cart is feeling light</h2>
@@ -644,7 +644,7 @@ export default function CartPage() {
                  Discover industry-leading templates, landing pages, and UI kits curated for modern businesses.
                </p>
                
-               <Link to="/" className="inline-flex items-center justify-center px-8 py-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-indigo-500/20 hover:scale-[1.02] active:scale-95 transition-all text-sm">
+               <Link to="/" className="inline-flex items-center justify-center px-8 py-4 bg-black hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-gray-200 text-white font-bold rounded-xl shadow-lg hover:scale-[1.02] active:scale-95 transition-all text-sm">
                   Explore Marketplace
                   <ArrowLeft className="w-4 h-4 ml-2 rotate-180" />
                </Link>
@@ -657,7 +657,7 @@ export default function CartPage() {
                {cartItems.map(item => (
                   <div 
                     key={item.id} 
-                    className="group relative rounded-3xl bg-white dark:bg-[#111111] border border-gray-200/80 dark:border-white/10 p-5 sm:p-6 shadow-sm hover:border-indigo-500/30 transition-all duration-300 overflow-hidden"
+                    className="group relative rounded-3xl bg-white dark:bg-[#111111] border border-gray-200/80 dark:border-white/10 p-5 sm:p-6 shadow-sm hover:border-black/30 dark:hover:border-white/30 transition-all duration-300 overflow-hidden"
                   >
                      <div className="flex flex-col sm:flex-row gap-5 items-start">
                         {/* Thumbnail */}
@@ -677,9 +677,9 @@ export default function CartPage() {
                            <div className="pr-8">
                               <div className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 font-medium mb-1">
                                  <span>by {item.author || 'Verified Author'}</span>
-                                 <BadgeCheck className="w-3.5 h-3.5 text-indigo-500" />
+                                 <BadgeCheck className="w-3.5 h-3.5 text-black dark:text-white" />
                               </div>
-                              <h3 className="text-lg font-black tracking-tight text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                              <h3 className="text-lg font-black tracking-tight text-gray-900 dark:text-white group-hover:text-black dark:group-hover:text-white transition-colors">
                                  {item.title}
                               </h3>
                            </div>
@@ -687,7 +687,7 @@ export default function CartPage() {
                            {/* Benefit Chips */}
                            <div className="flex flex-wrap items-center gap-1.5 mt-3">
                               <span className="inline-flex items-center gap-1 text-[10px] font-bold text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-white/5 px-2 py-0.5 rounded-md">
-                                 <Download className="w-3 h-3 text-indigo-500" /> Full ZIP Code
+                                 <Download className="w-3 h-3 text-black dark:text-white" /> Full ZIP Code
                               </span>
                               <span className="inline-flex items-center gap-1 text-[10px] font-bold text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-white/5 px-2 py-0.5 rounded-md">
                                  <Zap className="w-3 h-3 text-amber-500" /> Commercial Rights
@@ -719,9 +719,9 @@ export default function CartPage() {
                ))}
 
                {/* Value Proposition Cards */}
-               <div className="p-6 rounded-3xl bg-gradient-to-br from-indigo-500/[0.03] via-purple-500/[0.03] to-transparent border border-indigo-500/10 grid grid-cols-1 sm:grid-cols-3 gap-4">
+               <div className="p-6 rounded-3xl bg-gray-50 dark:bg-white/[0.02] border border-gray-200/80 dark:border-white/10 grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div className="flex items-start gap-3">
-                     <div className="w-8 h-8 rounded-xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center shrink-0 mt-0.5">
+                     <div className="w-8 h-8 rounded-xl bg-black/5 dark:bg-white/10 text-black dark:text-white flex items-center justify-center shrink-0 mt-0.5">
                         <Download className="w-4 h-4" />
                      </div>
                      <div>
@@ -741,7 +741,7 @@ export default function CartPage() {
                   </div>
 
                   <div className="flex items-start gap-3">
-                     <div className="w-8 h-8 rounded-xl bg-purple-500/10 text-purple-500 flex items-center justify-center shrink-0 mt-0.5">
+                     <div className="w-8 h-8 rounded-xl bg-black/5 dark:bg-white/10 text-black dark:text-white flex items-center justify-center shrink-0 mt-0.5">
                         <Zap className="w-4 h-4" />
                      </div>
                      <div>
@@ -766,7 +766,7 @@ export default function CartPage() {
                   <div className="mb-6 p-4 rounded-2xl bg-gray-50 dark:bg-white/[0.02] border border-gray-200 dark:border-white/10">
                     <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-2 flex items-center justify-between">
                       <span className="flex items-center gap-1.5">
-                        <Tag className="w-3.5 h-3.5 text-indigo-500" /> Have a Promo Code?
+                        <Tag className="w-3.5 h-3.5 text-black dark:text-white" /> Have a Promo Code?
                       </span>
                     </label>
 
@@ -799,12 +799,12 @@ export default function CartPage() {
                             value={couponInput}
                             onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
                             placeholder="Enter promo code (e.g. LAUNCH50)"
-                            className="w-full pl-3.5 pr-20 py-2.5 bg-white dark:bg-black/60 border border-gray-200 dark:border-white/10 rounded-xl text-xs font-bold tracking-wide placeholder:normal-case placeholder:font-normal focus:outline-none focus:ring-2 focus:ring-indigo-500 uppercase"
+                            className="w-full pl-3.5 pr-20 py-2.5 bg-white dark:bg-black/60 border border-gray-200 dark:border-white/10 rounded-xl text-xs font-bold tracking-wide placeholder:normal-case placeholder:font-normal focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white uppercase"
                           />
                           <button
                             type="submit"
                             disabled={couponLoading || !couponInput.trim()}
-                            className="absolute right-1.5 px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-40 text-white rounded-lg text-xs font-bold transition-all shadow-sm cursor-pointer"
+                            className="absolute right-1.5 px-3.5 py-1.5 bg-black hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-gray-200 disabled:opacity-40 text-white rounded-lg text-xs font-bold transition-all shadow-sm cursor-pointer"
                           >
                             {couponLoading ? 'Verifying...' : 'Apply'}
                           </button>
@@ -813,13 +813,13 @@ export default function CartPage() {
                         {/* Quick One-Click Offer Suggestion */}
                         <div 
                           onClick={(e) => handleApplyCoupon(e, 'LAUNCH50')}
-                          className="flex items-center justify-between p-2.5 rounded-xl bg-indigo-50/70 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 hover:bg-indigo-100/70 dark:hover:bg-indigo-500/15 cursor-pointer transition-colors text-[11px]"
+                          className="flex items-center justify-between p-2.5 rounded-xl bg-gray-100 dark:bg-white/5 border border-gray-200 dark:border-white/10 hover:bg-gray-200 dark:hover:bg-white/10 cursor-pointer transition-colors text-[11px]"
                         >
-                          <div className="flex items-center gap-1.5 text-indigo-700 dark:text-indigo-300 font-bold">
-                            <Sparkles className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
-                            <span>Apply code <strong className="font-mono bg-indigo-200/50 dark:bg-indigo-400/20 px-1 py-0.5 rounded">LAUNCH50</strong> for 50% OFF</span>
+                          <div className="flex items-center gap-1.5 text-gray-900 dark:text-white font-bold">
+                            <Sparkles className="w-3.5 h-3.5 text-black dark:text-white shrink-0" />
+                            <span>Apply code <strong className="font-mono bg-black/10 dark:bg-white/10 px-1 py-0.5 rounded">LAUNCH50</strong> for 50% OFF</span>
                           </div>
-                          <span className="font-black text-indigo-600 dark:text-indigo-400 text-[10px] uppercase">Apply</span>
+                          <span className="font-black text-black dark:text-white text-[10px] uppercase">Apply</span>
                         </div>
                       </div>
                     )}
@@ -865,7 +865,7 @@ export default function CartPage() {
                   {/* Primary Checkout Button */}
                   <button 
                     onClick={handleCheckout}
-                    className="w-full py-4 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white rounded-2xl font-black text-base hover:scale-[1.01] active:scale-95 transition-all shadow-xl shadow-indigo-500/25 flex items-center justify-center gap-2 mb-4 cursor-pointer"
+                    className="w-full py-4 bg-black hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-gray-200 text-white rounded-2xl font-black text-base hover:scale-[1.01] active:scale-95 transition-all shadow-xl flex items-center justify-center gap-2 mb-4 cursor-pointer"
                   >
                      <Lock className="w-4 h-4" /> Pay {formatPrice(finalPayableTotal)} & Download
                   </button>

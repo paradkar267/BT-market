@@ -123,7 +123,7 @@ export function CommandPalette() {
                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-300" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <h4 className="text-gray-900 dark:text-white font-bold text-base truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                        <h4 className="text-gray-900 dark:text-white font-bold text-base truncate group-hover:text-black dark:group-hover:text-white transition-colors">
                           {item.title}
                         </h4>
                         <p className="text-sm text-gray-500 dark:text-gray-400 font-medium mt-1 flex items-center gap-2">

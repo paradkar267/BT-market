@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { supabase } from './lib/supabase';
+import { api } from './lib/api';
 
 export function useTemplates() {
   const [templates, setTemplates] = useState([]);
@@ -9,25 +9,22 @@ export function useTemplates() {
   const fetchTemplates = useCallback(async () => {
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('templates')
-        .select('*')
-        .order('id', { ascending: true });
+      const data = await api.get('/api/templates');
 
-      if (error) throw error;
+      if (Array.isArray(data) && data.length > 0) {
+        const adjustedData = data.map(t => {
+          const currentPrice = parseInt(t.price, 10) || 0;
+          const slug = (t.title || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+          const previewUrl = t.previewUrl || t.preview_url || t.demo_url || `/previews/${slug}/index.html`;
 
-      const adjustedData = data?.map(t => {
-        let currentPrice = parseInt(t.price, 10);
-        
-        const slug = t.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
-        const previewUrl = t.previewUrl || t.preview_url || t.demo_url || t.demoUrl || `/previews/${slug}/index.html`;
-
-        return { ...t, price: currentPrice.toString(), previewUrl };
-      }) || [];
-      
-      setTemplates(adjustedData);
+          return { ...t, price: currentPrice.toString(), previewUrl };
+        });
+        setTemplates(adjustedData);
+      } else {
+        setTemplates([]);
+      }
     } catch (err) {
-      console.error('Error fetching templates:', err.message);
+      console.warn('Backend templates fetch error:', err.message);
       setError(err);
     } finally {
       setLoading(false);
@@ -35,47 +32,19 @@ export function useTemplates() {
   }, []);
 
   useEffect(() => {
-    let isMounted = true;
-    const load = async () => {
-      try {
-        const { data, error: fetchErr } = await supabase
-          .from('templates')
-          .select('*')
-          .order('id', { ascending: true });
+    fetchTemplates();
 
-        if (!isMounted) return;
-        if (fetchErr) throw fetchErr;
-
-        const adjustedData = data?.map(t => {
-          let currentPrice = parseInt(t.price, 10);
-          const slug = t.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
-          const previewUrl = t.previewUrl || t.preview_url || t.demo_url || t.demoUrl || `/previews/${slug}/index.html`;
-          return { ...t, price: currentPrice.toString(), previewUrl };
-        }) || [];
-        
-        setTemplates(adjustedData);
-      } catch (err) {
-        if (isMounted) {
-          console.error('Error fetching templates:', err.message);
-          setError(err);
-        }
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    };
-
-    load();
-    
     const handleUpdate = () => {
       fetchTemplates();
     };
-    
+
     window.addEventListener('templates_updated', handleUpdate);
     return () => {
-      isMounted = false;
       window.removeEventListener('templates_updated', handleUpdate);
     };
   }, [fetchTemplates]);
 
   return { templates, loading, error, refetch: fetchTemplates };
 }
+
+export default useTemplates;

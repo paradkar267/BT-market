@@ -41,7 +41,7 @@ export function FAQSection() {
           return (
             <div 
               key={index} 
-              className={`border rounded-2xl overflow-hidden transition-colors duration-300 ${isOpen ? 'border-violet-500 bg-violet-50/50 dark:bg-violet-950/20' : 'border-gray-200 dark:border-gray-800 bg-white dark:bg-black hover:border-gray-300 dark:hover:border-gray-700'}`}
+              className={`border rounded-2xl overflow-hidden transition-colors duration-300 ${isOpen ? 'border-black dark:border-white bg-black/[0.03] dark:bg-white/[0.04]' : 'border-gray-200 dark:border-gray-800 bg-white dark:bg-black hover:border-gray-300 dark:hover:border-gray-700'}`}
             >
               <button
                 onClick={() => toggleFaq(index)}

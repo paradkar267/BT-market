@@ -33,8 +33,9 @@ export default function FlashSaleTopBar() {
         const res = await fetch(`/api/announcement-banner?t=${Date.now()}`);
         if (res.ok) {
           const data = await res.json();
-          if (isMounted && data.banner) {
-            setBanner(data.banner);
+          const bannerData = data?.banner || (data?.id ? data : null);
+          if (isMounted && bannerData) {
+            setBanner(bannerData);
           }
         }
       } catch {
@@ -137,11 +138,11 @@ export default function FlashSaleTopBar() {
       glow: 'from-amber-400 to-red-500'
     },
     cyber: {
-      bar: 'bg-gradient-to-r from-indigo-800 via-purple-700 to-pink-700 text-white shadow-lg shadow-indigo-950/20 border-b border-indigo-400/30',
-      badge: 'bg-black/30 border-pink-300/40 text-pink-200',
-      coupon: 'bg-white text-indigo-700 hover:bg-indigo-50 border-white/60 shadow-sm',
-      cta: 'bg-black/40 hover:bg-black/60 text-white border-indigo-300/40',
-      glow: 'from-purple-400 to-indigo-500'
+      bar: 'bg-zinc-950 text-white shadow-lg border-b border-white/10',
+      badge: 'bg-white/10 border-white/20 text-white',
+      coupon: 'bg-white text-black hover:bg-zinc-200 border-white shadow-sm font-black',
+      cta: 'bg-white/10 hover:bg-white/20 text-white border-white/20',
+      glow: 'from-zinc-700 to-zinc-900'
     },
     emerald: {
       bar: 'bg-gradient-to-r from-emerald-800 via-teal-700 to-cyan-700 text-white shadow-lg shadow-emerald-950/20 border-b border-emerald-400/30',

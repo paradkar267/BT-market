@@ -25,7 +25,7 @@ export default function WishlistPage() {
       <div className="max-w-[1200px] mx-auto px-8 md:px-16 mt-12 relative">
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-red-500/10 rounded-full blur-3xl pointer-events-none mix-blend-screen" />
         
-        <Link to="/" className="inline-flex items-center gap-2 text-gray-500 font-bold hover:text-black dark:text-white mb-8 transition-colors">
+        <Link to="/templates" className="inline-flex items-center gap-2 text-gray-500 font-bold hover:text-black dark:text-white mb-8 transition-colors">
           <ArrowLeft className="w-5 h-5" /> Back to Market
         </Link>
 

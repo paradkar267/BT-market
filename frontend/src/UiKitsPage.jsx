@@ -110,21 +110,26 @@ export default function UiKitsPage() {
     <div className={`min-h-screen flex flex-col font-sans pb-32 transition-colors duration-1000 ${isDark ? 'bg-transparent text-white' : 'bg-gray-50 text-black'}`}>
       
       {/* Navigation */}
-      <nav className={`h-[80px] w-full px-4 md:px-8 lg:px-16 flex items-center justify-between border-b sticky top-0 z-50 shadow-sm transition-colors duration-1000 ${isDark ? 'bg-black/20 border-white/10 text-white backdrop-blur-md' : 'bg-white border-gray-200 text-black'}`}>
-        <Logo />
-        
-        <CenterNav />
-
-        <div className="flex items-center gap-4 md:gap-6">
-          <button onClick={() => requireAuth(() => navigate('/cart'))} className={`relative p-2 rounded-full transition-colors cursor-pointer ${isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}>
-            <ShoppingCart className="w-5 h-5 md:w-6 md:h-6" />
-            {cartItems.length > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 md:w-5 md:h-5 bg-black text-white text-[10px] md:text-[11px] font-bold rounded-full flex items-center justify-center shadow-md">
-                {cartItems.length}
-              </span>
-            )}
-          </button>
-          <UserMenu />
+      <nav className="sticky top-0 z-50 w-full bg-white/90 backdrop-blur-xl border-b border-gray-200/80">
+        <div className="max-w-[1400px] mx-auto px-5 md:px-10 h-[64px] flex items-center justify-between gap-4">
+          <Logo />
+          <CenterNav />
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => requireAuth(() => navigate('/cart'))}
+              className="relative flex items-center justify-center w-8 h-8 text-gray-600 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-full transition-colors cursor-pointer"
+              title="Cart"
+            >
+              <ShoppingCart className="w-3.5 h-3.5" />
+              {cartItems.length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-black text-white dark:bg-white dark:text-black text-[9px] font-bold w-4 h-4 flex items-center justify-center rounded-full shadow-sm">
+                  {cartItems.length}
+                </span>
+              )}
+            </button>
+            <UserMenu />
+          </div>
         </div>
       </nav>
 

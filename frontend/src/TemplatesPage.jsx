@@ -24,10 +24,11 @@ export default function TemplatesPage() {
   const { formatPrice, convertPrice, currency } = useCurrency();
   
   const searchParams = new URLSearchParams(location.search);
-  const paramTech = searchParams.get('tech');
+  const paramTech = searchParams.get('tech') || searchParams.get('category');
   const paramTag = searchParams.get('tag') || "";
+  const paramSearch = searchParams.get('search') || searchParams.get('q') || "";
 
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(() => paramSearch);
   const [selectedTechs, setSelectedTechs] = useState(() => paramTech ? [paramTech] : []);
   const [selectedTag, setSelectedTag] = useState(() => paramTag);
   const [priceRange, setPriceRange] = useState("all");
@@ -45,7 +46,7 @@ export default function TemplatesPage() {
 
   // Extract unique tech categories automatically from templates
   const allTechs = useMemo(() => {
-    if (!templates.length) return ["Figma", "Next.js", "React", "Webflow", "Tailwind", "HTML", "Shopify", "React Native", "Framer"];
+    if (!templates.length) return ["Figma", "Next.js", "React", "Webflow", "Tailwind", "Shopify", "React Native", "Framer"];
     const techs = new Set(templates.map(t => t.category));
     return Array.from(techs).sort();
   }, [templates]);
@@ -105,10 +106,10 @@ export default function TemplatesPage() {
   }, [templates, activeTechs, activeTag, priceRange, searchQuery, sortOrder, currency, convertPrice]);
 
   const sidebarContent = (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Search */}
       <div>
-        <h3 className="text-sm font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">Search</h3>
+        <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2.5">Search</h3>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
           <input 
@@ -123,11 +124,11 @@ export default function TemplatesPage() {
 
       {/* Categories / Industry */}
       <div>
-        <h3 className="text-sm font-bold uppercase tracking-wider text-gray-500 dark:text-gray-400 mb-3">Categories</h3>
-        <div className="space-y-1 max-h-[220px] overflow-y-auto pr-2" style={{ scrollbarWidth: 'thin' }}>
+        <h3 className="text-xs font-bold uppercase tracking-wider text-gray-400 mb-2.5">Categories</h3>
+        <div className="space-y-0.5">
           <button
             onClick={() => setSelectedTag("")}
-            className={`w-full text-left px-3 py-1.5 rounded-lg text-xs font-bold transition-colors ${!selectedTag ? (isDark ? 'bg-white text-black' : 'bg-black text-white') : (isDark ? 'text-gray-400 hover:text-white' : 'text-gray-600 hover:text-black')}`}
+            className={`w-full text-left px-2.5 py-1.5 rounded-lg text-sm transition-colors ${!selectedTag ? 'bg-black text-white font-semibold' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}`}
           >
             All Categories
           </button>
@@ -138,7 +139,7 @@ export default function TemplatesPage() {
             <button
               key={cat}
               onClick={() => setSelectedTag(selectedTag === cat ? "" : cat)}
-              className={`w-full text-left px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${selectedTag === cat ? (isDark ? 'bg-white/20 text-white font-bold' : 'bg-gray-200 text-black font-bold') : (isDark ? 'text-gray-400 hover:text-white hover:bg-white/5' : 'text-gray-600 hover:text-black hover:bg-gray-100')}`}
+              className={`w-full text-left px-2.5 py-1.5 rounded-lg text-sm transition-colors ${selectedTag === cat ? 'bg-black text-white font-semibold' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'}`}
             >
               {cat}
             </button>
@@ -192,56 +193,49 @@ export default function TemplatesPage() {
   );
 
   return (
-    <div className={`min-h-screen flex flex-col font-sans pb-32 transition-colors duration-1000 ${isDark ? 'bg-transparent text-white' : 'bg-gray-50 text-black'}`}>
+    <div className="min-h-screen flex flex-col font-sans bg-gray-50 text-gray-900">
       <SEO 
         title="All Templates" 
         description="Browse our complete collection of premium digital templates and UI kits."
         url="/templates"
       />
       
-      {/* Navigation */}
-      <nav className={`h-[80px] w-full px-4 md:px-8 lg:px-16 flex items-center justify-between border-b sticky top-0 z-50 shadow-sm transition-colors duration-1000 ${isDark ? 'bg-black/20 border-white/10 text-white backdrop-blur-md' : 'bg-white border-gray-200 text-black'}`}>
-        <Logo />
-        
-        <CenterNav />
-
-        <div className="flex items-center gap-4 md:gap-6">
-          <button onClick={() => requireAuth(() => navigate('/cart'))} className={`relative p-2 rounded-full transition-colors cursor-pointer ${isDark ? 'hover:bg-gray-800' : 'hover:bg-gray-100'}`}>
-            <ShoppingCart className="w-5 h-5 md:w-6 md:h-6" />
-            {cartItems.length > 0 && (
-              <span className="absolute -top-1 -right-1 w-4 h-4 md:w-5 md:h-5 bg-black text-white text-[10px] md:text-[11px] font-bold rounded-full flex items-center justify-center shadow-md">
-                {cartItems.length}
-              </span>
-            )}
-          </button>
-          <UserMenu />
+      {/* Navigation — matches Home.jsx */}
+      <nav className="sticky top-0 z-50 w-full bg-white/90 backdrop-blur-xl border-b border-gray-200/80">
+        <div className="max-w-[1400px] mx-auto px-5 md:px-10 h-[64px] flex items-center justify-between gap-4">
+          <Logo />
+          <CenterNav />
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => requireAuth(() => navigate('/cart'))}
+              className="relative flex items-center justify-center w-8 h-8 text-gray-600 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-full transition-colors cursor-pointer"
+              title="Cart"
+            >
+              <ShoppingCart className="w-3.5 h-3.5" />
+              {cartItems.length > 0 && (
+                <span className="absolute -top-1 -right-1 bg-black text-white dark:bg-white dark:text-black text-[9px] font-bold w-4 h-4 flex items-center justify-center rounded-full shadow-sm">
+                  {cartItems.length}
+                </span>
+              )}
+            </button>
+            <UserMenu />
+          </div>
         </div>
       </nav>
 
       {/* Main Content */}
-      <div className="max-w-[1600px] w-full mx-auto px-4 md:px-8 lg:px-16 mt-8 md:mt-12 flex flex-col">
+      <div className="max-w-[1400px] w-full mx-auto px-5 md:px-10 pt-8 flex flex-col">
         
-        <Link to="/" className="inline-flex items-center gap-2 text-gray-500 font-bold hover:text-black dark:text-white mb-6 md:mb-8 transition-colors self-start">
-          <ArrowLeft className="w-4 h-4 md:w-5 md:h-5" /> Back to Home
+        <Link to="/" className="inline-flex items-center gap-2 text-sm text-gray-500 font-medium hover:text-gray-900 mb-6 transition-colors self-start">
+          <ArrowLeft className="w-4 h-4" /> Back to Home
         </Link>
 
-        {/* Hero Section */}
-        <div 
-          className="w-full py-16 px-4 border-b border-black/5 dark:border-white/10 relative overflow-hidden bg-cover bg-center rounded-3xl mb-8"
-          style={{ backgroundImage: "url('/bground.png')" }}
-        >
-          <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none mix-blend-screen" />
-          <div className="max-w-7xl mx-auto flex flex-col items-center text-center relative z-10">
-            <div className="w-16 h-16 bg-black dark:bg-white text-white dark:text-black rounded-2xl flex items-center justify-center shadow-xl shadow-black/10 mb-6">
-              <LayoutTemplate className="w-8 h-8" />
-            </div>
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-black tracking-tight mb-4">
-              All Templates
-            </h1>
-            <p className="text-lg md:text-xl text-gray-500 dark:text-gray-400 font-medium max-w-2xl">
-              Browse our collection of premium digital assets.
-            </p>
-          </div>
+        {/* Clean page header */}
+        <div className="mb-6 pb-6 border-b border-gray-200">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">All Templates</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1">Browse Templates</h1>
+          <p className="text-gray-500 text-sm">{filteredTemplates.length} results — premium website templates with full source code</p>
         </div>
 
         {/* Mobile Filter & Sort */}
@@ -346,7 +340,7 @@ export default function TemplatesPage() {
                   </span>
                 ))}
                 {searchQuery && (
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-purple-500/20 text-purple-600 dark:text-purple-400 border border-purple-500/30">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-black/10 dark:bg-white/10 text-black dark:text-white border border-black/20 dark:border-white/20">
                     Search: "{searchQuery}"
                     <button onClick={() => setSearchQuery('')} className="hover:opacity-75">
                       <X className="w-3.5 h-3.5" />
@@ -362,7 +356,7 @@ export default function TemplatesPage() {
               </div>
             )}
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-7">
                {loading ? (
                  Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)
                ) : (

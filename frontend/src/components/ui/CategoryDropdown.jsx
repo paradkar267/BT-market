@@ -27,7 +27,7 @@ export function CategoryDropdown({ isActive, isOpen, setIsOpen }) {
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+  }, [setIsOpen]);
 
   const handleSelect = (tag) => {
     setIsOpen(false);
@@ -38,61 +38,51 @@ export function CategoryDropdown({ isActive, isOpen, setIsOpen }) {
   return (
     <div className="relative" ref={dropdownRef}>
       <button
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "relative cursor-pointer text-sm font-semibold px-6 py-2 rounded-full transition-colors flex items-center gap-2 uppercase",
-          "text-gray-500 hover:text-black dark:text-gray-400 dark:hover:text-white",
-          isActive && "bg-gray-100/50 dark:bg-white/10 text-black dark:text-white",
+          "relative cursor-pointer text-xs font-bold uppercase tracking-wider px-4 py-1.5 rounded-full transition-colors flex items-center gap-1.5 z-10",
+          isActive
+            ? "text-gray-900 dark:text-white"
+            : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
         )}
       >
-        <LayoutGrid className="hidden md:inline-block w-4 h-4" />
-        <span className="hidden md:inline">CATEGORIES</span>
-        <ChevronDown className={`hidden md:inline-block w-4 h-4 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
-        
-        {/* Mobile icon view */}
-        <span className="md:hidden flex items-center gap-1">
-           <LayoutGrid size={18} strokeWidth={2.5} />
-        </span>
-        
+        <LayoutGrid className="w-3.5 h-3.5" />
+        <span>CATEGORIES</span>
+        <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+
         {isActive && (
           <motion.div
-            layoutId="lamp"
-            className="absolute inset-0 w-full bg-gray-100/50 dark:bg-white/5 rounded-full -z-10"
-            initial={false}
+            layoutId="activeNavPill"
+            className="absolute inset-0 bg-white dark:bg-gray-900 rounded-full shadow-sm -z-10 border border-black/[0.04] dark:border-white/[0.08]"
             transition={{
               type: "spring",
-              stiffness: 300,
+              stiffness: 400,
               damping: 30,
             }}
-          >
-            <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-8 h-1 bg-black dark:bg-white rounded-t-full">
-              <div className="absolute w-12 h-6 bg-black/10 dark:bg-white/10 rounded-full blur-md -top-2 -left-2" />
-              <div className="absolute w-8 h-6 bg-black/10 dark:bg-white/10 rounded-full blur-md -top-1" />
-              <div className="absolute w-4 h-4 bg-black/10 dark:bg-white/10 rounded-full blur-sm top-0 left-2" />
-            </div>
-          </motion.div>
+          />
         )}
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-black/90 backdrop-blur-xl border border-black/10 dark:border-white/10 rounded-2xl shadow-xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200">
-          <div 
-            className="py-2 max-h-64 overflow-y-auto overscroll-none"
-            onWheel={(e) => e.stopPropagation()}
-            onTouchMove={(e) => e.stopPropagation()}
-          >
+        <div className="absolute right-0 mt-2 w-52 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150">
+          <div className="p-1.5 max-h-64 overflow-y-auto overscroll-none" style={{ scrollbarWidth: 'thin' }}>
+            <div className="px-3 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+              Filter by Industry
+            </div>
             {tags.length > 0 ? (
               tags.map(tag => (
                 <button
                   key={tag}
+                  type="button"
                   onClick={() => handleSelect(tag)}
-                  className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 transition-colors"
+                  className="w-full text-left px-3 py-1.5 rounded-lg text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 hover:text-black dark:hover:text-white transition-colors"
                 >
                   {tag}
                 </button>
               ))
             ) : (
-              <div className="px-4 py-2 text-sm text-gray-500">Loading...</div>
+              <div className="px-3 py-2 text-xs text-gray-400">Loading...</div>
             )}
           </div>
         </div>

@@ -708,3 +708,184 @@ export const sendCampaignEmail = async (to, {
     html: htmlContent
   });
 };
+
+export const sendGiftTemplateEmail = async (to, { customerName, template, note, frontendUrl }) => {
+  const hostUrl = frontendUrl || process.env.FRONTEND_URL || 'http://localhost:5173';
+  const tmplTitle = template?.title || 'Premium Template';
+  const tmplCategory = template?.category || 'React / Web';
+  const tmplId = template?.id || '';
+  const tmplImage = template?.image || '';
+  const tmplPrice = template?.price ? `₹${template.price}` : '₹4,999';
+  const myTemplatesUrl = `${hostUrl}/my-templates${tmplId ? `?download=${tmplId}` : ''}`;
+  const previewUrl = tmplId ? `${hostUrl}/preview/${tmplId}` : hostUrl;
+
+  const subject = `🎁 Special Gift: You received free access to '${tmplTitle}' on BizLeap!`;
+
+  const htmlContent = `
+  <!DOCTYPE html>
+  <html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${subject}</title>
+    <style>
+      body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #0b0f19; color: #334155; }
+      @media only screen and (max-width: 600px) {
+        .main-container { width: 100% !important; border-radius: 0 !important; }
+        .content-padding { padding: 24px 20px !important; }
+        .action-button { display: block !important; width: 100% !important; margin-bottom: 12px !important; }
+      }
+    </style>
+  </head>
+  <body style="margin: 0; padding: 30px 10px; background-color: #0b0f19; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+    <table cellpadding="0" cellspacing="0" border="0" width="100%">
+      <tr>
+        <td align="center">
+          <table cellpadding="0" cellspacing="0" border="0" width="600" class="main-container" style="background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5); max-width: 600px; width: 100%;">
+            
+            <!-- Festive Header Banner -->
+            <tr>
+              <td style="background: linear-gradient(135deg, #059669 0%, #10b981 50%, #047857 100%); padding: 36px 32px 30px; text-align: center;">
+                <div style="display: inline-block; background: rgba(255, 255, 255, 0.2); backdrop-filter: blur(10px); padding: 6px 16px; border-radius: 9999px; margin-bottom: 16px; border: 1px solid rgba(255, 255, 255, 0.3);">
+                  <span style="color: #ffffff; font-size: 13px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;">
+                    🎁 Exclusive Gift Unlocked
+                  </span>
+                </div>
+                <h1 style="color: #ffffff; font-size: 26px; font-weight: 900; margin: 0 0 10px; letter-spacing: -0.5px; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                  A Special Gift For You!
+                </h1>
+                <p style="color: #d1fae5; font-size: 15px; margin: 0; font-weight: 500; line-height: 1.5;">
+                  The BizLeap team has granted you full complimentary access to a premium template.
+                </p>
+              </td>
+            </tr>
+
+            <!-- Main Content Area -->
+            <tr>
+              <td class="content-padding" style="padding: 32px 36px;">
+                
+                <p style="font-size: 16px; color: #1e293b; margin: 0 0 16px; font-weight: 600;">
+                  Hello ${customerName || 'Valued Creator'},
+                </p>
+                
+                <p style="font-size: 14px; color: #475569; line-height: 1.6; margin: 0 0 22px;">
+                  We appreciate having you in the BizLeap community! As a token of appreciation, we have added <strong>${tmplTitle}</strong> directly into your account with full commercial rights and source code download access.
+                </p>
+
+                ${note ? `
+                <!-- Admin Personal Note Box -->
+                <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-bottom: 24px; background-color: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; overflow: hidden;">
+                  <tr>
+                    <td style="padding: 16px 20px;">
+                      <div style="font-size: 12px; font-weight: 700; color: #15803d; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+                        💬 Message from Administrator
+                      </div>
+                      <div style="font-size: 14px; color: #166534; font-style: italic; line-height: 1.5;">
+                        "${note}"
+                      </div>
+                    </td>
+                  </tr>
+                </table>
+                ` : ''}
+
+                <!-- Gifted Template Card -->
+                <table cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; overflow: hidden; margin-bottom: 28px;">
+                  ${tmplImage ? `
+                  <tr>
+                    <td>
+                      <img src="${tmplImage}" alt="${tmplTitle}" style="width: 100%; height: 180px; object-fit: cover; display: block; border-bottom: 1px solid #e2e8f0;" />
+                    </td>
+                  </tr>
+                  ` : ''}
+                  <tr>
+                    <td style="padding: 20px 24px;">
+                      <table cellpadding="0" cellspacing="0" border="0" width="100%">
+                        <tr>
+                          <td>
+                            <span style="display: inline-block; padding: 3px 10px; background-color: #ecfdf5; color: #059669; border-radius: 6px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px;">
+                              ${tmplCategory}
+                            </span>
+                            <h3 style="margin: 0 0 6px; font-size: 18px; font-weight: 800; color: #0f172a; line-height: 1.3;">
+                              ${tmplTitle}
+                            </h3>
+                            <p style="margin: 0; font-size: 13px; color: #64748b;">
+                              Complete Source Code (.zip) &bull; Commercial License &bull; Lifetime Access
+                            </p>
+                          </td>
+                          <td style="text-align: right; vertical-align: top; white-space: nowrap; padding-left: 12px;">
+                            <div style="font-size: 13px; color: #94a3b8; text-decoration: line-through;">
+                              ${tmplPrice}
+                            </div>
+                            <div style="font-size: 16px; font-weight: 900; color: #059669;">
+                              100% FREE
+                            </div>
+                          </td>
+                        </tr>
+                      </table>
+
+                      <!-- Call to Action Buttons -->
+                      <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-top: 18px; padding-top: 16px; border-top: 1px dashed #cbd5e1;">
+                        <tr>
+                          <td align="left" style="vertical-align: middle;">
+                            <a href="${myTemplatesUrl}" target="_blank" style="display: inline-block; background-color: #10b981; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-size: 14px; font-weight: 800; letter-spacing: 0.2px; box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.4);">
+                              🎁 Access in My Templates
+                            </a>
+                          </td>
+                          <td align="right" style="vertical-align: middle;">
+                            <a href="${previewUrl}" target="_blank" style="display: inline-block; color: #6366f1; text-decoration: none; font-size: 13px; font-weight: 700; padding: 8px 12px;">
+                              Live Preview &rarr;
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+
+                    </td>
+                  </tr>
+                </table>
+
+                <!-- Easy How-To Steps -->
+                <div style="background-color: #f1f5f9; border-radius: 10px; padding: 18px 20px; margin-bottom: 24px;">
+                  <h4 style="margin: 0 0 10px; font-size: 13px; font-weight: 800; color: #334155; text-transform: uppercase; letter-spacing: 0.5px;">
+                    How to access your gifted template:
+                  </h4>
+                  <ol style="margin: 0; padding-left: 18px; font-size: 13px; color: #475569; line-height: 1.6;">
+                    <li style="margin-bottom: 4px;">Click the <strong>Access in My Templates</strong> button above (or log in to BizLeap).</li>
+                    <li style="margin-bottom: 4px;">Locate <strong>${tmplTitle}</strong> under your owned templates.</li>
+                    <li>Click <strong>Download Template</strong> to grab your clean, production-ready source code ZIP!</li>
+                  </ol>
+                </div>
+
+                <p style="font-size: 13px; color: #64748b; line-height: 1.5; margin: 0;">
+                  If you have any questions, feedback, or need customization assistance, simply reply to this email or reach out to our team anytime at <a href="mailto:bizleap1@gmail.com" style="color: #10b981; text-decoration: none; font-weight: 600;">bizleap1@gmail.com</a>.
+                </p>
+
+              </td>
+            </tr>
+
+            <!-- Footer -->
+            <tr>
+              <td style="background-color: #f8fafc; padding: 24px 32px; text-align: center; border-top: 1px solid #e2e8f0;">
+                <p style="color: #64748b; font-size: 12px; margin: 0 0 6px; font-weight: 500;">
+                  © ${new Date().getFullYear()} BizLeap Marketplace &bull; Empowering Creators Worldwide
+                </p>
+                <p style="color: #94a3b8; font-size: 11px; margin: 0;">
+                  You received this email because an administrator gifted a license to your registered account.
+                </p>
+              </td>
+            </tr>
+
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+  </html>
+  `;
+
+  return transporter.sendMail({
+    from: `"Bizleap Marketplace" <${process.env.SMTP_FROM || process.env.SMTP_USER || 'bizleap1@gmail.com'}>`,
+    to: to,
+    subject: subject,
+    html: htmlContent
+  });
+};

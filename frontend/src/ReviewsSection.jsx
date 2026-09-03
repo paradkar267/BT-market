@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { ConfirmModal } from './components/ui/ConfirmModal';
 import { Star, MessageSquare, Edit2, Trash2 } from 'lucide-react';
-import { supabase } from './lib/supabase';
+import { api } from './lib/api';
 import { useAuth } from './AuthContext';
 import { useCart } from './CartContext';
 import { toast } from 'sonner';
@@ -27,75 +27,40 @@ export function ReviewsSection({ templateId }) {
 
   const fetchReviews = useCallback(async () => {
     try {
-      const { data, error } = await supabase
-        .from('reviews')
-        .select('*')
-        .eq('template_id', templateId)
-        .order('created_at', { ascending: false });
-        
-      if (error) {
-        console.error("Error fetching reviews:", error.message);
-        setReviews([]);
-      } else {
-        setReviews(data || []);
-      }
+      const data = await api.get(`/api/reviews/${templateId}`);
+      setReviews(Array.isArray(data) ? data : []);
     } catch (err) {
-      console.error(err);
+      console.warn("Reviews fetch note:", err.message);
+      setReviews([]);
     } finally {
       setLoading(false);
     }
   }, [templateId]);
 
   useEffect(() => {
-    let isMounted = true;
-    const load = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('reviews')
-          .select('*')
-          .eq('template_id', templateId)
-          .order('created_at', { ascending: false });
-        if (!isMounted) return;
-        if (error) {
-          setReviews([]);
-        } else {
-          setReviews(data || []);
-        }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    };
-    load();
-    return () => { isMounted = false; };
-  }, [templateId]);
+    fetchReviews();
+  }, [fetchReviews]);
 
   const [deleteReviewId, setDeleteReviewId] = useState(null);
   const handleDeleteReview = (id) => setDeleteReviewId(id);
   const confirmDeleteReview = useCallback(async () => {
     try {
-      const { error } = await supabase.from('reviews').delete().eq('id', deleteReviewId).eq('user_id', user.id);
-      if (error) throw error;
+      await api.delete(`/api/reviews/${deleteReviewId}`);
       toast.success("Review deleted successfully!");
       fetchReviews();
     } catch (err) {
       toast.error("Failed to delete review.");
       console.error(err);
     }
-  }, [deleteReviewId, user]);
+  }, [deleteReviewId, fetchReviews]);
 
   const handleUpdateReview = async (e, id) => {
     e.preventDefault();
     if (!editComment.trim()) return;
     setUpdating(true);
     try {
-      const { error } = await supabase.from('reviews').update({
-        rating: editRating,
-        comment: editComment
-      }).eq('id', id).eq('user_id', user.id);
-
-      if (error) throw error;
+      // Re-post or update
+      await api.post('/api/reviews', { templateId, rating: editRating, comment: editComment });
       toast.success("Review updated successfully!");
       setEditingReviewId(null);
       fetchReviews();
@@ -113,26 +78,18 @@ export function ReviewsSection({ templateId }) {
     setEditComment(review.comment);
   };
 
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!comment.trim()) return;
     
     setSubmitting(true);
     try {
-      const { data, error } = await supabase.from('reviews').insert([
-        {
-          template_id: templateId,
-          user_id: user.id,
-          rating,
-          comment,
-          user_name: profile?.full_name || user?.email?.split('@')[0] || 'User',
-          avatar_url: profile?.avatar_url
-        }
-      ]);
+      await api.post('/api/reviews', {
+        templateId,
+        rating,
+        comment: comment.trim()
+      });
 
-      if (error) throw error;
-      
       toast.success("Review submitted successfully!");
       setComment('');
       setRating(5);
@@ -310,7 +267,7 @@ export function ReviewsSection({ templateId }) {
                     required
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
-                    className="w-full p-3 rounded-xl bg-white dark:bg-black border border-gray-200 dark:border-gray-800 outline-none focus:border-violet-500 transition-colors h-32 resize-none"
+                    className="w-full p-3 rounded-xl bg-white dark:bg-black border border-gray-200 dark:border-gray-800 outline-none focus:border-black dark:focus:border-white transition-colors h-32 resize-none"
                     placeholder="What do you think about this template?"
                   ></textarea>
                 </div>

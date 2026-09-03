@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { toast } from 'sonner';
 import { useAuth } from './AuthContext';
-import { supabase } from './lib/supabase';
 import { useTemplates } from './useTemplates';
 
 const CartContext = createContext();
@@ -18,6 +17,7 @@ export const CartProvider = ({ children }) => {
     }
     return [];
   });
+
   const [purchasedTemplates, setPurchasedTemplates] = useState([]);
   const [hasPlayedIntro, setHasPlayedIntro] = useState(window.location.pathname !== '/');
   const { user, requireAuth } = useAuth();
@@ -25,7 +25,7 @@ export const CartProvider = ({ children }) => {
 
   const isLoggedIn = !!user;
 
-  // Robustly load purchases from both User Metadata and Purchases DB table
+  // Load purchased templates from user data and backend live sync
   const loadPurchasedTemplates = useCallback(async () => {
     if (!user) {
       setPurchasedTemplates([]);
@@ -33,23 +33,35 @@ export const CartProvider = ({ children }) => {
     }
 
     try {
-      // 1. Get IDs from user_metadata
-      const metadataIds = (user.user_metadata?.purchased_templates || []).map(id => String(id));
+      const token = localStorage.getItem('bizleap_token') || '';
+      let activeIds = null;
 
-      // 2. Get IDs from purchases database table
-      const { data: dbPurchases } = await supabase
-        .from('purchases')
-        .select('template_id')
-        .eq('user_id', user.id);
+      // Attempt live sync from backend to get ground truth non-refunded/non-revoked purchase list
+      if (token) {
+        try {
+          const res = await fetch('/api/purchased-templates', {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data.templateIds)) {
+              activeIds = data.templateIds.map(id => String(id));
+            }
+          }
+        } catch {
+          // Fallback to local user object only if network offline
+        }
+      }
 
-      const dbIds = (dbPurchases || []).map(p => String(p.template_id));
-
-      // Combine both sources
-      const allPurchasedIds = [...new Set([...metadataIds, ...dbIds])];
+      if (activeIds === null) {
+        activeIds = (user.purchased_templates || user.user_metadata?.purchased_templates || []).map(id => String(id));
+      }
 
       if (templates.length > 0) {
-        const fetchedTemplates = templates.filter(t => allPurchasedIds.includes(String(t.id)));
+        const fetchedTemplates = templates.filter(t => activeIds.includes(String(t.id)));
         setPurchasedTemplates(fetchedTemplates);
+      } else {
+        setPurchasedTemplates([]);
       }
     } catch (err) {
       console.error("Error loading purchased templates:", err);
@@ -57,58 +69,21 @@ export const CartProvider = ({ children }) => {
   }, [user, templates]);
 
   useEffect(() => {
-    let isMounted = true;
-    const fetchPurchases = async () => {
-      if (!user) {
-        if (isMounted) setPurchasedTemplates([]);
-        return;
-      }
-      if (templates.length === 0) return;
-      try {
-        const { data: dbPurchases, error } = await supabase
-          .from('purchases')
-          .select('template_id')
-          .eq('user_id', user.id);
+    loadPurchasedTemplates();
 
-        if (!isMounted) return;
-        
-        let allPurchasedIds = [];
-        if (!error && dbPurchases !== null) {
-          allPurchasedIds = dbPurchases.map(p => String(p.template_id));
-        } else {
-          allPurchasedIds = (user.user_metadata?.purchased_templates || []).map(id => String(id));
-        }
-
-        const fetchedTemplates = templates.filter(t => allPurchasedIds.includes(String(t.id)));
-        setPurchasedTemplates(fetchedTemplates);
-      } catch (err) {
-        console.error("Error loading purchased templates:", err);
-      }
+    const handleSync = () => loadPurchasedTemplates();
+    window.addEventListener('templates_updated', handleSync);
+    window.addEventListener('purchases_updated', handleSync);
+    return () => {
+      window.removeEventListener('templates_updated', handleSync);
+      window.removeEventListener('purchases_updated', handleSync);
     };
+  }, [loadPurchasedTemplates]);
 
-    fetchPurchases();
-    return () => { isMounted = false; };
-  }, [user, templates]);
-
-  // Sync cart with localStorage and across tabs
+  // Sync cart with localStorage
   useEffect(() => {
     localStorage.setItem('bt_cart', JSON.stringify(cartItems));
   }, [cartItems]);
-
-  useEffect(() => {
-    const handleStorage = (e) => {
-      if (e.key === 'bt_cart') {
-        try {
-          const newCart = JSON.parse(e.newValue || '[]');
-          setCartItems(newCart);
-        } catch (err) {
-          setCartItems([]);
-        }
-      }
-    };
-    window.addEventListener('storage', handleStorage);
-    return () => window.removeEventListener('storage', handleStorage);
-  }, []);
 
   const addToCart = (product) => {
     requireAuth(() => {
@@ -129,29 +104,37 @@ export const CartProvider = ({ children }) => {
 
   const removeFromCart = (productId) => {
     setCartItems(prev => prev.filter(item => item.id !== productId));
-    toast.success("Item removed from cart");
+    toast.info("Item removed from cart");
   };
 
-  const checkout = async (paymentId = 'mock_pay_id', purchasedItems = null) => {
-    const itemsToBuy = purchasedItems || cartItems;
-    if (itemsToBuy.length === 0) return;
-    if (!user) {
-      toast.error("You must be logged in to checkout.");
+  const checkout = async (param1 = null, param2 = null) => {
+    // Safely resolve items whether called as checkout(paymentId, cartItems) or checkout(cartItems)
+    let itemsToBuy = cartItems;
+    if (Array.isArray(param1)) {
+      itemsToBuy = param1;
+    } else if (Array.isArray(param2)) {
+      itemsToBuy = param2;
+    } else if (param1 && typeof param1 === 'object') {
+      itemsToBuy = [param1];
+    } else if (param2 && typeof param2 === 'object') {
+      itemsToBuy = [param2];
+    }
+
+    if (!Array.isArray(itemsToBuy) || itemsToBuy.length === 0) {
+      toast.error("Your cart is empty!");
       return;
     }
-    
-    // Immediately update local purchased state for seamless instant navigation
+
     setPurchasedTemplates(prev => {
-      const combined = [...prev];
+      const combined = Array.isArray(prev) ? [...prev] : [];
       itemsToBuy.forEach(item => {
-        if (!combined.some(c => String(c.id) === String(item.id))) {
+        if (item && item.id && !combined.some(c => String(c.id) === String(item.id))) {
           combined.push(item);
         }
       });
       return combined;
     });
 
-    // Clear cart immediately
     setCartItems([]);
     try {
       localStorage.removeItem('bt_cart');
@@ -159,44 +142,33 @@ export const CartProvider = ({ children }) => {
       // Ignore
     }
 
-    // Trigger a custom event to tell useTemplates to refetch globally across components
     window.dispatchEvent(new Event('templates_updated'));
-    
-    // Update local state by re-fetching purchased templates from DB & Auth metadata in background
-    await loadPurchasedTemplates();
   };
 
   const removePurchasedTemplate = async (templateId) => {
-    if (!user) return;
-    
-    const existingIds = user.user_metadata?.purchased_templates || [];
-    const finalIds = existingIds.filter(id => id !== templateId);
-    
-    // Remove from both user_metadata and purchases table
-    const [{ error }, { error: dbError }] = await Promise.all([
-      supabase.auth.updateUser({ data: { purchased_templates: finalIds } }),
-      supabase.from('purchases').delete().eq('user_id', user.id).eq('template_id', templateId)
-    ]);
-      
-    if (error) {
-      console.error("Delete error:", error);
-      toast.error("Failed to delete template.");
-      return;
-    }
-    if (dbError) {
-      console.warn("Could not remove purchase record:", dbError);
-    }
-    
-    const newPurchasedObjects = templates.filter(t => finalIds.includes(t.id));
-    setPurchasedTemplates(newPurchasedObjects);
+    setPurchasedTemplates(prev => prev.filter(t => t.id !== templateId));
     toast.success("Template removed from your collection.");
   };
 
-  const cartTotal = cartItems.reduce((sum, item) => sum + parseFloat(item.price), 0);
+  const cartTotal = cartItems.reduce((sum, item) => sum + parseFloat(item.price || 0), 0);
 
   return (
-    <CartContext.Provider value={{ cartItems, purchasedTemplates, addToCart, removeFromCart, checkout, cartTotal, isLoggedIn, hasPlayedIntro, setHasPlayedIntro, removePurchasedTemplate, loadPurchasedTemplates }}>
+    <CartContext.Provider value={{
+      cartItems,
+      purchasedTemplates,
+      addToCart,
+      removeFromCart,
+      checkout,
+      cartTotal,
+      isLoggedIn,
+      hasPlayedIntro,
+      setHasPlayedIntro,
+      removePurchasedTemplate,
+      loadPurchasedTemplates
+    }}>
       {children}
     </CartContext.Provider>
   );
 };
+
+export default CartContext;
