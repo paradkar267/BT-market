@@ -14,14 +14,18 @@ dotenv.config({ path: path.resolve(__dirname, '../../.env.local') });
 dotenv.config({ path: path.resolve(__dirname, '../.env.local') });
 dotenv.config();
 
-const connectionString = process.env.DATABASE_URL;
+const getConnectionString = () => {
+  const raw = process.env.DATABASE_URL;
+  return raw ? raw.trim().replace(/^['"]|['"]$/g, '') : null;
+};
 
-if (!connectionString) {
-  console.warn('⚠️ Warning: Missing DATABASE_URL in environment configuration');
-}
+export const getSql = () => {
+  const conn = getConnectionString();
+  return conn ? neon(conn) : null;
+};
 
-export const sql = connectionString ? neon(connectionString) : null;
-export const pool = connectionString ? new Pool({ connectionString }) : null;
+export const sql = getSql();
+export const pool = getConnectionString() ? new Pool({ connectionString: getConnectionString() }) : null;
 
 /**
  * Execute a SQL query with parameters against Neon Postgres with automatic retry
@@ -30,12 +34,18 @@ export const pool = connectionString ? new Pool({ connectionString }) : null;
  * @returns {Promise<{ rows: Array, rowCount: number }>}
  */
 export const query = async (text, params = []) => {
-  if (!sql) throw new Error('Database not configured: Missing DATABASE_URL');
+  const client = getSql();
+  if (!client) throw new Error('Database not configured: Missing DATABASE_URL');
   
   let lastError;
   for (let attempt = 1; attempt <= 2; attempt++) {
     try {
-      const rows = await sql.query(text, params);
+      let rows;
+      if (typeof client.query === 'function') {
+        rows = await client.query(text, params);
+      } else {
+        rows = await client(text, params);
+      }
       return {
         rows: Array.isArray(rows) ? rows : (rows?.rows || []),
         rowCount: Array.isArray(rows) ? rows.length : (rows?.rowCount || 0)

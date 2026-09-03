@@ -37,7 +37,11 @@ router.get('/templates', async (req, res) => {
     res.json(adjusted);
   } catch (error) {
     console.error('Error fetching templates from Neon:', error);
-    res.status(500).json({ error: 'Failed to fetch templates' });
+    res.status(500).json({ 
+      error: 'Failed to fetch templates', 
+      details: error.message,
+      has_database_url: Boolean(process.env.DATABASE_URL)
+    });
   }
 });
 
