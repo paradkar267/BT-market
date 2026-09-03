@@ -3,24 +3,12 @@
   "outputDirectory": "frontend/dist",
   "rewrites": [
     {
-      "source": "/api/admin-campaigns",
-      "destination": "/api/admin?action=campaigns"
+      "source": "/api/:match*",
+      "destination": "https://bt-templates.onrender.com/api/:match*"
     },
     {
-      "source": "/api/admin-coupons",
-      "destination": "/api/admin?action=coupons"
-    },
-    {
-      "source": "/api/admin-customers",
-      "destination": "/api/admin?action=customers"
-    },
-    {
-      "source": "/api/admin-orders",
-      "destination": "/api/admin?action=orders"
-    },
-    {
-      "source": "/api/admin-refund",
-      "destination": "/api/admin?action=refund"
+      "source": "/uploads/:match*",
+      "destination": "https://bt-templates.onrender.com/uploads/:match*"
     },
     {
       "source": "/:path*",
