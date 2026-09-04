@@ -663,7 +663,25 @@ router.get('/purchased-templates', requireAuth, async (req, res) => {
     // Keep database users table strictly in sync
     await query(`UPDATE users SET purchased_templates = $1, updated_at = NOW() WHERE id = $2`, [JSON.stringify(cleanList), user.id]).catch(() => {});
 
-    res.json({ success: true, templateIds: cleanList });
+    let purchasedRows = [];
+    if (cleanList.length > 0) {
+      const templateRes = await query(`
+        SELECT id, title, category, tag, author, price, rating, image, description,
+               preview_url, demo_url, figma_url, github_repo_url, is_exclusive, is_sold_out,
+               created_at
+        FROM templates 
+        WHERE id = ANY($1::int[])
+      `, [cleanList]);
+
+      purchasedRows = (templateRes.rows || []).map(t => {
+        const currentPrice = parseInt(t.price, 10) || 0;
+        const slug = (t.title || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+        const previewUrl = t.preview_url || t.demo_url || `/previews/${slug}/index.html`;
+        return { ...t, price: currentPrice.toString(), previewUrl };
+      });
+    }
+
+    res.json({ success: true, templateIds: cleanList, templates: purchasedRows });
   } catch (error) {
     console.error('Fetch purchased templates error:', error);
     res.status(500).json({ error: 'Failed to fetch purchased templates' });
@@ -750,6 +768,49 @@ router.post('/send-receipt', async (req, res) => {
     } else {
       return res.status(400).json({ error: 'Missing order details or cart items' });
     }
+  }
+
+  // Safety net: ensure purchase records exist in Neon even if called via send-receipt
+  try {
+    const cleanEmail = recipientEmail.trim().toLowerCase();
+    const userRes = await query('SELECT id, purchased_templates FROM users WHERE email = $1', [cleanEmail]);
+    if (userRes.rows.length > 0) {
+      const dbUser = userRes.rows[0];
+      const itemsToRecord = cartItems || normalizedOrderDetails?.items || [];
+      const newTemplateIds = [];
+
+      for (const it of itemsToRecord) {
+        const tId = parseInt(it.id, 10);
+        if (!isNaN(tId)) {
+          newTemplateIds.push(tId);
+          const existing = await query(
+            'SELECT id FROM purchases WHERE user_id = $1 AND template_id = $2 AND (payment_id = $3 OR $3 IS NULL) LIMIT 1',
+            [dbUser.id, tId, paymentId || null]
+          );
+          if (!existing.rows.length) {
+            await query(`
+              INSERT INTO purchases (user_id, template_id, payment_id, amount)
+              VALUES ($1, $2, $3, $4)
+            `, [dbUser.id, tId, paymentId || `ord_${Date.now()}`, parseFloat(it.price || 0)]);
+          }
+        }
+      }
+
+      if (newTemplateIds.length > 0) {
+        let existingList = [];
+        if (Array.isArray(dbUser.purchased_templates)) existingList = dbUser.purchased_templates;
+        else if (typeof dbUser.purchased_templates === 'string') {
+          try { existingList = JSON.parse(dbUser.purchased_templates); } catch {}
+        }
+        const mergedList = [...new Set([...existingList.map(Number), ...newTemplateIds])].filter(n => !isNaN(n));
+        await query('UPDATE users SET purchased_templates = $1, updated_at = NOW() WHERE id = $2', [
+          JSON.stringify(mergedList),
+          dbUser.id
+        ]);
+      }
+    }
+  } catch (syncErr) {
+    console.warn('send-receipt DB sync note:', syncErr.message);
   }
 
   try {

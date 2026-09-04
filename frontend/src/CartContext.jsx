@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { toast } from 'sonner';
 import { useAuth } from './AuthContext';
 import { useTemplates } from './useTemplates';
+import { api } from './lib/api';
 
 const CartContext = createContext();
 
@@ -39,28 +40,27 @@ export const CartProvider = ({ children }) => {
       // Attempt live sync from backend to get ground truth non-refunded/non-revoked purchase list
       if (token) {
         try {
-          const res = await fetch('/api/purchased-templates', {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
-          if (res.ok) {
-            const data = await res.json();
-            if (Array.isArray(data.templateIds)) {
-              activeIds = data.templateIds.map(id => String(id));
-            }
+          const data = await api.get('/api/purchased-templates');
+          if (Array.isArray(data?.templates) && data.templates.length > 0) {
+            setPurchasedTemplates(data.templates);
+            return;
+          } else if (Array.isArray(data?.templateIds)) {
+            activeIds = data.templateIds.map(id => String(id));
           }
-        } catch {
-          // Fallback to local user object only if network offline
+        } catch (syncErr) {
+          console.warn("Purchased templates live sync note:", syncErr?.message);
         }
       }
 
       if (activeIds === null) {
-        activeIds = (user.purchased_templates || user.user_metadata?.purchased_templates || []).map(id => String(id));
+        const raw = user.purchased_templates || user.user_metadata?.purchased_templates || [];
+        activeIds = (Array.isArray(raw) ? raw : []).map(id => String(id));
       }
 
-      if (templates.length > 0) {
-        const fetchedTemplates = templates.filter(t => activeIds.includes(String(t.id)));
+      if (templates.length > 0 && activeIds.length > 0) {
+        const fetchedTemplates = templates.filter(t => activeIds.some(aid => String(aid) === String(t.id)));
         setPurchasedTemplates(fetchedTemplates);
-      } else {
+      } else if (activeIds.length === 0) {
         setPurchasedTemplates([]);
       }
     } catch (err) {

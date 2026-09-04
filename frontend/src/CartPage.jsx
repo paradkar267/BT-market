@@ -373,7 +373,7 @@ export default function CartPage() {
     }
   };
 
-  const processSuccessfulPayment = async (paymentId) => {
+  const processSuccessfulPayment = async (paymentId, razorpayMeta = {}) => {
     let activeUser = user;
     if (!activeUser) {
       try {
@@ -399,61 +399,10 @@ export default function CartPage() {
     toast.success('🎉 Purchase complete! Your templates are ready.');
     navigate('/my-templates');
 
-    // 2. Asynchronous Background Task: DB Record Sync & Invoice Email Dispatch
+    // 2. Asynchronous Background Task: DB Record Sync in Neon & Invoice Email Dispatch
     (async () => {
       try {
-        if (userId) {
-          const insertPayloads = cartItems.map(item => ({
-            user_id: userId,
-            template_id: item.id,
-            payment_id: paymentId,
-          }));
-
-          const { error: dbError } = await supabase
-            .from('purchases')
-            .insert(insertPayloads);
-
-          if (dbError) {
-            console.error("Database sync error (purchases):", dbError);
-          }
-
-          // Record Coupon Redemption for per-user 1-time enforcement
-          if (appliedCoupon) {
-            try {
-              await supabase.from('coupon_redemptions').insert([{
-                coupon_id: typeof appliedCoupon.id === 'number' || typeof appliedCoupon.id === 'string' ? appliedCoupon.id : null,
-                coupon_code: appliedCoupon.code,
-                user_id: userId,
-                user_email: customerEmail,
-                payment_id: paymentId
-              }]);
-
-              const currentUsed = activeUser?.user_metadata?.used_coupons || user?.user_metadata?.used_coupons || [];
-              if (!currentUsed.includes(appliedCoupon.code)) {
-                await supabase.auth.updateUser({
-                  data: { used_coupons: [...currentUsed, appliedCoupon.code] }
-                });
-              }
-
-              if (appliedCoupon.id) {
-                const { data: cData } = await supabase
-                  .from('coupons')
-                  .select('times_used')
-                  .eq('id', appliedCoupon.id)
-                  .single();
-
-                await supabase
-                  .from('coupons')
-                  .update({ times_used: (cData?.times_used || 0) + 1 })
-                  .eq('id', appliedCoupon.id);
-              }
-            } catch (couponRedeemErr) {
-              console.warn("Coupon redemption sync note:", couponRedeemErr?.message);
-            }
-          }
-        }
-
-        // Generate PDF & Send Receipt Email in Background
+        // Generate PDF
         let invoicePdfBase64 = null;
         try {
           invoicePdfBase64 = await generateInvoicePDF(paymentId);
@@ -461,6 +410,43 @@ export default function CartPage() {
           console.warn("PDF generation note:", pdfErr?.message);
         }
 
+        const token = localStorage.getItem('bizleap_token') || '';
+        const verifyPayload = {
+          paymentId: paymentId,
+          orderId: razorpayMeta?.razorpay_order_id || `order_${paymentId}`,
+          signature: razorpayMeta?.razorpay_signature || '',
+          cartItems: cartItems.map(it => ({ id: it.id, title: it.title, price: it.price, category: it.category })),
+          couponCode: appliedCoupon ? appliedCoupon.code : null,
+          couponId: appliedCoupon ? appliedCoupon.id : null,
+          invoicePdfBase64: invoicePdfBase64
+        };
+
+        const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3000' : '');
+        const targetUrls = [];
+        if (backendUrl) targetUrls.push(`${backendUrl}/api/verify-payment`);
+        targetUrls.push('/api/verify-payment');
+
+        for (const url of targetUrls) {
+          try {
+            const res = await fetch(url, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+              },
+              body: JSON.stringify(verifyPayload)
+            });
+            if (res.ok) {
+              window.dispatchEvent(new Event('purchases_updated'));
+              window.dispatchEvent(new Event('templates_updated'));
+              break;
+            }
+          } catch (e) {
+            console.warn('verify-payment attempt note:', e?.message);
+          }
+        }
+
+        // Failsafe backup email dispatch
         const emailPayload = {
           to: customerEmail,
           email: customerEmail,
@@ -494,12 +480,11 @@ export default function CartPage() {
           invoicePdfBase64: invoicePdfBase64
         };
 
-        const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3000' : '');
-        const targetUrls = [];
-        if (backendUrl) targetUrls.push(`${backendUrl}/api/send-receipt`);
-        targetUrls.push('/api/send-receipt');
+        const emailTargetUrls = [];
+        if (backendUrl) emailTargetUrls.push(`${backendUrl}/api/send-receipt`);
+        emailTargetUrls.push('/api/send-receipt');
 
-        for (const url of targetUrls) {
+        for (const url of emailTargetUrls) {
           try {
             const res = await fetch(url, {
               method: 'POST',
@@ -558,7 +543,7 @@ export default function CartPage() {
       description: appliedCoupon ? `Discount applied: ${appliedCoupon.code}` : 'Premium Templates & UI Kits',
       image: 'https://cdn-icons-png.flaticon.com/512/3176/3176366.png',
       handler: async function (response) {
-        await processSuccessfulPayment(response.razorpay_payment_id);
+        await processSuccessfulPayment(response.razorpay_payment_id, response);
       },
       prefill: {
         name: activeUser?.user_metadata?.full_name || '',
