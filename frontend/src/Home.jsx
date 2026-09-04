@@ -90,12 +90,6 @@ export default function Home() {
         {/* Hero Left Content Layer */}
         <div className="relative z-10 max-w-[1400px] w-full mx-auto px-5 md:px-10 py-16 lg:py-24">
           <div className="max-w-2xl">
-            {/* Minimal Status Indicator */}
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-gray-100/90 dark:bg-zinc-800/80 text-gray-700 dark:text-gray-300 mb-6 border border-gray-200/60 dark:border-zinc-700">
-              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-              <span>React 19 & Next.js 15 Stacks</span>
-            </div>
-
             {/* Clean, Refined Minimalist Headline */}
             <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[54px] font-bold tracking-tight leading-[1.12] text-gray-950 dark:text-white mb-4">
               Ship production websites <br />
