@@ -1,4 +1,4 @@
--- Run this in your Supabase SQL Editor
+-- Run this in your PostgreSQL / Neon SQL Editor
 
 ALTER TABLE public.templates 
 ADD COLUMN IF NOT EXISTS is_sold_out BOOLEAN DEFAULT FALSE;

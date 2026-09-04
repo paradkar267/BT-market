@@ -121,7 +121,7 @@ export const FALLBACK_TEMPLATES = [
     sales: 45,
     rating: "5",
     price: "6763",
-    image: "https://wcpxbgbutnovjcrfdkuk.supabase.co/storage/v1/object/public/template_covers/covers/1787835929608_images.jpg",
+    image: "https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=800&auto=format&fit=crop&q=80",
     description: "Modern dental healthcare website template featuring responsive mobile layouts, treatment listings, and online consultation bookings.",
     previewUrl: "https://dental-eosin-sigma.vercel.app/",
     preview_url: "https://dental-eosin-sigma.vercel.app/",

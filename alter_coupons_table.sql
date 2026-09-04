@@ -1,4 +1,4 @@
--- Run this in Supabase SQL Editor if you already had a coupons table to add the new advanced fields:
+-- Run this in PostgreSQL / Neon SQL Editor if you already had a coupons table to add the new advanced fields:
 
 ALTER TABLE public.coupons ADD COLUMN IF NOT EXISTS min_order_amount numeric DEFAULT 0;
 ALTER TABLE public.coupons ADD COLUMN IF NOT EXISTS usage_limit integer;

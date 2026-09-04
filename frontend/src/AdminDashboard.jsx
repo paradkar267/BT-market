@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from './AuthContext';
 import { useTemplates } from './useTemplates';
 import { useCurrency } from './CurrencyContext';
-import { supabase } from './lib/supabase';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import {
@@ -1043,27 +1042,7 @@ export default function AdminDashboard() {
         console.warn('API image upload attempt failed, falling back to direct storage:', apiErr);
       }
 
-      // Fallback 1: Direct Supabase Storage upload
-      if (!finalImageUrl) {
-        try {
-          const cleanFileName = `${Date.now()}_${file.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
-          const filePath = `covers/${cleanFileName}`;
-          const { error: storageErr } = await supabase.storage
-            .from('template_covers')
-            .upload(filePath, file, { contentType: file.type, upsert: true });
-
-          if (!storageErr) {
-            const { data: { publicUrl } } = supabase.storage
-              .from('template_covers')
-              .getPublicUrl(filePath);
-            if (publicUrl) finalImageUrl = publicUrl;
-          }
-        } catch (storageErr) {
-          console.warn('Direct storage upload failed:', storageErr);
-        }
-      }
-
-      // Fallback 2: Inline Base64 Data URL
+      // Fallback: Inline Base64 Data URL
       if (!finalImageUrl) {
         finalImageUrl = base64Data;
       }
@@ -1621,12 +1600,7 @@ export default function AdminDashboard() {
       if (buyersData && buyersData.buyers) {
         setBroadcastBuyers(buyersData.buyers);
       } else {
-        const { data: purchases } = await supabase
-          .from('purchases')
-          .select('user_id')
-          .eq('template_id', template.id);
-        const uniqueUids = [...new Set((purchases || []).map(p => p.user_id).filter(Boolean))];
-        setBroadcastBuyers(uniqueUids.map(u => ({ id: u })));
+        setBroadcastBuyers([]);
       }
     } catch (err) {
       console.warn("Could not fetch buyers list preview:", err);
@@ -1771,92 +1745,7 @@ export default function AdminDashboard() {
       }
 
       if (!res || !res.ok) {
-        // Resilient Fallback: Direct upload to Supabase Storage & Database
-        const fileName = `${Date.now()}-${selectedFile.name.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
-        const filePath = `templates/${fileName}`;
-
-        // 1. Upload ZIP directly to Supabase Storage bucket 'secure_templates'
-        const { error: storageErr } = await supabase.storage
-          .from('secure_templates')
-          .upload(filePath, selectedFile, {
-            contentType: selectedFile.type || 'application/zip',
-            upsert: true
-          });
-
-        if (storageErr) throw new Error(storageErr.message || errorMsg || 'Failed to upload ZIP package to storage');
-
-        // 2. Fetch max ID for sequential integer ID
-        const { data: maxIdData } = await supabase
-          .from('templates')
-          .select('id')
-          .order('id', { ascending: false })
-          .limit(1);
-
-        const nextId = (maxIdData && maxIdData.length > 0 && !isNaN(maxIdData[0].id))
-          ? Number(maxIdData[0].id) + 1
-          : Math.floor(Date.now() % 2000000000);
-
-        // 3. Keywords format
-        let parsedKeywords = [];
-        if (Array.isArray(formData.keywords)) {
-          parsedKeywords = formData.keywords;
-        } else if (typeof formData.keywords === 'string') {
-          parsedKeywords = formData.keywords.split(',').map(k => k.trim()).filter(Boolean);
-        }
-
-        const slug = formData.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
-        const liveDemoUrl = formData.previewUrl || `/previews/${slug}/index.html`;
-
-        // 4. Insert into templates table safely
-        const baseInsertData = {
-          id: nextId,
-          title: formData.title,
-          description: formData.description,
-          price: formData.price,
-          category: formData.category,
-          tag: formData.tag,
-          image: formData.image,
-          keywords: parsedKeywords,
-        };
-
-        let dbErr = null;
-        const fullInsert = await supabase
-          .from('templates')
-          .insert({
-            ...baseInsertData,
-            demo_url: liveDemoUrl,
-            previewUrl: liveDemoUrl
-          });
-
-        if (fullInsert.error) {
-          // Retry with demo_url only
-          const retry1 = await supabase
-            .from('templates')
-            .insert({
-              ...baseInsertData,
-              demo_url: liveDemoUrl
-            });
-          if (retry1.error) {
-            // Retry with base columns
-            const retry2 = await supabase.from('templates').insert(baseInsertData);
-            dbErr = retry2.error;
-          }
-        } else {
-          dbErr = null;
-        }
-
-        if (dbErr) throw new Error(dbErr.message || 'Failed to save template metadata');
-
-        // 5. Insert file record into template_files table
-        await supabase
-          .from('template_files')
-          .insert({
-            template_id: nextId,
-            file_path: filePath,
-            file_name: selectedFile.name,
-            file_size: selectedFile.size,
-            mime_type: selectedFile.type || 'application/zip'
-          });
+        throw new Error(errorMsg || 'Failed to publish template. Please check your network or server connection.');
       }
 
       setUploadSuccess(true);

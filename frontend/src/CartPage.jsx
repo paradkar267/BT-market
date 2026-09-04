@@ -23,7 +23,6 @@ import { useCurrency } from './CurrencyContext';
 import UserMenu from './UserMenu';
 import { useTheme } from './ThemeContext';
 import { useAuth } from './AuthContext';
-import { supabase } from './lib/supabase';
 import { Logo } from './components/ui/Logo';
 
 export default function CartPage() {
@@ -489,15 +488,7 @@ export default function CartPage() {
   };
 
   const handleCheckout = async () => {
-    let activeUser = user;
-    if (!activeUser) {
-      try {
-        const { data: { session } } = await supabase.auth.getSession();
-        activeUser = session?.user || null;
-      } catch {}
-    }
-
-    if (!activeUser) {
+    if (!user) {
       toast.info('Please sign in or create an account to proceed with purchase.');
       requireAuth(() => handleCheckout());
       return;

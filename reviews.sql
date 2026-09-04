@@ -1,4 +1,4 @@
--- Run this SQL in your Supabase SQL Editor to create the Reviews table
+-- Run this SQL in your PostgreSQL / Neon SQL Editor to create the Reviews table
 
 CREATE TABLE reviews (
   id uuid DEFAULT gen_random_uuid() PRIMARY KEY,

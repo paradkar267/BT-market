@@ -1,5 +1,5 @@
 -- Add refund columns to purchases table
--- Run this in Supabase SQL Editor
+-- Run this in PostgreSQL / Neon SQL Editor
 
 ALTER TABLE public.purchases
   ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'completed'
