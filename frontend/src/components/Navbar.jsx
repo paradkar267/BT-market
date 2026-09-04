@@ -102,15 +102,6 @@ export default function Navbar() {
             )}
           </button>
 
-          {/* Right-Side Primary CTA: Browse Templates */}
-          <Link
-            to="/templates"
-            className="hidden lg:inline-flex items-center gap-1.5 h-9 px-3.5 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold rounded-xl transition-all duration-150 shadow-sm hover:shadow-md cursor-pointer select-none group shrink-0"
-          >
-            <span>Browse Templates</span>
-            <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
-          </Link>
-
           {/* Currency + User Menu Dropdown */}
           <UserMenu />
 
