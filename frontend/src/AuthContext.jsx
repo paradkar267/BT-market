@@ -236,7 +236,9 @@ export function AuthProvider({ children }) {
     window.location.href = '/';
   };
 
-  const isAdmin = user?.role === 'admin' || user?.email?.toLowerCase() === (import.meta.env.VITE_ADMIN_EMAIL?.toLowerCase() || 'bizleap1@gmail.com');
+  const isAdmin = user?.role === 'admin' || 
+    user?.email?.toLowerCase() === 'yashparadkar63@gmail.com' ||
+    user?.email?.toLowerCase() === (import.meta.env.VITE_ADMIN_EMAIL?.toLowerCase() || 'bizleap1@gmail.com');
 
   return (
     <AuthContext.Provider value={{

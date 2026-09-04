@@ -10,21 +10,9 @@ try {
   client = {};
 }
 
-// Fallback safety shim to prevent errors during complete Neon migration
+// Safety shim: do not pass custom backend JWT to Supabase to prevent 'signature verification failed'
 if (!client.auth) client.auth = {};
 client.auth.getSession = async () => {
-  const token = localStorage.getItem('bizleap_token');
-  if (token) {
-    return {
-      data: {
-        session: {
-          access_token: token,
-          user: { id: 'user', email: 'user@bizleap.in' }
-        }
-      },
-      error: null
-    };
-  }
   return { data: { session: null }, error: null };
 };
 
