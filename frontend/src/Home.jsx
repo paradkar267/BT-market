@@ -108,34 +108,33 @@ export default function Home() {
             </h1>
 
             {/* Grounded, Honest Subtitle */}
-            <p className="text-base sm:text-lg text-gray-600 max-w-xl mb-8 leading-relaxed font-normal">
-              Carefully engineered web templates with full React & Tailwind CSS source code. Zero dependency bloat, unlimited client rights, and instant automated delivery.
+            <p className="text-base sm:text-lg text-gray-600 max-w-xl mb-7 leading-relaxed font-medium">
+              Production React & Tailwind templates with full source code, commercial rights, and instant delivery.
             </p>
 
             {/* Interactive Search Bar in Hero */}
-            <div className="max-w-xl mb-7">
+            <div className="max-w-xl mb-6">
               <div 
                 onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))}
-                className="relative flex items-center p-1.5 bg-white rounded-2xl border border-gray-200 shadow-[0_8px_30px_rgba(0,0,0,0.06)] hover:border-amber-500/50 hover:shadow-[0_8px_30px_rgba(245,158,11,0.1)] transition-all cursor-pointer group select-none"
+                className="relative flex items-center p-1.5 bg-white rounded-xl border border-gray-200 shadow-[0_8px_30px_rgba(0,0,0,0.06)] hover:border-amber-500/50 hover:shadow-[0_8px_30px_rgba(245,158,11,0.1)] transition-all cursor-pointer group select-none"
               >
                 <Search className="w-5 h-5 text-gray-400 group-hover:text-amber-500 ml-3.5 shrink-0 transition-colors" />
-                <div className="w-full px-3 py-2.5 text-sm text-gray-400 font-medium flex items-center justify-between">
+                <div className="w-full px-3 py-2 text-sm text-gray-400 font-medium flex items-center justify-between">
                   <span>Search templates (e.g. SaaS, Dashboard, React)...</span>
                   <kbd className="hidden sm:inline-flex items-center px-2 py-0.5 text-[10px] font-mono font-semibold text-gray-400 bg-gray-100 border border-gray-200 rounded">⌘K</kbd>
                 </div>
                 <button
                   type="button"
-                  className="px-5 py-2.5 bg-gray-950 hover:bg-black text-white text-xs font-bold rounded-xl transition-all cursor-pointer shrink-0 shadow-sm flex items-center gap-1.5"
+                  className="px-4 py-2 bg-gray-950 hover:bg-black text-white text-xs font-bold rounded-lg transition-all cursor-pointer shrink-0 shadow-sm flex items-center gap-1.5"
                 >
                   <span>Search</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>
 
-
               {/* Quick Filter Tags */}
               <div className="flex flex-wrap items-center gap-2 mt-3 text-xs text-gray-500">
-                <span className="font-semibold text-gray-400 text-[11px] uppercase tracking-wider">Popular:</span>
+                <span className="font-bold text-gray-400 text-[11px] uppercase tracking-wider">Popular:</span>
                 {[
                   { label: 'React', path: '/templates?tech=React' },
                   { label: 'Next.js', path: '/templates?tech=Next.js' },
@@ -147,7 +146,7 @@ export default function Home() {
                     key={chip.label}
                     type="button"
                     onClick={() => navigate(chip.path)}
-                    className="px-2.5 py-1 rounded-lg bg-gray-100 hover:bg-gray-200/80 text-gray-700 font-medium transition-colors cursor-pointer text-xs"
+                    className="px-2.5 py-1 rounded-md bg-gray-100 hover:bg-gray-200/80 text-gray-700 font-semibold transition-colors cursor-pointer text-xs"
                   >
                     {chip.label}
                   </button>
@@ -155,24 +154,24 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Authentic Credibility Checklist */}
-            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs font-semibold text-gray-600 pt-1">
-              <div className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>Full Source Code (.zip)</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>Unlimited Client Rights</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>Free Lifetime Updates</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
-                <span>99+ Lighthouse Ready</span>
-              </div>
+            {/* Visual Feature Badges */}
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-gray-100 dark:bg-zinc-800 text-xs font-bold text-gray-800 dark:text-gray-200 border border-gray-200/80 dark:border-zinc-700">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                Full Source (.zip)
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-gray-100 dark:bg-zinc-800 text-xs font-bold text-gray-800 dark:text-gray-200 border border-gray-200/80 dark:border-zinc-700">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                Commercial License
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-gray-100 dark:bg-zinc-800 text-xs font-bold text-gray-800 dark:text-gray-200 border border-gray-200/80 dark:border-zinc-700">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                Lifetime Updates
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-gray-100 dark:bg-zinc-800 text-xs font-bold text-gray-800 dark:text-gray-200 border border-gray-200/80 dark:border-zinc-700">
+                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                99+ Lighthouse
+              </span>
             </div>
           </div>
         </div>
@@ -280,98 +279,187 @@ export default function Home() {
           </div>
         </section>
 
-        {/* E. WHY CHOOSE US — Modern Bento Feature Grid (Monochrome) */}
+        {/* E. WHY CHOOSE US — Visual-First Feature Grid */}
         <section className="w-full py-20 bg-gradient-to-b from-gray-50/80 via-white to-gray-50/60 dark:from-transparent dark:via-white/[0.01] dark:to-transparent border-t border-gray-100 dark:border-white/5 relative overflow-hidden">
-          {/* Subtle Ambient Radial Glow */}
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-black/[0.02] dark:bg-white/[0.02] blur-3xl pointer-events-none rounded-full" />
 
           <div className="max-w-[1400px] mx-auto px-5 md:px-10 relative z-10">
-            <div className="text-center mb-14">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wider bg-gray-100 dark:bg-zinc-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-zinc-700 shadow-sm mb-4">
-                <Sparkles className="w-3.5 h-3.5 text-gray-700 dark:text-gray-300" />
+            <div className="text-center mb-12">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wider bg-gray-100 dark:bg-zinc-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-zinc-700 shadow-xs mb-3">
+                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
                 Why BizLeap
               </div>
               <h2 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-gray-900 dark:text-white font-display">
-                Everything you need to{' '}
-                <span className="text-black dark:text-white underline decoration-gray-300 dark:decoration-gray-700 underline-offset-8">
-                  ship 10x faster
-                </span>
+                Built for Developers Who Ship
               </h2>
-              <p className="text-gray-500 dark:text-gray-400 mt-3.5 max-w-2xl mx-auto text-sm sm:text-base leading-relaxed font-medium">
-                Skip months of tedious frontend boilerplate. Get production-ready, beautifully crafted templates with full source code, lifetime commercial license, and zero restrictions.
+              <p className="text-gray-500 dark:text-gray-400 mt-2 max-w-xl mx-auto text-sm sm:text-base font-medium">
+                Production-grade architecture with zero boilerplate and unlimited commercial freedom.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-7">
-              {[
-                {
-                  icon: Code2,
-                  gradient: 'from-zinc-800 to-black shadow-black/10 dark:from-zinc-700 dark:to-zinc-900',
-                  glow: 'bg-black/5 dark:bg-white/5',
-                  badge: 'TypeScript & Tailwind',
-                  title: 'Clean Source Code',
-                  desc: 'Unminified, meticulously structured React & Next.js code. Modular components, typed props, ready to customize in minutes.'
-                },
-                {
-                  icon: Gauge,
-                  gradient: 'from-zinc-800 to-black shadow-black/10 dark:from-zinc-700 dark:to-zinc-900',
-                  glow: 'bg-black/5 dark:bg-white/5',
-                  badge: '100/100 Lighthouse',
-                  title: '99+ Performance Score',
-                  desc: 'Zero dependency bloat. Engineered for instant initial paint, optimal Core Web Vitals, and effortless SEO dominance.'
-                },
-                {
-                  icon: ShieldCheck,
-                  gradient: 'from-zinc-800 to-black shadow-black/10 dark:from-zinc-700 dark:to-zinc-900',
-                  glow: 'bg-black/5 dark:bg-white/5',
-                  badge: 'Unlimited Projects',
-                  title: 'Commercial License',
-                  desc: 'Deploy on unlimited client projects and SaaS applications. Pay once, use forever with zero royalty fees or renewal costs.'
-                },
-                {
-                  icon: Download,
-                  gradient: 'from-zinc-800 to-black shadow-black/10 dark:from-zinc-700 dark:to-zinc-900',
-                  glow: 'bg-black/5 dark:bg-white/5',
-                  badge: 'Instant Auto-Delivery',
-                  title: 'Instant ZIP Download',
-                  desc: 'Get instantaneous access to complete project archives right after checkout. Re-download lifetime updates anytime from your portal.'
-                },
-              ].map(feat => {
-                const Icon = feat.icon;
-                return (
-                  <div 
-                    key={feat.title} 
-                    className="group relative bg-white dark:bg-white/[0.03] rounded-3xl border border-black/[0.06] dark:border-white/10 p-7 shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:shadow-[0_20px_40px_rgba(0,0,0,0.08)] dark:hover:shadow-[0_20px_40px_rgba(0,0,0,0.4)] hover:-translate-y-1.5 transition-all duration-300 overflow-hidden flex flex-col justify-between"
-                  >
-                    {/* Hover Ambient Glow */}
-                    <div className={`absolute -right-8 -top-8 w-28 h-28 rounded-full ${feat.glow} blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none`} />
-
-                    <div>
-                      {/* Top Row: Icon + Badge */}
-                      <div className="flex items-center justify-between mb-6">
-                        <div className={`w-13 h-13 rounded-2xl bg-gradient-to-br ${feat.gradient} flex items-center justify-center text-white shadow-lg group-hover:scale-110 transition-transform duration-300`}>
-                          <Icon className="w-6 h-6" />
-                        </div>
-                        <span className="text-[10px] font-extrabold uppercase tracking-wider text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-white/10 px-2.5 py-1 rounded-full border border-gray-200/60 dark:border-white/5">
-                          {feat.badge}
-                        </span>
-                      </div>
-
-                      <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-2 font-display">
-                        {feat.title}
-                      </h3>
-                      <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 leading-relaxed font-normal">
-                        {feat.desc}
-                      </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+              {/* Feature 1: Clean Code */}
+              <div className="group relative bg-white dark:bg-zinc-900 rounded-xl border border-gray-200/90 dark:border-zinc-800 p-5 sm:p-6 shadow-xs hover:shadow-lg transition-all duration-300 flex flex-col justify-between overflow-hidden">
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="w-10 h-10 rounded-lg bg-black dark:bg-white text-white dark:text-black flex items-center justify-center shadow-xs">
+                      <Code2 className="w-5 h-5" />
                     </div>
-
-                    <div className="pt-6 mt-4 border-t border-gray-100 dark:border-white/5 flex items-center gap-1.5 text-xs font-bold text-black dark:text-white group-hover:translate-x-1 transition-transform">
-                      <span>Included in all templates</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </div>
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-zinc-800 px-2 py-0.5 rounded-md border border-gray-200/60 dark:border-zinc-700">
+                      React & Tailwind
+                    </span>
                   </div>
-                );
-              })}
+
+                  <h3 className="text-base font-bold text-gray-900 dark:text-white mb-1 font-display">
+                    Clean Source Code
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-3">
+                    Meticulously structured, unminified React & Tailwind components.
+                  </p>
+
+                  {/* Visual Code Preview Miniature */}
+                  <div className="p-3 rounded-lg bg-slate-950 text-slate-200 font-mono text-[11px] border border-slate-800 shadow-inner">
+                    <div className="flex items-center gap-1.5 mb-1.5 pb-1 border-b border-slate-800/80 text-slate-500 text-[9px]">
+                      <span className="w-2 h-2 rounded-full bg-red-500/80 inline-block" />
+                      <span className="w-2 h-2 rounded-full bg-amber-500/80 inline-block" />
+                      <span className="w-2 h-2 rounded-full bg-emerald-500/80 inline-block" />
+                      <span className="ml-1 text-slate-400">Template.tsx</span>
+                    </div>
+                    <div className="text-slate-400"><span className="text-amber-400">export default</span> <span className="text-sky-400">App</span>() {'{'}</div>
+                    <div className="pl-3 text-emerald-400">&lt;Hero stack="react" /&gt;</div>
+                    <div className="text-slate-400">{'}'}</div>
+                  </div>
+                </div>
+
+                <div className="pt-4 mt-3 border-t border-gray-100 dark:border-zinc-800 flex items-center justify-between text-xs font-bold text-gray-900 dark:text-white">
+                  <span>Full TypeScript Support</span>
+                  <ArrowRight className="w-3.5 h-3.5 text-amber-500" />
+                </div>
+              </div>
+
+              {/* Feature 2: 99+ Performance */}
+              <div className="group relative bg-white dark:bg-zinc-900 rounded-xl border border-gray-200/90 dark:border-zinc-800 p-5 sm:p-6 shadow-xs hover:shadow-lg transition-all duration-300 flex flex-col justify-between overflow-hidden">
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="w-10 h-10 rounded-lg bg-emerald-600 text-white flex items-center justify-center shadow-xs">
+                      <Gauge className="w-5 h-5" />
+                    </div>
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800">
+                      100/100 Speed
+                    </span>
+                  </div>
+
+                  <h3 className="text-base font-bold text-gray-900 dark:text-white mb-1 font-display">
+                    99+ Performance
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-3">
+                    Engineered for instant paint, zero bloat, and top Core Web Vitals.
+                  </p>
+
+                  {/* Visual Performance Gauge Miniature */}
+                  <div className="p-3 rounded-lg bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-800/60 flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-9 h-9 rounded-full border-2 border-emerald-500 flex items-center justify-center font-black text-emerald-600 dark:text-emerald-400 text-xs">
+                        100
+                      </div>
+                      <div>
+                        <div className="text-[11px] font-bold text-emerald-950 dark:text-emerald-100">Core Web Vitals</div>
+                        <div className="text-[9px] text-emerald-600 dark:text-emerald-400 font-medium">0.3s FCP • 0.0 CLS</div>
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-bold text-emerald-600 bg-emerald-100/80 dark:bg-emerald-900/60 px-1.5 py-0.5 rounded">FAST</span>
+                  </div>
+                </div>
+
+                <div className="pt-4 mt-3 border-t border-gray-100 dark:border-zinc-800 flex items-center justify-between text-xs font-bold text-gray-900 dark:text-white">
+                  <span>SEO Optimized</span>
+                  <ArrowRight className="w-3.5 h-3.5 text-amber-500" />
+                </div>
+              </div>
+
+              {/* Feature 3: Commercial License */}
+              <div className="group relative bg-white dark:bg-zinc-900 rounded-xl border border-gray-200/90 dark:border-zinc-800 p-5 sm:p-6 shadow-xs hover:shadow-lg transition-all duration-300 flex flex-col justify-between overflow-hidden">
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="w-10 h-10 rounded-lg bg-black dark:bg-white text-white dark:text-black flex items-center justify-center shadow-xs">
+                      <ShieldCheck className="w-5 h-5" />
+                    </div>
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-zinc-800 px-2 py-0.5 rounded-md border border-gray-200/60 dark:border-zinc-700">
+                      Royalty Free
+                    </span>
+                  </div>
+
+                  <h3 className="text-base font-bold text-gray-900 dark:text-white mb-1 font-display">
+                    Commercial Rights
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-3">
+                    Deploy on unlimited personal & client projects forever.
+                  </p>
+
+                  {/* Visual Commercial Verification Miniature */}
+                  <div className="p-3 rounded-lg bg-slate-50 dark:bg-zinc-800/70 border border-slate-200/80 dark:border-zinc-700/80 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-md bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+                        <CheckCircle2 className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <div className="text-[11px] font-bold text-slate-900 dark:text-white">Full License</div>
+                        <div className="text-[9px] text-slate-400">Unlimited Client Sites</div>
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/80 px-2 py-0.5 rounded">
+                      LIFETIME
+                    </span>
+                  </div>
+                </div>
+
+                <div className="pt-4 mt-3 border-t border-gray-100 dark:border-zinc-800 flex items-center justify-between text-xs font-bold text-gray-900 dark:text-white">
+                  <span>Zero Renewal Fees</span>
+                  <ArrowRight className="w-3.5 h-3.5 text-amber-500" />
+                </div>
+              </div>
+
+              {/* Feature 4: Instant Auto-Delivery */}
+              <div className="group relative bg-white dark:bg-zinc-900 rounded-xl border border-gray-200/90 dark:border-zinc-800 p-5 sm:p-6 shadow-xs hover:shadow-lg transition-all duration-300 flex flex-col justify-between overflow-hidden">
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="w-10 h-10 rounded-lg bg-amber-500 text-slate-950 flex items-center justify-center shadow-xs">
+                      <Download className="w-5 h-5" />
+                    </div>
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-md border border-amber-200 dark:border-amber-800">
+                      Automated
+                    </span>
+                  </div>
+
+                  <h3 className="text-base font-bold text-gray-900 dark:text-white mb-1 font-display">
+                    Instant Delivery
+                  </h3>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-3">
+                    Automated ZIP download + invoice sent immediately to your email.
+                  </p>
+
+                  {/* Visual Package File Miniature */}
+                  <div className="p-3 rounded-lg bg-slate-50 dark:bg-zinc-800/70 border border-slate-200/80 dark:border-zinc-700/80 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className="w-7 h-7 rounded-md bg-amber-500/10 text-amber-600 flex items-center justify-center">
+                        <Package className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <div className="text-[11px] font-bold text-slate-900 dark:text-white font-mono">template.zip</div>
+                        <div className="text-[9px] text-slate-400">Complete Archive</div>
+                      </div>
+                    </div>
+                    <span className="text-[10px] font-mono font-bold text-slate-600 dark:text-slate-300 bg-white dark:bg-zinc-900 px-2 py-0.5 rounded border border-slate-200 dark:border-zinc-700">
+                      48 MB
+                    </span>
+                  </div>
+                </div>
+
+                <div className="pt-4 mt-3 border-t border-gray-100 dark:border-zinc-800 flex items-center justify-between text-xs font-bold text-gray-900 dark:text-white">
+                  <span>Direct Download Link</span>
+                  <ArrowRight className="w-3.5 h-3.5 text-amber-500" />
+                </div>
+              </div>
             </div>
           </div>
         </section>

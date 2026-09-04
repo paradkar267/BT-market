@@ -9,7 +9,7 @@ import UserMenu from './UserMenu';
 import { useTheme } from './ThemeContext';
 import Navbar from './components/Navbar';
 import SEO from './components/SEO';
-
+import { useAuth } from './AuthContext';
 
 export default function FeaturedPage() {
   const { cartItems } = useCart();
@@ -73,7 +73,7 @@ export default function FeaturedPage() {
            </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {loading ? (
              Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)
           ) : (
