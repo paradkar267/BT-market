@@ -88,53 +88,48 @@ export default function Home() {
         </div>
 
         {/* Hero Left Content Layer */}
-        <div className="relative z-10 max-w-[1400px] w-full mx-auto px-5 md:px-10 py-16 lg:py-20">
+        <div className="relative z-10 max-w-[1400px] w-full mx-auto px-5 md:px-10 py-16 lg:py-24">
           <div className="max-w-2xl">
-            {/* Clean Status Pill */}
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-gray-100/90 hover:bg-gray-200/70 text-gray-800 border border-gray-200/80 mb-6 transition-colors cursor-default">
-              <span className="flex h-2 w-2 relative">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-              </span>
-              <span className="font-bold text-gray-900">New Drops:</span>
-              <span className="text-gray-600">Production React & Next.js Stacks</span>
-              <ArrowRight className="w-3 h-3 text-gray-400 ml-0.5" />
+            {/* Minimal Status Indicator */}
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-medium bg-gray-100/90 dark:bg-zinc-800/80 text-gray-700 dark:text-gray-300 mb-6 border border-gray-200/60 dark:border-zinc-700">
+              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+              <span>React 19 & Next.js 15 Stacks</span>
             </div>
 
-            {/* Authoritative, Clear Headline */}
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-[76px] font-extrabold tracking-[-0.035em] leading-[1.02] text-gray-950 mb-5 font-display">
-              Ship world-class websites <br />
-              <span className="text-black dark:text-white underline decoration-gray-300 dark:decoration-gray-700 underline-offset-8">in days, not months.</span>
+            {/* Clean, Refined Minimalist Headline */}
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[54px] font-bold tracking-tight leading-[1.12] text-gray-950 dark:text-white mb-4">
+              Ship production websites <br />
+              <span className="text-gray-400 dark:text-gray-500 font-medium">in days, not months.</span>
             </h1>
 
-            {/* Grounded, Honest Subtitle */}
-            <p className="text-base sm:text-lg text-gray-600 max-w-xl mb-7 leading-relaxed font-medium">
-              Production React & Tailwind templates with full source code, commercial rights, and instant delivery.
+            {/* Minimal Subtitle */}
+            <p className="text-base text-gray-500 dark:text-gray-400 max-w-lg mb-8 leading-relaxed font-normal">
+              Curated React and Tailwind templates with full source code, lifetime commercial license, and instant automated delivery.
             </p>
 
-            {/* Interactive Search Bar in Hero */}
+            {/* Minimalist Search Bar in Hero */}
             <div className="max-w-xl mb-6">
               <div 
                 onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))}
-                className="relative flex items-center p-1.5 bg-white rounded-xl border border-gray-200 shadow-[0_8px_30px_rgba(0,0,0,0.06)] hover:border-amber-500/50 hover:shadow-[0_8px_30px_rgba(245,158,11,0.1)] transition-all cursor-pointer group select-none"
+                className="relative flex items-center p-1.5 bg-white dark:bg-zinc-900 rounded-xl border border-gray-200/90 dark:border-zinc-800 shadow-xs hover:border-gray-400 dark:hover:border-zinc-600 transition-all cursor-pointer group select-none"
               >
-                <Search className="w-5 h-5 text-gray-400 group-hover:text-amber-500 ml-3.5 shrink-0 transition-colors" />
-                <div className="w-full px-3 py-2 text-sm text-gray-400 font-medium flex items-center justify-between">
-                  <span>Search templates (e.g. SaaS, Dashboard, React)...</span>
-                  <kbd className="hidden sm:inline-flex items-center px-2 py-0.5 text-[10px] font-mono font-semibold text-gray-400 bg-gray-100 border border-gray-200 rounded">⌘K</kbd>
+                <Search className="w-4 h-4 text-gray-400 group-hover:text-gray-700 dark:group-hover:text-white ml-3.5 shrink-0 transition-colors" />
+                <div className="w-full px-3 py-2 text-sm text-gray-400 font-normal flex items-center justify-between">
+                  <span>Search templates...</span>
+                  <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono text-gray-400 bg-gray-100 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded">⌘K</kbd>
                 </div>
                 <button
                   type="button"
-                  className="px-4 py-2 bg-gray-950 hover:bg-black text-white text-xs font-bold rounded-lg transition-all cursor-pointer shrink-0 shadow-sm flex items-center gap-1.5"
+                  className="px-4 py-2 bg-black hover:bg-zinc-800 text-white text-xs font-semibold rounded-lg transition-all cursor-pointer shrink-0 shadow-xs flex items-center gap-1.5"
                 >
                   <span>Search</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>
 
-              {/* Quick Filter Tags */}
-              <div className="flex flex-wrap items-center gap-2 mt-3 text-xs text-gray-500">
-                <span className="font-bold text-gray-400 text-[11px] uppercase tracking-wider">Popular:</span>
+              {/* Minimal Quick Filter Tags */}
+              <div className="flex flex-wrap items-center gap-1.5 mt-3 text-xs text-gray-400">
+                <span className="text-[11px] font-medium mr-1 text-gray-400">Popular:</span>
                 {[
                   { label: 'React', path: '/templates?tech=React' },
                   { label: 'Next.js', path: '/templates?tech=Next.js' },
@@ -146,7 +141,7 @@ export default function Home() {
                     key={chip.label}
                     type="button"
                     onClick={() => navigate(chip.path)}
-                    className="px-2.5 py-1 rounded-md bg-gray-100 hover:bg-gray-200/80 text-gray-700 font-semibold transition-colors cursor-pointer text-xs"
+                    className="px-2.5 py-0.5 rounded-md bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-600 dark:text-gray-300 font-medium transition-colors cursor-pointer text-xs"
                   >
                     {chip.label}
                   </button>
@@ -154,24 +149,13 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Visual Feature Badges */}
-            <div className="flex flex-wrap items-center gap-2 pt-1">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-gray-100 dark:bg-zinc-800 text-xs font-bold text-gray-800 dark:text-gray-200 border border-gray-200/80 dark:border-zinc-700">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                Full Source (.zip)
-              </span>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-gray-100 dark:bg-zinc-800 text-xs font-bold text-gray-800 dark:text-gray-200 border border-gray-200/80 dark:border-zinc-700">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                Commercial License
-              </span>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-gray-100 dark:bg-zinc-800 text-xs font-bold text-gray-800 dark:text-gray-200 border border-gray-200/80 dark:border-zinc-700">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                Lifetime Updates
-              </span>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-gray-100 dark:bg-zinc-800 text-xs font-bold text-gray-800 dark:text-gray-200 border border-gray-200/80 dark:border-zinc-700">
-                <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                99+ Lighthouse
-              </span>
+            {/* Minimal Trust Line */}
+            <div className="flex items-center gap-4 text-xs text-gray-400 font-medium pt-2">
+              <span>Full Source Code</span>
+              <span className="text-gray-300 dark:text-zinc-700">•</span>
+              <span>Commercial License</span>
+              <span className="text-gray-300 dark:text-zinc-700">•</span>
+              <span>Instant Download</span>
             </div>
           </div>
         </div>
