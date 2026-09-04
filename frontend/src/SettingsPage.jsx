@@ -14,6 +14,7 @@ import { motion } from 'framer-motion';
 import UserMenu from './UserMenu';
 import { Logo } from './components/ui/Logo';
 import { ConfirmModal } from './components/ui/ConfirmModal';
+import Navbar from './components/Navbar';
 
 export default function SettingsPage() {
   const { user, profile, setProfile, signOut, updatePassword, isAdmin } = useAuth();
@@ -176,12 +177,7 @@ export default function SettingsPage() {
   return (
     <div className="min-h-screen bg-[#FBFBFB] dark:bg-[#0A0A0A] text-black dark:text-white flex flex-col transition-colors duration-500">
       {/* Top Navbar */}
-      <nav className="flex items-center justify-between p-6 md:px-16 border-b border-gray-200 dark:border-white/10 bg-white/70 dark:bg-black/50 backdrop-blur-md sticky top-0 z-40">
-        <Logo />
-        <div className="flex items-center gap-6">
-          <UserMenu />
-        </div>
-      </nav>
+      <Navbar />
 
       <main className="max-w-6xl w-full mx-auto px-4 pt-10 pb-24 sm:px-6 lg:px-8 flex-1">
         

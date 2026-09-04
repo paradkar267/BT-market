@@ -5,6 +5,7 @@ import { useWishlist } from './WishlistContext';
 import UserMenu from './UserMenu';
 import { InteractiveProductCard } from './components/ui/card-7';
 import { Logo } from './components/ui/Logo';
+import Navbar from './components/Navbar';
 
 export default function WishlistPage() {
   const { wishlistItems } = useWishlist();
@@ -15,12 +16,7 @@ export default function WishlistPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-black text-black dark:text-white font-sans pb-24 transition-colors duration-500">
-      <nav className="h-[80px] w-full px-8 md:px-16 flex items-center justify-between glass-nav sticky top-0 z-50 bg-white/80 dark:bg-black/80 backdrop-blur-xl border-b border-gray-200 dark:border-white/10">
-        <Logo />
-        <div className="flex items-center gap-6">
-          <UserMenu />
-        </div>
-      </nav>
+      <Navbar />
 
       <div className="max-w-[1200px] mx-auto px-8 md:px-16 mt-12 relative">
         <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-red-500/10 rounded-full blur-3xl pointer-events-none mix-blend-screen" />
