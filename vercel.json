@@ -4,11 +4,11 @@
   "rewrites": [
     {
       "source": "/api/:match*",
-      "destination": "https://bt-templates.onrender.com/api/:match*"
+      "destination": "https://bt-templates-twwr.onrender.com/api/:match*"
     },
     {
       "source": "/uploads/:match*",
-      "destination": "https://bt-templates.onrender.com/uploads/:match*"
+      "destination": "https://bt-templates-twwr.onrender.com/uploads/:match*"
     },
     {
       "source": "/:path*",

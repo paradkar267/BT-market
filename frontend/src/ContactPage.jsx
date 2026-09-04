@@ -33,7 +33,7 @@ export default function ContactPage() {
     };
 
     try {
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://bt-templates.onrender.com';
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'https://bt-templates-twwr.onrender.com';
       const response = await fetch(`${backendUrl}/api/contact`, {
         method: 'POST',
         headers: {
