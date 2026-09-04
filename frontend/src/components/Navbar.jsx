@@ -31,7 +31,7 @@ export default function Navbar() {
   ];
 
   return (
-    <header className="sticky top-0 z-[100] w-full bg-white/85 dark:bg-slate-950/85 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-850 transition-colors duration-200">
+    <header className="sticky top-0 z-[100] w-full bg-white/85 dark:bg-slate-950/85 backdrop-blur-xl border-b border-slate-200/70 dark:border-slate-800/80 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.03)] transition-all duration-200">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
         {/* Left: Brand Logo */}
         <div className="flex items-center gap-4 shrink-0">
@@ -47,12 +47,14 @@ export default function Navbar() {
           <button
             type="button"
             onClick={openSearch}
-            className="hidden sm:inline-flex items-center gap-2 h-9 px-3 text-xs text-slate-500 hover:text-slate-950 dark:text-slate-400 dark:hover:text-white bg-slate-100/70 hover:bg-slate-100 dark:bg-slate-850/70 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800 rounded-full transition-all duration-150 cursor-pointer group select-none"
+            className="hidden sm:inline-flex items-center justify-between gap-2.5 h-9 w-36 lg:w-44 px-3 text-xs text-slate-500 hover:text-slate-950 dark:text-slate-400 dark:hover:text-white bg-slate-100/70 hover:bg-slate-100 dark:bg-slate-900/70 dark:hover:bg-slate-850 border border-slate-200/80 dark:border-slate-800 hover:border-amber-500/40 rounded-full transition-all duration-150 cursor-pointer group select-none shadow-xs"
             title="Search templates (⌘K)"
           >
-            <Search className="w-3.5 h-3.5 text-slate-400 group-hover:text-amber-500 transition-colors" />
-            <span className="text-[12px] font-medium text-slate-600 dark:text-slate-400">Search</span>
-            <kbd className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono font-semibold text-slate-400 dark:text-slate-500 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded shadow-2xs">
+            <div className="flex items-center gap-2 min-w-0">
+              <Search className="w-3.5 h-3.5 text-slate-400 group-hover:text-amber-500 transition-colors shrink-0" />
+              <span className="text-[12px] font-medium text-slate-500 dark:text-slate-400 truncate">Search...</span>
+            </div>
+            <kbd className="inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono font-bold text-slate-400 dark:text-slate-500 bg-white dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 rounded shadow-2xs shrink-0">
               ⌘K
             </kbd>
           </button>
@@ -61,7 +63,7 @@ export default function Navbar() {
           <button
             type="button"
             onClick={openSearch}
-            className="sm:hidden flex items-center justify-center w-9 h-9 text-slate-600 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white bg-slate-100/70 hover:bg-slate-100 dark:bg-slate-850/70 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800 rounded-full transition-colors cursor-pointer"
+            className="sm:hidden flex items-center justify-center w-9 h-9 text-slate-600 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white bg-slate-100/70 hover:bg-slate-100 dark:bg-slate-900/70 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800 rounded-full transition-colors cursor-pointer"
             aria-label="Open search"
           >
             <Search className="w-4 h-4" />
@@ -71,7 +73,7 @@ export default function Navbar() {
           <button
             type="button"
             onClick={() => requireAuth(() => navigate('/cart'))}
-            className="relative flex items-center justify-center w-9 h-9 text-slate-700 hover:text-slate-950 dark:text-slate-200 dark:hover:text-white bg-slate-100/70 hover:bg-slate-100 dark:bg-slate-850/70 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800 rounded-full transition-all duration-150 cursor-pointer select-none group"
+            className="relative flex items-center justify-center w-9 h-9 text-slate-700 hover:text-slate-950 dark:text-slate-200 dark:hover:text-white bg-slate-100/70 hover:bg-slate-100 dark:bg-slate-900/70 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800 hover:border-amber-500/40 rounded-full transition-all duration-150 cursor-pointer select-none group"
             title="Shopping Cart"
             aria-label="Shopping Cart"
           >
@@ -82,6 +84,7 @@ export default function Navbar() {
               </span>
             )}
           </button>
+
 
           {/* Currency + User Menu Dropdown */}
           <UserMenu />
