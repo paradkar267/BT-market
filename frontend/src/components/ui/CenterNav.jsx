@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, MessageSquare, Info, Sparkles } from 'lucide-react';
+import { Home, MessageSquare, Info } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { TemplatesDropdown } from './TemplatesDropdown';
@@ -40,7 +40,7 @@ export function CenterNav() {
     <div className="hidden md:flex items-center justify-center">
       <nav
         aria-label="Main Navigation"
-        className="flex items-center gap-0.5 bg-slate-100/80 dark:bg-slate-850/80 border border-slate-200/80 dark:border-slate-800 p-1 rounded-xl shadow-[0_1px_2px_rgba(0,0,0,0.04)] backdrop-blur-md"
+        className="flex items-center gap-0.5 bg-neutral-100/90 dark:bg-neutral-900/90 border border-neutral-200/80 dark:border-neutral-800 p-1 rounded-xl shadow-[0_1px_2px_rgba(0,0,0,0.04)] backdrop-blur-md"
       >
         {/* 1. Home */}
         <button
@@ -49,17 +49,17 @@ export function CenterNav() {
           className={cn(
             "relative cursor-pointer text-[13px] font-medium tracking-normal px-3 py-1.5 rounded-lg transition-colors duration-150 flex items-center gap-1.5 z-10 select-none",
             activeTab === "Home"
-              ? "text-slate-950 dark:text-white font-semibold"
-              : "text-slate-600 hover:text-slate-950 dark:text-slate-400 dark:hover:text-white"
+              ? "text-black dark:text-white font-semibold"
+              : "text-neutral-600 hover:text-black dark:text-neutral-400 dark:hover:text-white"
           )}
         >
-          <Home className={cn("w-3.5 h-3.5 transition-colors", activeTab === "Home" ? "text-amber-500" : "text-slate-400")} />
+          <Home className={cn("w-3.5 h-3.5 transition-colors", activeTab === "Home" ? "text-black dark:text-white" : "text-neutral-400")} />
           <span>Home</span>
 
           {activeTab === "Home" && (
             <motion.div
               layoutId="activeNavPill"
-              className="absolute inset-0 bg-white dark:bg-slate-900 rounded-lg shadow-[0_1px_3px_rgba(0,0,0,0.08)] -z-10 border border-black/[0.04] dark:border-white/[0.08]"
+              className="absolute inset-0 bg-white dark:bg-neutral-800 rounded-lg shadow-[0_1px_3px_rgba(0,0,0,0.08)] -z-10 border border-black/[0.06] dark:border-white/[0.08]"
               transition={{
                 type: "spring",
                 stiffness: 450,
@@ -96,17 +96,17 @@ export function CenterNav() {
           className={cn(
             "relative cursor-pointer text-[13px] font-medium tracking-normal px-3 py-1.5 rounded-lg transition-colors duration-150 flex items-center gap-1.5 z-10 select-none",
             activeTab === "About Us"
-              ? "text-slate-950 dark:text-white font-semibold"
-              : "text-slate-600 hover:text-slate-950 dark:text-slate-400 dark:hover:text-white"
+              ? "text-black dark:text-white font-semibold"
+              : "text-neutral-600 hover:text-black dark:text-neutral-400 dark:hover:text-white"
           )}
         >
-          <Info className={cn("w-3.5 h-3.5 transition-colors", activeTab === "About Us" ? "text-amber-500" : "text-slate-400")} />
+          <Info className={cn("w-3.5 h-3.5 transition-colors", activeTab === "About Us" ? "text-black dark:text-white" : "text-neutral-400")} />
           <span>About Us</span>
 
           {activeTab === "About Us" && (
             <motion.div
               layoutId="activeNavPill"
-              className="absolute inset-0 bg-white dark:bg-slate-900 rounded-lg shadow-[0_1px_3px_rgba(0,0,0,0.08)] -z-10 border border-black/[0.04] dark:border-white/[0.08]"
+              className="absolute inset-0 bg-white dark:bg-neutral-800 rounded-lg shadow-[0_1px_3px_rgba(0,0,0,0.08)] -z-10 border border-black/[0.06] dark:border-white/[0.08]"
               transition={{
                 type: "spring",
                 stiffness: 450,
@@ -123,17 +123,17 @@ export function CenterNav() {
           className={cn(
             "relative cursor-pointer text-[13px] font-medium tracking-normal px-3 py-1.5 rounded-lg transition-colors duration-150 flex items-center gap-1.5 z-10 select-none",
             activeTab === "Contact"
-              ? "text-slate-950 dark:text-white font-semibold"
-              : "text-slate-600 hover:text-slate-950 dark:text-slate-400 dark:hover:text-white"
+              ? "text-black dark:text-white font-semibold"
+              : "text-neutral-600 hover:text-black dark:text-neutral-400 dark:hover:text-white"
           )}
         >
-          <MessageSquare className={cn("w-3.5 h-3.5 transition-colors", activeTab === "Contact" ? "text-amber-500" : "text-slate-400")} />
+          <MessageSquare className={cn("w-3.5 h-3.5 transition-colors", activeTab === "Contact" ? "text-black dark:text-white" : "text-neutral-400")} />
           <span>Contact</span>
 
           {activeTab === "Contact" && (
             <motion.div
               layoutId="activeNavPill"
-              className="absolute inset-0 bg-white dark:bg-slate-900 rounded-lg shadow-[0_1px_3px_rgba(0,0,0,0.08)] -z-10 border border-black/[0.04] dark:border-white/[0.08]"
+              className="absolute inset-0 bg-white dark:bg-neutral-800 rounded-lg shadow-[0_1px_3px_rgba(0,0,0,0.08)] -z-10 border border-black/[0.06] dark:border-white/[0.08]"
               transition={{
                 type: "spring",
                 stiffness: 450,
