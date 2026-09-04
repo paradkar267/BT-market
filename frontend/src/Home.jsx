@@ -114,26 +114,24 @@ export default function Home() {
 
             {/* Interactive Search Bar in Hero */}
             <div className="max-w-xl mb-7">
-              <form 
-                onSubmit={handleHeroSearch}
-                className="relative flex items-center p-1.5 bg-white rounded-2xl border border-gray-200 shadow-[0_8px_30px_rgba(0,0,0,0.06)] focus-within:border-black dark:focus-within:border-white focus-within:ring-4 focus-within:ring-black/5 dark:focus-within:ring-white/10 transition-all"
+              <div 
+                onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))}
+                className="relative flex items-center p-1.5 bg-white rounded-2xl border border-gray-200 shadow-[0_8px_30px_rgba(0,0,0,0.06)] hover:border-amber-500/50 hover:shadow-[0_8px_30px_rgba(245,158,11,0.1)] transition-all cursor-pointer group select-none"
               >
-                <Search className="w-5 h-5 text-gray-400 ml-3.5 shrink-0" />
-                <input
-                  type="text"
-                  value={heroSearch}
-                  onChange={(e) => setHeroSearch(e.target.value)}
-                  placeholder="Search templates (e.g. SaaS, Dashboard, React)..."
-                  className="w-full px-3 py-2.5 bg-transparent text-sm text-gray-900 placeholder-gray-400 outline-none font-medium"
-                />
+                <Search className="w-5 h-5 text-gray-400 group-hover:text-amber-500 ml-3.5 shrink-0 transition-colors" />
+                <div className="w-full px-3 py-2.5 text-sm text-gray-400 font-medium flex items-center justify-between">
+                  <span>Search templates (e.g. SaaS, Dashboard, React)...</span>
+                  <kbd className="hidden sm:inline-flex items-center px-2 py-0.5 text-[10px] font-mono font-semibold text-gray-400 bg-gray-100 border border-gray-200 rounded">⌘K</kbd>
+                </div>
                 <button
-                  type="submit"
+                  type="button"
                   className="px-5 py-2.5 bg-gray-950 hover:bg-black text-white text-xs font-bold rounded-xl transition-all cursor-pointer shrink-0 shadow-sm flex items-center gap-1.5"
                 >
                   <span>Search</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
-              </form>
+              </div>
+
 
               {/* Quick Filter Tags */}
               <div className="flex flex-wrap items-center gap-2 mt-3 text-xs text-gray-500">
