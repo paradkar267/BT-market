@@ -196,7 +196,7 @@ export default function Home() {
           {loading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="bg-gray-100 rounded-2xl aspect-[16/10] animate-pulse" />
+                <div key={i} className="bg-gray-100 dark:bg-zinc-800 rounded-xl aspect-[4/3] animate-pulse" />
               ))}
             </div>
           ) : (
@@ -254,7 +254,7 @@ export default function Home() {
           {loading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {[...Array(8)].map((_, i) => (
-                <div key={i} className="bg-gray-100 rounded-2xl aspect-[16/10] animate-pulse" />
+                <div key={i} className="bg-gray-100 dark:bg-zinc-800 rounded-xl aspect-[4/3] animate-pulse" />
               ))}
             </div>
           ) : (

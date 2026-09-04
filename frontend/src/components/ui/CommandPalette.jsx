@@ -312,14 +312,14 @@ export function CommandPalette() {
                       key={item.id}
                       onClick={() => handleSelectTemplate(item.id)}
                       onMouseEnter={() => setSelectedIndex(index)}
-                      className={`group flex flex-col bg-white dark:bg-slate-900 rounded-2xl border transition-all duration-200 cursor-pointer overflow-hidden ${
+                      className={`group flex flex-col bg-white dark:bg-slate-900 rounded-xl border transition-all duration-200 cursor-pointer overflow-hidden ${
                         isSelected
                           ? 'border-amber-500 ring-2 ring-amber-500/30 shadow-xl scale-[1.01]'
                           : 'border-slate-200/90 dark:border-slate-800 hover:border-amber-500/50 shadow-xs hover:shadow-lg'
                       }`}
                     >
-                      {/* Card Thumbnail */}
-                      <div className="relative aspect-[16/10] overflow-hidden bg-slate-100 dark:bg-slate-800">
+                      {/* Card Thumbnail: 70% Ratio */}
+                      <div className="relative aspect-[4/3] overflow-hidden bg-slate-100 dark:bg-slate-800">
                         <img
                           src={item.image}
                           alt={item.title}

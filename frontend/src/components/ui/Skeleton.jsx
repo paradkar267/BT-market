@@ -10,9 +10,9 @@ export function Skeleton({ className = "" }) {
 // Skeleton for DenseCard (Templates Page)
 export function SkeletonCard() {
   return (
-    <div className="flex flex-col h-full bg-white dark:bg-black rounded-[2rem] border border-black/[0.04] dark:border-white/[0.04] shadow-sm overflow-hidden p-3 pb-6">
+    <div className="flex flex-col h-full bg-white dark:bg-black rounded-xl border border-black/[0.04] dark:border-white/[0.04] shadow-sm overflow-hidden p-3 pb-4">
       {/* Image Area Skeleton */}
-      <Skeleton className="w-full aspect-[16/10] rounded-[1.5rem] mb-5" />
+      <Skeleton className="w-full aspect-[4/3] rounded-lg mb-3" />
       
       <div className="flex flex-col flex-1 px-3">
         {/* Title & Author Skeleton */}
