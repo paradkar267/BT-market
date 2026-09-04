@@ -142,9 +142,11 @@ export default function PreviewPage() {
   return (
     <div className="flex flex-col h-screen w-full bg-black overflow-hidden font-sans">
       <SEO 
-        title={`Live Preview - ${template.title}`}
-        description={`Live preview of ${template.title}`}
+        title={`Live Preview - ${template.title} | BizLeap Marketplace`}
+        description={`Explore full interactive live demo and responsive preview of ${template.title}. Production-ready code with lifetime updates.`}
         image={template.image}
+        url={`/preview/${template._id || template.id}`}
+        product={template}
       />
       
       {/* Top Bar */}

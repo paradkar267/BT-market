@@ -14,6 +14,7 @@ import UserMenu from './UserMenu';
 import { useTheme } from './ThemeContext';
 import { useAuth } from './AuthContext';
 import { ProductSkeleton } from './components/ui/Skeleton';
+import { InteractiveProductCard } from './components/ui/card-7';
 import { FAQSection } from './components/ui/FAQSection';
 import { Footerdemo } from '@/components/ui/footer-section';
 import Navbar from './components/Navbar';
@@ -92,6 +93,12 @@ export default function ProductPage() {
         keywords={template.keywords?.join(', ')}
         image={template.image}
         url={`/product/${template.id}`}
+        product={template}
+        breadcrumbs={[
+          { name: 'Home', url: '/' },
+          { name: 'Templates', url: '/templates' },
+          { name: template.title, url: `/product/${template.id}` }
+        ]}
       />
 
       {/* Unified Global Navbar */}
@@ -466,18 +473,20 @@ export default function ProductPage() {
 
                   {/* Primary CTA Buttons */}
                   <div className="space-y-3">
+                    {/* Primary Buy Now Button */}
                     <button 
                       onClick={() => {
                         if (isOwned) return;
-                        requireAuth(() => addToCart(template));
+                        requireAuth(() => {
+                          if (!inCart) addToCart(template);
+                          navigate('/cart');
+                        });
                       }}
                       disabled={isOwned}
                       className={`w-full py-4 rounded-2xl font-black text-sm sm:text-base flex items-center justify-center gap-2.5 transition-all duration-200 cursor-pointer shadow-lg active:scale-95 ${
                         isOwned
                           ? 'bg-gray-200 dark:bg-white/10 text-gray-500 cursor-not-allowed'
-                          : inCart 
-                          ? 'bg-emerald-500 hover:bg-emerald-600 text-white shadow-emerald-500/25'
-                          : 'bg-black dark:bg-white hover:bg-gray-800 dark:hover:bg-gray-100 text-white dark:text-black shadow-black/20 dark:shadow-white/20'
+                          : 'bg-black dark:bg-white hover:bg-neutral-800 dark:hover:bg-neutral-100 text-white dark:text-black shadow-black/20 dark:shadow-white/20'
                       }`}
                     >
                       {isOwned ? (
@@ -485,29 +494,46 @@ export default function ProductPage() {
                           <Check className="w-5 h-5" />
                           <span>Already Purchased</span>
                         </>
-                      ) : inCart ? (
-                        <>
-                          <Check className="w-5 h-5" />
-                          <span>In Cart • View Checkout</span>
-                        </>
                       ) : (
                         <>
-                          <ShoppingCart className="w-5 h-5" />
-                          <span>Add to Cart</span>
+                          <Zap className="w-5 h-5 fill-current" />
+                          <span>Buy Now</span>
                         </>
                       )}
                     </button>
 
-                    {/* Secondary Actions: Live Preview & Wishlist */}
+                    {/* Secondary Actions: Add to Cart & Wishlist */}
                     <div className="grid grid-cols-2 gap-2.5">
-                      <Link
-                        to={`/preview/${template.id}`}
-                        target="_blank"
-                        className="py-3 px-4 rounded-xl border border-black/10 dark:border-white/10 bg-gray-50 hover:bg-gray-100 dark:bg-white/5 dark:hover:bg-white/10 text-xs font-bold text-gray-800 dark:text-gray-200 flex items-center justify-center gap-1.5 transition-all text-center"
+                      <button
+                        onClick={() => {
+                          if (isOwned) return;
+                          requireAuth(() => {
+                            if (inCart) {
+                              navigate('/cart');
+                            } else {
+                              addToCart(template);
+                            }
+                          });
+                        }}
+                        disabled={isOwned}
+                        className={`py-3 px-4 rounded-xl border text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                          inCart
+                            ? 'border-emerald-200 dark:border-emerald-500/20 bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400'
+                            : 'border-black/10 dark:border-white/10 bg-gray-50 hover:bg-gray-100 dark:bg-white/5 dark:hover:bg-white/10 text-gray-800 dark:text-gray-200'
+                        }`}
                       >
-                        <Eye className="w-3.5 h-3.5 text-black dark:text-white" />
-                        <span>Live Demo</span>
-                      </Link>
+                        {inCart ? (
+                          <>
+                            <Check className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                            <span>In Cart</span>
+                          </>
+                        ) : (
+                          <>
+                            <ShoppingCart className="w-3.5 h-3.5" />
+                            <span>Add to Cart</span>
+                          </>
+                        )}
+                      </button>
 
                       <button
                         onClick={() => toggleWishlist(template)}

@@ -3,7 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   Search, ShoppingCart, Menu, X, Home, LayoutTemplate, 
   MessageSquare, Sparkles, Layers, LayoutGrid,
-  Info, ArrowRight, Gift, Crown, TrendingUp
+  ArrowRight, Gift, Crown, TrendingUp
 } from 'lucide-react';
 import { useCart } from '../CartContext';
 import { useAuth } from '../AuthContext';
@@ -138,7 +138,7 @@ export default function Navbar() {
             </button>
 
             {/* Primary Nav Links Grid */}
-            <div className="grid grid-cols-4 gap-2">
+            <div className="grid grid-cols-3 gap-2">
               <Link
                 to="/"
                 onClick={() => setMobileOpen(false)}
@@ -165,18 +165,6 @@ export default function Navbar() {
                 <span className="text-[11px]">Templates</span>
               </Link>
 
-              <Link
-                to="/about"
-                onClick={() => setMobileOpen(false)}
-                className={`flex flex-col items-center justify-center p-2.5 rounded-xl border text-center transition-all ${
-                  location.pathname === '/about'
-                    ? 'bg-black text-white dark:bg-white dark:text-black border-black dark:border-white font-semibold'
-                    : 'bg-neutral-50 dark:bg-neutral-900 border-neutral-200 dark:border-neutral-800 text-neutral-700 dark:text-neutral-300 font-medium'
-                }`}
-              >
-                <Info className="w-4 h-4 mb-1" />
-                <span className="text-[11px]">About</span>
-              </Link>
 
               <Link
                 to="/contact"

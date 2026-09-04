@@ -59,8 +59,12 @@ export default function ContactPage() {
     <div className="min-h-screen flex flex-col font-sans bg-gray-50 text-gray-900">
       <SEO 
         title="Contact Us | BizLeap Marketplace" 
-        description="Have a question about our templates or need custom work? Contact the BizLeap team."
+        description="Have a question about our templates or need custom digital product development? Contact the BizLeap team based in Nagpur, India."
         url="/contact"
+        breadcrumbs={[
+          { name: "Home", url: "/" },
+          { name: "Contact BizLeap", url: "/contact" }
+        ]}
       />
 
       {/* Global Unified Navigation */}

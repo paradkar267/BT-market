@@ -1,9 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import {
-  ShoppingCart, Search, MoveRight, Headset, Code2, ShieldCheck,
-  Download, Sparkles, Gauge, CheckCircle2, ArrowRight, Star, Zap, Package
-} from 'lucide-react';
+import { Search, Check, ArrowRight, Sparkles } from 'lucide-react';
 import { useCart } from './CartContext';
 import { useTemplates } from './useTemplates';
 import { useAuth } from './AuthContext';
@@ -31,6 +28,49 @@ const CATEGORY_CHIPS = [
   { label: 'Next.js', value: 'Next.js' },
   { label: 'Figma', value: 'Figma' },
 ];
+
+const ROTATING_PHRASES = [
+  'ready to launch.',
+  'built to convert.',
+  'engineered to scale.',
+  'designed to impress.'
+];
+
+function DynamicTicker() {
+  const [index, setIndex] = useState(0);
+  const [state, setState] = useState('visible');
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setState('exiting');
+      setTimeout(() => {
+        setIndex((i) => (i + 1) % ROTATING_PHRASES.length);
+        setState('entering');
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => setState('visible'));
+        });
+      }, 260);
+    }, 2800);
+    return () => clearInterval(timer);
+  }, []);
+
+  const style = {
+    display: 'inline-block',
+    transition: state === 'visible' ? 'all 320ms cubic-bezier(0.16, 1, 0.3, 1)' :
+                state === 'exiting' ? 'all 240ms cubic-bezier(0.4, 0, 0.2, 1)' : 'none',
+    opacity: state === 'visible' ? 1 : 0,
+    transform: state === 'visible' ? 'translateY(0)' :
+               state === 'exiting' ? 'translateY(-24px)' : 'translateY(24px)',
+  };
+
+  return (
+    <span className="inline-block overflow-hidden align-bottom whitespace-nowrap" style={{ height: '1.18em' }}>
+      <span style={style} className="text-[#172033] font-bold whitespace-nowrap">
+        {ROTATING_PHRASES[index]}
+      </span>
+    </span>
+  );
+}
 
 export default function Home() {
   const { cartItems } = useCart();
@@ -62,7 +102,7 @@ export default function Home() {
       {/* ─── BESPOKE DEVELOPER HERO ────────────────── */}
       <section className="relative w-full min-h-[620px] md:min-h-[700px] bg-white border-b border-gray-100 flex items-center overflow-hidden pointer-events-auto">
         {/* Right Background Video Layer */}
-        <div className="absolute top-0 right-0 w-full lg:w-[50%] h-full pointer-events-none overflow-hidden z-0 flex items-center justify-center lg:justify-end">
+        <div className="absolute top-0 right-0 w-full lg:w-[54%] h-full pointer-events-none overflow-hidden z-0 flex items-center justify-center lg:justify-end">
           <video
             ref={(el) => {
               if (el) {
@@ -75,84 +115,72 @@ export default function Home() {
             muted
             playsInline
             preload="auto"
-            className="w-full h-full object-cover object-center lg:object-[60%_center]"
+            className="w-full h-full object-cover object-center lg:object-[68%_center]"
             src="/bg.mp4"
           />
 
-          {/* Left-edge natural blend into white canvas */}
-          <div className="absolute inset-y-0 left-0 w-32 md:w-56 bg-gradient-to-r from-white via-white/85 to-transparent pointer-events-none z-10" />
+          {/* Soft narrow left-edge blend — reduced to eliminate washed-out whitish haze */}
+          <div className="absolute inset-y-0 left-0 w-16 md:w-24 bg-gradient-to-r from-white to-transparent pointer-events-none z-10" />
 
-          {/* Top and bottom edge fades */}
-          <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-white to-transparent pointer-events-none z-10" />
-          <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-white to-transparent pointer-events-none z-10" />
+          {/* Subtle top and bottom fades */}
+          <div className="absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-white/40 to-transparent pointer-events-none z-10" />
+          <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-white/40 to-transparent pointer-events-none z-10" />
         </div>
 
         {/* Hero Left Content Layer */}
-        <div className="relative z-10 max-w-[1400px] w-full mx-auto px-5 md:px-10 py-16 lg:py-24">
-          <div className="max-w-2xl">
-            {/* Clean, Refined Minimalist Headline */}
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-[54px] font-bold tracking-tight leading-[1.12] text-gray-950 dark:text-white mb-4">
-              Ship production websites <br />
-              <span className="text-gray-400 dark:text-gray-500 font-medium">in days, not months.</span>
-            </h1>
-
-            {/* Minimal Subtitle */}
-            <p className="text-base text-gray-500 dark:text-gray-400 max-w-lg mb-8 leading-relaxed font-normal">
-              Curated React and Tailwind templates with full source code, lifetime commercial license, and instant automated delivery.
+        <div className="relative z-10 max-w-[1440px] w-full mx-auto px-6 sm:px-8 lg:pl-8 xl:pl-12 lg:pr-8 py-16 lg:py-24">
+          <div className="max-w-[620px] lg:max-w-[660px]">
+            {/* Small uppercase label */}
+            <p className="text-[12px] sm:text-[13px] font-bold uppercase tracking-[0.16em] text-[#556075] mb-5">
+              PRODUCTION-READY WEBSITE TEMPLATES
             </p>
 
-            {/* Primary & Secondary Action CTAs */}
-            <div className="flex flex-wrap items-center gap-3 mb-8">
+            {/* Main headline with Dynamic Rotating Text */}
+            <h1 className="text-4xl sm:text-5xl lg:text-[58px] xl:text-[64px] font-bold tracking-tight text-[#172033] leading-[1.08] mb-6">
+              Premium websites,<br />
+              <DynamicTicker />
+            </h1>
+
+            {/* Supporting paragraph */}
+            <p className="text-[17px] sm:text-[18px] leading-[1.65] text-[#556075] max-w-[560px] font-normal mb-8">
+              Curated React and Tailwind templates built for ambitious teams who demand top-tier performance, pixel-perfect design, and full commercial freedom.
+            </p>
+
+            {/* Primary & Secondary CTAs */}
+            <div className="flex flex-wrap items-center gap-3.5">
               <Link
                 to="/templates"
-                className="px-6 py-3.5 bg-black hover:bg-neutral-800 text-white text-sm font-bold rounded-xl transition-all shadow-sm hover:shadow-md flex items-center gap-2 group cursor-pointer"
+                className="group h-[48px] px-6 bg-[#172033] hover:bg-[#222d44] text-white text-sm font-semibold rounded-[8px] transition-colors duration-200 inline-flex items-center justify-center cursor-pointer shadow-none"
               >
                 <span>Explore Templates</span>
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+                <ArrowRight className="w-4 h-4 ml-2 transition-transform duration-200 group-hover:translate-x-0.5" />
               </Link>
               
               <Link
-                to="/about"
-                className="px-5 py-3.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 text-sm font-semibold rounded-xl transition-all border border-neutral-200/80 flex items-center gap-2 cursor-pointer"
+                to="/templates"
+                className="h-[48px] px-6 bg-white hover:bg-neutral-50 text-[#172033] text-sm font-semibold rounded-[8px] border border-[#D0D5DD] hover:border-neutral-400 transition-colors duration-200 inline-flex items-center justify-center cursor-pointer shadow-none"
               >
-                <span>About Bizleap</span>
+                <span>View Live Demos</span>
               </Link>
             </div>
 
-            {/* Quick Popular Categories */}
-            <div className="flex flex-wrap items-center gap-2 mb-8">
-              <span className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mr-1">Browse:</span>
-              {[
-                { label: 'SaaS', path: '/templates?tag=SaaS' },
-                { label: 'E-Commerce', path: '/templates?tag=E-Commerce' },
-                { label: 'Dashboards', path: '/templates?tag=Dashboard' },
-                { label: 'Agency', path: '/templates?tag=Agency' },
-                { label: 'Landing Page', path: '/templates?tag=Landing%20Page' },
-              ].map(chip => (
-                <button
-                  key={chip.label}
-                  type="button"
-                  onClick={() => navigate(chip.path)}
-                  className="px-3 py-1 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-medium transition-colors cursor-pointer text-xs"
-                >
-                  {chip.label}
-                </button>
-              ))}
-            </div>
-
-            {/* Trust Highlights Strip */}
-            <div className="pt-6 border-t border-neutral-100 grid grid-cols-3 gap-4 max-w-lg">
-              <div className="flex items-center gap-2 text-xs text-neutral-600 font-medium">
-                <Code2 className="w-4 h-4 text-black shrink-0" />
-                <span>Full Source Code</span>
-              </div>
-              <div className="flex items-center gap-2 text-xs text-neutral-600 font-medium">
-                <ShieldCheck className="w-4 h-4 text-black shrink-0" />
-                <span>Commercial License</span>
-              </div>
-              <div className="flex items-center gap-2 text-xs text-neutral-600 font-medium">
-                <Download className="w-4 h-4 text-black shrink-0" />
-                <span>Instant Download</span>
+            {/* Minimal Feature Row */}
+            <div className="pt-6 mt-8 border-t border-neutral-200/80 max-w-[560px]">
+              <div className="flex flex-wrap items-center gap-y-2 gap-x-4 text-xs font-medium text-[#556075]">
+                <span className="flex items-center gap-1.5">
+                  <Check className="w-3.5 h-3.5 text-[#172033]" />
+                  Full Source Code
+                </span>
+                <span className="text-neutral-300 select-none">•</span>
+                <span className="flex items-center gap-1.5">
+                  <Check className="w-3.5 h-3.5 text-[#172033]" />
+                  Commercial License
+                </span>
+                <span className="text-neutral-300 select-none">•</span>
+                <span className="flex items-center gap-1.5">
+                  <Check className="w-3.5 h-3.5 text-[#172033]" />
+                  Instant Access
+                </span>
               </div>
             </div>
           </div>
@@ -260,193 +288,6 @@ export default function Home() {
             </Link>
           </div>
         </section>
-
-        {/* E. WHY CHOOSE US — Visual-First Feature Grid */}
-        <section className="w-full py-20 bg-gradient-to-b from-gray-50/80 via-white to-gray-50/60 dark:from-transparent dark:via-white/[0.01] dark:to-transparent border-t border-gray-100 dark:border-white/5 relative overflow-hidden">
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-black/[0.02] dark:bg-white/[0.02] blur-3xl pointer-events-none rounded-full" />
-
-          <div className="max-w-[1400px] mx-auto px-5 md:px-10 relative z-10">
-            <div className="text-center mb-12">
-              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wider bg-gray-100 dark:bg-zinc-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-zinc-700 shadow-xs mb-3">
-                <Sparkles className="w-3.5 h-3.5 text-black dark:text-white" />
-                Why BizLeap
-              </div>
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-gray-900 dark:text-white font-display">
-                Built for Developers Who Ship
-              </h2>
-              <p className="text-gray-500 dark:text-gray-400 mt-2 max-w-xl mx-auto text-sm sm:text-base font-medium">
-                Production-grade architecture with zero boilerplate and unlimited commercial freedom.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-              {/* Feature 1: Clean Code */}
-              <div className="group relative bg-white dark:bg-zinc-900 rounded-xl border border-gray-200/90 dark:border-zinc-800 p-5 sm:p-6 shadow-xs hover:shadow-lg transition-all duration-300 flex flex-col justify-between overflow-hidden">
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="w-10 h-10 rounded-lg bg-black dark:bg-white text-white dark:text-black flex items-center justify-center shadow-xs">
-                      <Code2 className="w-5 h-5" />
-                    </div>
-                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-zinc-800 px-2 py-0.5 rounded-md border border-gray-200/60 dark:border-zinc-700">
-                      React & Tailwind
-                    </span>
-                  </div>
-
-                  <h3 className="text-base font-bold text-gray-900 dark:text-white mb-1 font-display">
-                    Clean Source Code
-                  </h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-3">
-                    Meticulously structured, unminified React & Tailwind components.
-                  </p>
-
-                  {/* Visual Code Preview Miniature */}
-                  <div className="p-3 rounded-lg bg-slate-950 text-slate-200 font-mono text-[11px] border border-slate-800 shadow-inner">
-                    <div className="flex items-center gap-1.5 mb-1.5 pb-1 border-b border-slate-800/80 text-slate-500 text-[9px]">
-                      <span className="w-2 h-2 rounded-full bg-neutral-600 inline-block" />
-                      <span className="w-2 h-2 rounded-full bg-neutral-500 inline-block" />
-                      <span className="w-2 h-2 rounded-full bg-neutral-400 inline-block" />
-                      <span className="ml-1 text-slate-400">Template.tsx</span>
-                    </div>
-                    <div className="text-slate-400"><span className="text-white">export default</span> <span className="text-neutral-300">App</span>() {'{'}</div>
-                    <div className="pl-3 text-neutral-300">&lt;Hero stack="react" /&gt;</div>
-                    <div className="text-slate-400">{'}'}</div>
-                  </div>
-                </div>
-
-                <div className="pt-4 mt-3 border-t border-gray-100 dark:border-zinc-800 flex items-center justify-between text-xs font-bold text-gray-900 dark:text-white">
-                  <span>Full TypeScript Support</span>
-                  <ArrowRight className="w-3.5 h-3.5 text-black dark:text-white" />
-                </div>
-              </div>
-
-              {/* Feature 2: 99+ Performance */}
-              <div className="group relative bg-white dark:bg-zinc-900 rounded-xl border border-gray-200/90 dark:border-zinc-800 p-5 sm:p-6 shadow-xs hover:shadow-lg transition-all duration-300 flex flex-col justify-between overflow-hidden">
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="w-10 h-10 rounded-lg bg-black dark:bg-white text-white dark:text-black flex items-center justify-center shadow-xs">
-                      <Gauge className="w-5 h-5" />
-                    </div>
-                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-zinc-800 px-2 py-0.5 rounded-md border border-gray-200/60 dark:border-zinc-700">
-                      100/100 Speed
-                    </span>
-                  </div>
-
-                  <h3 className="text-base font-bold text-gray-900 dark:text-white mb-1 font-display">
-                    99+ Performance
-                  </h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-3">
-                    Engineered for instant paint, zero bloat, and top Core Web Vitals.
-                  </p>
-
-                  {/* Visual Performance Gauge Miniature */}
-                  <div className="p-3 rounded-lg bg-neutral-50 dark:bg-zinc-800/60 border border-neutral-200 dark:border-zinc-700 flex items-center justify-between">
-                    <div className="flex items-center gap-2.5">
-                      <div className="w-9 h-9 rounded-full border-2 border-black dark:border-white flex items-center justify-center font-black text-black dark:text-white text-xs">
-                        100
-                      </div>
-                      <div>
-                        <div className="text-[11px] font-bold text-black dark:text-white">Core Web Vitals</div>
-                        <div className="text-[9px] text-neutral-500 dark:text-neutral-400 font-medium">0.3s FCP • 0.0 CLS</div>
-                      </div>
-                    </div>
-                    <span className="text-[10px] font-bold text-black dark:text-white bg-neutral-200 dark:bg-zinc-700 px-1.5 py-0.5 rounded">FAST</span>
-                  </div>
-                </div>
-
-                <div className="pt-4 mt-3 border-t border-gray-100 dark:border-zinc-800 flex items-center justify-between text-xs font-bold text-gray-900 dark:text-white">
-                  <span>SEO Optimized</span>
-                  <ArrowRight className="w-3.5 h-3.5 text-black dark:text-white" />
-                </div>
-              </div>
-
-              {/* Feature 3: Commercial License */}
-              <div className="group relative bg-white dark:bg-zinc-900 rounded-xl border border-gray-200/90 dark:border-zinc-800 p-5 sm:p-6 shadow-xs hover:shadow-lg transition-all duration-300 flex flex-col justify-between overflow-hidden">
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="w-10 h-10 rounded-lg bg-black dark:bg-white text-white dark:text-black flex items-center justify-center shadow-xs">
-                      <ShieldCheck className="w-5 h-5" />
-                    </div>
-                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-zinc-800 px-2 py-0.5 rounded-md border border-gray-200/60 dark:border-zinc-700">
-                      Royalty Free
-                    </span>
-                  </div>
-
-                  <h3 className="text-base font-bold text-gray-900 dark:text-white mb-1 font-display">
-                    Commercial Rights
-                  </h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-3">
-                    Deploy on unlimited personal & client projects forever.
-                  </p>
-
-                  {/* Visual Commercial Verification Miniature */}
-                  <div className="p-3 rounded-lg bg-slate-50 dark:bg-zinc-800/70 border border-slate-200/80 dark:border-zinc-700/80 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-md bg-black/10 dark:bg-white/10 text-black dark:text-white flex items-center justify-center">
-                        <CheckCircle2 className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <div className="text-[11px] font-bold text-slate-900 dark:text-white">Full License</div>
-                        <div className="text-[9px] text-slate-400">Unlimited Client Sites</div>
-                      </div>
-                    </div>
-                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-black dark:text-white bg-neutral-200 dark:bg-zinc-700 px-2 py-0.5 rounded">
-                      LIFETIME
-                    </span>
-                  </div>
-                </div>
-
-                <div className="pt-4 mt-3 border-t border-gray-100 dark:border-zinc-800 flex items-center justify-between text-xs font-bold text-gray-900 dark:text-white">
-                  <span>Zero Renewal Fees</span>
-                  <ArrowRight className="w-3.5 h-3.5 text-black dark:text-white" />
-                </div>
-              </div>
-
-              {/* Feature 4: Instant Auto-Delivery */}
-              <div className="group relative bg-white dark:bg-zinc-900 rounded-xl border border-gray-200/90 dark:border-zinc-800 p-5 sm:p-6 shadow-xs hover:shadow-lg transition-all duration-300 flex flex-col justify-between overflow-hidden">
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="w-10 h-10 rounded-lg bg-black dark:bg-white text-white dark:text-black flex items-center justify-center shadow-xs">
-                      <Download className="w-5 h-5" />
-                    </div>
-                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-zinc-800 px-2 py-0.5 rounded-md border border-gray-200/60 dark:border-zinc-700">
-                      Automated
-                    </span>
-                  </div>
-
-                  <h3 className="text-base font-bold text-gray-900 dark:text-white mb-1 font-display">
-                    Instant Delivery
-                  </h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 font-medium mb-3">
-                    Automated ZIP download + invoice sent immediately to your email.
-                  </p>
-
-                  {/* Visual Package File Miniature */}
-                  <div className="p-3 rounded-lg bg-slate-50 dark:bg-zinc-800/70 border border-slate-200/80 dark:border-zinc-700/80 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-md bg-black/10 dark:bg-white/10 text-black dark:text-white flex items-center justify-center">
-                        <Package className="w-4 h-4" />
-                      </div>
-                      <div>
-                        <div className="text-[11px] font-bold text-slate-900 dark:text-white font-mono">template.zip</div>
-                        <div className="text-[9px] text-slate-400">Complete Archive</div>
-                      </div>
-                    </div>
-                    <span className="text-[10px] font-mono font-bold text-slate-600 dark:text-slate-300 bg-white dark:bg-zinc-900 px-2 py-0.5 rounded border border-slate-200 dark:border-zinc-700">
-                      48 MB
-                    </span>
-                  </div>
-                </div>
-
-                <div className="pt-4 mt-3 border-t border-gray-100 dark:border-zinc-800 flex items-center justify-between text-xs font-bold text-gray-900 dark:text-white">
-                  <span>Direct Download Link</span>
-                  <ArrowRight className="w-3.5 h-3.5 text-black dark:text-white" />
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
-
 
         {/* G. FAQ */}
         <div className="pt-4 pb-16 px-5 md:px-10 w-full max-w-[900px] mx-auto">

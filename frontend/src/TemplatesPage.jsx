@@ -12,6 +12,7 @@ import Navbar from './components/Navbar';
 import SEO from './components/SEO';
 import { useCurrency } from './CurrencyContext';
 import { useAuth } from './AuthContext';
+import { SortDropdown } from './components/ui/SortDropdown';
 
 export default function TemplatesPage() {
   const { cartItems } = useCart();
@@ -217,9 +218,13 @@ export default function TemplatesPage() {
   return (
     <div className="min-h-screen flex flex-col font-sans bg-gray-50 text-gray-900">
       <SEO 
-        title="All Templates" 
-        description="Browse our complete collection of premium digital templates and UI kits."
+        title="All Website Templates & UI Kits | BizLeap" 
+        description="Browse our complete collection of production-ready React, Next.js, and Tailwind CSS digital website templates and dashboards."
         url="/templates"
+        breadcrumbs={[
+          { name: "Home", url: "/" },
+          { name: "Templates Catalog", url: "/templates" }
+        ]}
       />
       
       {/* Navigation — matches Home.jsx */}
@@ -252,16 +257,7 @@ export default function TemplatesPage() {
             <span className="text-sm font-bold text-gray-500">{filteredTemplates.length} results</span>
           </div>
           <div className="flex justify-end">
-            <select 
-              value={sortOrder} 
-              onChange={(e) => setSortOrder(e.target.value)}
-              className={`px-3 py-2 rounded-lg font-bold text-sm border outline-none ${isDark ? 'bg-black border-white/20 text-white' : 'bg-white border-gray-300 text-black'}`}
-            >
-              <option value="newest" className="bg-white dark:bg-black text-black dark:text-white">Newest Arrivals</option>
-              <option value="popular" className="bg-white dark:bg-black text-black dark:text-white">Most Popular</option>
-              <option value="price-low" className="bg-white dark:bg-black text-black dark:text-white">Price: Low to High</option>
-              <option value="price-high" className="bg-white dark:bg-black text-black dark:text-white">Price: High to Low</option>
-            </select>
+            <SortDropdown value={sortOrder} onChange={setSortOrder} />
           </div>
         </div>
 
@@ -306,18 +302,9 @@ export default function TemplatesPage() {
           <div className="flex-1 w-full">
             <div className="hidden lg:flex justify-between items-center mb-6">
               <span className="text-sm font-bold text-gray-500">{filteredTemplates.length} results found</span>
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-bold text-gray-500">Sort by:</span>
-                <select 
-                  value={sortOrder} 
-                  onChange={(e) => setSortOrder(e.target.value)}
-                  className={`px-3 py-2 rounded-lg font-bold text-sm border outline-none cursor-pointer ${isDark ? 'bg-black border-white/20 text-white' : 'bg-white border-gray-300 text-black'}`}
-                >
-                  <option value="newest" className="bg-white dark:bg-black text-black dark:text-white">Newest Arrivals</option>
-                  <option value="popular" className="bg-white dark:bg-black text-black dark:text-white">Most Popular</option>
-                  <option value="price-low" className="bg-white dark:bg-black text-black dark:text-white">Price: Low to High</option>
-                  <option value="price-high" className="bg-white dark:bg-black text-black dark:text-white">Price: High to Low</option>
-                </select>
+              <div className="flex items-center gap-2.5">
+                <span className="text-xs font-semibold uppercase tracking-wider text-gray-400">Sort by:</span>
+                <SortDropdown value={sortOrder} onChange={setSortOrder} />
               </div>
             </div>
 

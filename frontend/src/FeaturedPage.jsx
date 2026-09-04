@@ -38,9 +38,13 @@ export default function FeaturedPage() {
   return (
     <div className={`min-h-screen flex flex-col font-sans pb-32 transition-colors duration-1000 ${isDark ? 'bg-transparent text-white' : 'bg-gray-50 dark:bg-gray-900 text-black dark:text-white'}`}>
       <SEO 
-        title="Featured Themes" 
-        description="Discover our highest-rated and best-selling premium templates."
+        title="Featured Themes & Top Rated Templates | BizLeap" 
+        description="Discover our highest-rated, award-winning, and best-selling premium React & Next.js website templates."
         url="/featured"
+        breadcrumbs={[
+          { name: "Home", url: "/" },
+          { name: "Featured Themes", url: "/featured" }
+        ]}
       />
       
       {/* Navigation */}

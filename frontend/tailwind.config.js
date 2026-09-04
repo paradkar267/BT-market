@@ -17,7 +17,7 @@ export default {
       },
       fontFamily: {
         sans: ['"Plus Jakarta Sans"', '"Inter"', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
-        display: ['"Plus Jakarta Sans"', '"Inter"', 'sans-serif'],
+        display: ['"Plus Jakarta Sans"', 'sans-serif'],
       },
       animation: {
         'blob': 'blob 7s infinite',

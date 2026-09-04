@@ -5,6 +5,7 @@ import UserMenu from './UserMenu';
 import { useTheme } from './ThemeContext';
 import { ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import SEO from './components/SEO';
 
 export default function TermsPage() {
   const { theme } = useTheme();
@@ -16,6 +17,15 @@ export default function TermsPage() {
 
   return (
     <div className={`min-h-screen font-sans transition-colors duration-500 ${isDark ? 'bg-black text-white' : 'bg-gray-50 text-black'}`}>
+      <SEO 
+        title="Terms and Conditions | BizLeap Marketplace"
+        description="Review BizLeap commercial license terms, template usage rights, and customer service conditions."
+        url="/terms"
+        breadcrumbs={[
+          { name: "Home", url: "/" },
+          { name: "Terms & Conditions", url: "/terms" }
+        ]}
+      />
       <nav className="flex items-center justify-between p-6 md:px-16 border-b border-gray-200 dark:border-white/10 bg-white/50 dark:bg-black/50 backdrop-blur-xl sticky top-0 z-50">
         <Logo />
         <UserMenu />

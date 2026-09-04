@@ -108,7 +108,15 @@ export default function UiKitsPage() {
 
   return (
     <div className={`min-h-screen flex flex-col font-sans pb-32 transition-colors duration-1000 ${isDark ? 'bg-transparent text-white' : 'bg-gray-50 text-black'}`}>
-      
+      <SEO 
+        title="UI Kits & Design Systems | BizLeap Marketplace" 
+        description="Explore production-ready UI kits, design systems, and customizable component libraries for React and Tailwind CSS."
+        url="/ui-kits"
+        breadcrumbs={[
+          { name: "Home", url: "/" },
+          { name: "UI Kits", url: "/ui-kits" }
+        ]}
+      />
       {/* Navigation */}
       <Navbar />
 

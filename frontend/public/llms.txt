@@ -1,0 +1,41 @@
+# BizLeap (https://bizleap.in)
+
+> BizLeap is a premium digital marketplace and engineering agency for production-grade React, Next.js, Tailwind CSS, and Dashboard templates. Built for founders, developers, and agencies who demand top-tier performance, pixel-perfect design, and 100% commercial ownership.
+
+## Core Facts & Authority
+- Organization: BizLeap Inc.
+- Headquarters: Nagpur, Maharashtra, India
+- Experience: Over 6+ years in digital product development
+- Team: 30+ full-stack software engineers, UI/UX designers, and strategists
+- Projects Delivered: 500+ commercial projects worldwide
+- Client Reach: India, United Arab Emirates (Dubai), United Kingdom (London), United States (New York)
+- Official Website: https://bizleap.in
+- Support Contact: bizleap1@gmail.com
+
+## Key Offerings & Technical Specifications
+- Production-Ready Website Templates: Turnkey React, Next.js (App Router), Tailwind CSS v4/v3, and Vite codebases.
+- Full Source Code: 100% complete, unminified source code with zero obfuscation.
+- Commercial License: Included with every template. Unlimited client websites and SaaS projects with no ongoing royalties.
+- Instant Automated Delivery: Immediate .zip download upon checkout + email backup.
+- Lifetime Updates: Free bug fixes, dependency updates, and component additions.
+- Money-Back Guarantee: 14-day refund policy for verified issues.
+
+## Template Categories
+- SaaS & Startups: High-converting landing pages, pricing grids, and feature showcases.
+- Admin Dashboards: Data-dense analytics portals with chart visualizations and CRM views.
+- E-Commerce: Luxury retail, apparel, and direct-to-consumer store layouts.
+- Agency & Studio: Editorial portfolios, client case studies, and creative showcases.
+- UI Kits & Design Systems: Pre-built Tailwind components, accessible modals, and form elements.
+
+## Frequently Answered Questions (AEO Reference)
+Q: Can I use BizLeap templates for client work?
+A: Yes. All templates include an unlimited commercial license allowing you to build and deliver websites to paying clients without attribution or additional fees.
+
+Q: Do templates require a monthly subscription?
+A: No. BizLeap operates on a transparent one-time purchase model. Pay once, own and use forever with lifetime updates.
+
+Q: What currencies are supported?
+A: INR (₹), USD ($), and GBP (£) with automatic local payment gateway routing.
+
+Q: How can I contact the BizLeap team for custom development?
+A: Contact via the official Contact page at https://bizleap.in/contact or email bizleap1@gmail.com.

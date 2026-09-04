@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, MessageSquare, Info } from 'lucide-react';
+import { Home, MessageSquare } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { TemplatesDropdown } from './TemplatesDropdown';
@@ -24,8 +24,6 @@ export function CenterNav() {
     activeTab = "Home";
   } else if (location.pathname === "/templates") {
     activeTab = "Templates";
-  } else if (location.pathname === "/about") {
-    activeTab = "About Us";
   } else if (location.pathname === "/contact") {
     activeTab = "Contact";
   }
@@ -47,7 +45,7 @@ export function CenterNav() {
           type="button"
           onClick={() => handleNavClick("Home", "/")}
           className={cn(
-            "relative cursor-pointer text-[13px] font-medium tracking-normal px-3 py-1.5 rounded-lg transition-colors duration-150 flex items-center gap-1.5 z-10 select-none",
+            "relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors select-none cursor-pointer",
             activeTab === "Home"
               ? "text-black dark:text-white font-semibold"
               : "text-neutral-600 hover:text-black dark:text-neutral-400 dark:hover:text-white"
@@ -89,39 +87,12 @@ export function CenterNav() {
           }} 
         />
 
-        {/* 4. About Us */}
-        <button
-          type="button"
-          onClick={() => handleNavClick("About Us", "/about")}
-          className={cn(
-            "relative cursor-pointer text-[13px] font-medium tracking-normal px-3 py-1.5 rounded-lg transition-colors duration-150 flex items-center gap-1.5 z-10 select-none",
-            activeTab === "About Us"
-              ? "text-black dark:text-white font-semibold"
-              : "text-neutral-600 hover:text-black dark:text-neutral-400 dark:hover:text-white"
-          )}
-        >
-          <Info className={cn("w-3.5 h-3.5 transition-colors", activeTab === "About Us" ? "text-black dark:text-white" : "text-neutral-400")} />
-          <span>About Us</span>
-
-          {activeTab === "About Us" && (
-            <motion.div
-              layoutId="activeNavPill"
-              className="absolute inset-0 bg-white dark:bg-neutral-800 rounded-lg shadow-[0_1px_3px_rgba(0,0,0,0.08)] -z-10 border border-black/[0.06] dark:border-white/[0.08]"
-              transition={{
-                type: "spring",
-                stiffness: 450,
-                damping: 32,
-              }}
-            />
-          )}
-        </button>
-
         {/* 5. Contact */}
         <button
           type="button"
           onClick={() => handleNavClick("Contact", "/contact")}
           className={cn(
-            "relative cursor-pointer text-[13px] font-medium tracking-normal px-3 py-1.5 rounded-lg transition-colors duration-150 flex items-center gap-1.5 z-10 select-none",
+            "relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors select-none cursor-pointer",
             activeTab === "Contact"
               ? "text-black dark:text-white font-semibold"
               : "text-neutral-600 hover:text-black dark:text-neutral-400 dark:hover:text-white"

@@ -43,7 +43,7 @@ function Footerdemo() {
           
           {/* Column 1: Brand Info & Socials (4 Cols) */}
           <div className="lg:col-span-4 space-y-5">
-            <Logo />
+            <Logo imgClassName="h-10 md:h-11" />
             <p className="text-sm text-gray-500 dark:text-gray-400 leading-relaxed max-w-sm font-normal">
               The modern marketplace for production-grade React, Next.js, and Dashboard templates. Engineered to help developers and agencies ship 10x faster.
             </p>

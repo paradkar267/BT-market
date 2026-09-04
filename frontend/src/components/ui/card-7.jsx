@@ -18,6 +18,30 @@ export function InteractiveProductCard({
   const { toggleWishlist, isInWishlist } = useWishlist();
   const { formatPrice } = useCurrency();
   const [hovered, setHovered] = React.useState(false);
+  const cardRef = React.useRef(null);
+  const [tiltStyle, setTiltStyle] = React.useState({});
+
+  const handleMouseMove = (e) => {
+    if (!cardRef.current) return;
+    const rect = cardRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const rotateX = ((y - rect.height / 2) / (rect.height / 2)) * -7;
+    const rotateY = ((x - rect.width / 2) / (rect.width / 2)) * 7;
+    setTiltStyle({
+      transform: `perspective(1000px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) scale3d(1.025, 1.025, 1.025)`,
+      transition: "transform 0.1s ease-out",
+    });
+  };
+
+  const handleMouseLeave = () => {
+    setHovered(false);
+    setTiltStyle({
+      transform: "perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)",
+      transition: "transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)",
+    });
+  };
+
   const inCart = cartItems.some(item => item.id === template.id);
   const isOwned = purchasedTemplates?.some(item => item.id === template.id);
   const isWishlisted = isInWishlist(template.id);
@@ -37,9 +61,16 @@ export function InteractiveProductCard({
 
   return (
     <div
+      ref={cardRef}
+      onMouseMove={handleMouseMove}
       onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      className={`group relative w-full bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 overflow-hidden cursor-pointer flex flex-col hover:shadow-[0_10px_30px_rgba(0,0,0,0.08)] hover:border-black/50 dark:hover:border-white/50 transition-all duration-300 ${className}`}
+      onMouseLeave={handleMouseLeave}
+      style={{
+        ...tiltStyle,
+        transformStyle: "preserve-3d",
+        willChange: "transform",
+      }}
+      className={`group relative w-full bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 overflow-hidden cursor-pointer flex flex-col hover:shadow-[0_16px_36px_rgba(0,0,0,0.12)] hover:border-black/50 dark:hover:border-white/50 transition-shadow duration-300 ${className}`}
       {...props}
     >
       {/* Thumbnail: 70% Visual Ratio */}
