@@ -24,27 +24,27 @@ export function InteractiveProductCard({
 
   const categoryColors = {
     'Figma':        { bg: 'bg-black/10 dark:bg-white/10', text: 'text-black dark:text-white' },
-    'Next.js':      { bg: 'bg-gray-900 text-white', text: 'text-white' },
-    'React':        { bg: 'bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300', text: 'text-sky-800 dark:text-sky-300' },
-    'Webflow':      { bg: 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300', text: 'text-blue-800 dark:text-blue-300' },
-    'Framer':       { bg: 'bg-pink-100 text-pink-800 dark:bg-pink-950 dark:text-pink-300', text: 'text-pink-800 dark:text-pink-300' },
-    'Shopify':      { bg: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300', text: 'text-emerald-800 dark:text-emerald-300' },
-    'HTML':         { bg: 'bg-orange-100 text-orange-800 dark:bg-orange-950 dark:text-orange-300', text: 'text-orange-800 dark:text-orange-300' },
-    'Tailwind':     { bg: 'bg-cyan-100 text-cyan-800 dark:bg-cyan-950 dark:text-cyan-300', text: 'text-cyan-800 dark:text-cyan-300' },
-    'React Native': { bg: 'bg-sky-100 text-sky-800 dark:bg-sky-950 dark:text-sky-300', text: 'text-sky-800 dark:text-sky-300' },
+    'Next.js':      { bg: 'bg-neutral-900 text-white', text: 'text-white' },
+    'React':        { bg: 'bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-200', text: 'text-neutral-800 dark:text-neutral-200' },
+    'Webflow':      { bg: 'bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-200', text: 'text-neutral-800 dark:text-neutral-200' },
+    'Framer':       { bg: 'bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-200', text: 'text-neutral-800 dark:text-neutral-200' },
+    'Shopify':      { bg: 'bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-200', text: 'text-neutral-800 dark:text-neutral-200' },
+    'HTML':         { bg: 'bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-200', text: 'text-neutral-800 dark:text-neutral-200' },
+    'Tailwind':     { bg: 'bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-200', text: 'text-neutral-800 dark:text-neutral-200' },
+    'React Native': { bg: 'bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-200', text: 'text-neutral-800 dark:text-neutral-200' },
   };
-  const { bg, text } = categoryColors[template.category] || { bg: 'bg-gray-100 dark:bg-zinc-800 text-gray-700 dark:text-gray-300', text: 'text-gray-700 dark:text-gray-300' };
+  const { bg, text } = categoryColors[template.category] || { bg: 'bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300', text: 'text-neutral-700 dark:text-neutral-300' };
 
   return (
     <div
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      className={`group relative w-full bg-white dark:bg-zinc-900 rounded-xl border border-gray-200/90 dark:border-zinc-800 overflow-hidden cursor-pointer flex flex-col hover:shadow-[0_10px_30px_rgba(0,0,0,0.08)] hover:border-black/30 dark:hover:border-white/30 transition-all duration-300 ${className}`}
+      className={`group relative w-full bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 overflow-hidden cursor-pointer flex flex-col hover:shadow-[0_10px_30px_rgba(0,0,0,0.08)] hover:border-black/50 dark:hover:border-white/50 transition-all duration-300 ${className}`}
       {...props}
     >
       {/* Thumbnail: 70% Visual Ratio */}
       <div
-        className="relative w-full aspect-[4/3] overflow-hidden bg-gray-100 dark:bg-zinc-800"
+        className="relative w-full aspect-[4/3] overflow-hidden bg-neutral-100 dark:bg-neutral-800"
         onClick={() => navigate(`/product/${template.id}`)}
       >
         <img
@@ -63,19 +63,19 @@ export function InteractiveProductCard({
         <button
           onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleWishlist(template); }}
           className={`absolute top-2.5 right-2.5 z-10 p-1.5 rounded-lg backdrop-blur-md shadow-xs transition-all cursor-pointer
-            ${isWishlisted ? 'bg-red-500 text-white' : 'bg-white/90 dark:bg-zinc-900/90 text-gray-600 dark:text-gray-300 hover:text-red-500'}
+            ${isWishlisted ? 'bg-black text-white dark:bg-white dark:text-black' : 'bg-white/90 dark:bg-neutral-900/90 text-neutral-600 dark:text-neutral-300 hover:text-black dark:hover:text-white'}
             opacity-0 group-hover:opacity-100 scale-95 group-hover:scale-100 duration-200`}
         >
-          <Heart className={`w-3.5 h-3.5 ${isWishlisted ? 'fill-white' : ''}`} />
+          <Heart className={`w-3.5 h-3.5 ${isWishlisted ? 'fill-current' : ''}`} />
         </button>
 
         {/* Hover overlay — Preview + Add */}
         <div
-          className={`absolute inset-0 bg-gray-950/40 backdrop-blur-[2px] flex items-center justify-center gap-2 transition-opacity duration-200 ${hovered ? 'opacity-100' : 'opacity-0'}`}
+          className={`absolute inset-0 bg-black/40 backdrop-blur-[2px] flex items-center justify-center gap-2 transition-opacity duration-200 ${hovered ? 'opacity-100' : 'opacity-0'}`}
         >
           <button
             onClick={e => { e.stopPropagation(); navigate(`/product/${template.id}`); }}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-white text-gray-900 text-xs font-bold rounded-lg hover:bg-gray-100 transition shadow-sm cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-white text-black text-xs font-bold rounded-lg hover:bg-neutral-100 transition shadow-sm cursor-pointer"
           >
             <Eye className="w-3.5 h-3.5 text-black" /> Preview
           </button>
@@ -88,10 +88,10 @@ export function InteractiveProductCard({
             disabled={isOwned || template.is_sold_out}
             className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg shadow-sm transition cursor-pointer ${
               isOwned
-                ? 'bg-emerald-500 text-white cursor-default'
+                ? 'bg-neutral-800 text-white cursor-default'
                 : inCart
-                  ? 'bg-black text-white hover:bg-zinc-800'
-                  : 'bg-black text-white hover:bg-zinc-800'
+                  ? 'bg-black text-white hover:bg-neutral-800'
+                  : 'bg-black text-white hover:bg-neutral-800'
             }`}
           >
             {isOwned
@@ -104,42 +104,42 @@ export function InteractiveProductCard({
 
       {/* Card Body: 30% Visual Ratio */}
       <div
-        className="flex flex-col justify-between p-3.5 sm:p-4 bg-white dark:bg-zinc-900 flex-1"
+        className="flex flex-col justify-between p-3.5 sm:p-4 bg-white dark:bg-neutral-900 flex-1"
         onClick={() => navigate(`/product/${template.id}`)}
       >
         <div>
           {/* Tag / Tier Label */}
           {template.tag && (
-            <p className="text-[10px] font-extrabold text-gray-400 dark:text-gray-500 uppercase tracking-wider mb-0.5">
+            <p className="text-[10px] font-extrabold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider mb-0.5">
               {template.tag}
             </p>
           )}
 
           {/* Title */}
-          <h3 className="font-bold text-sm sm:text-[15px] text-gray-900 dark:text-white leading-snug line-clamp-1 group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
+          <h3 className="font-bold text-sm sm:text-[15px] text-black dark:text-white leading-snug line-clamp-1 group-hover:text-neutral-600 dark:group-hover:text-neutral-300 transition-colors">
             {template.title}
           </h3>
 
           {/* Author */}
-          <p className="text-[11px] text-gray-400 dark:text-gray-500 truncate mb-2">
-            by <span className="text-gray-600 dark:text-gray-300 font-medium">{template.author}</span>
+          <p className="text-[11px] text-neutral-400 dark:text-neutral-500 truncate mb-2">
+            by <span className="text-neutral-700 dark:text-neutral-300 font-medium">{template.author}</span>
           </p>
         </div>
 
         {/* Footer — Stars + Price */}
-        <div className="flex items-center justify-between pt-2 border-t border-gray-100 dark:border-zinc-800/80 mt-auto">
+        <div className="flex items-center justify-between pt-2 border-t border-neutral-100 dark:border-neutral-800 mt-auto">
           <div className="flex items-center gap-1">
             <div className="flex items-center">
               {[...Array(5)].map((_, i) => (
                 <Star 
                   key={i} 
-                  className={`w-3 h-3 ${i < Math.floor(template.rating) ? 'fill-amber-400 text-amber-400' : 'text-gray-200 dark:text-zinc-700'}`} 
+                  className={`w-3 h-3 ${i < Math.floor(template.rating) ? 'fill-black text-black dark:fill-white dark:text-white' : 'text-neutral-200 dark:text-neutral-700'}`} 
                 />
               ))}
             </div>
-            <span className="text-[11px] text-gray-400 dark:text-gray-500 ml-0.5">({(template.sales || 0).toLocaleString()})</span>
+            <span className="text-[11px] text-neutral-400 dark:text-neutral-500 ml-0.5">({(template.sales || 0).toLocaleString()})</span>
           </div>
-          <span className="text-sm sm:text-base font-black text-gray-900 dark:text-white">
+          <span className="text-sm sm:text-base font-black text-black dark:text-white">
             {formatPrice(template.price)}
           </span>
         </div>

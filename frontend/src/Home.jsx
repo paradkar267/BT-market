@@ -268,7 +268,7 @@ export default function Home() {
           <div className="max-w-[1400px] mx-auto px-5 md:px-10 relative z-10">
             <div className="text-center mb-12">
               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wider bg-gray-100 dark:bg-zinc-800 text-gray-900 dark:text-gray-100 border border-gray-200 dark:border-zinc-700 shadow-xs mb-3">
-                <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                <Sparkles className="w-3.5 h-3.5 text-black dark:text-white" />
                 Why BizLeap
               </div>
               <h2 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-gray-900 dark:text-white font-display">
@@ -302,20 +302,20 @@ export default function Home() {
                   {/* Visual Code Preview Miniature */}
                   <div className="p-3 rounded-lg bg-slate-950 text-slate-200 font-mono text-[11px] border border-slate-800 shadow-inner">
                     <div className="flex items-center gap-1.5 mb-1.5 pb-1 border-b border-slate-800/80 text-slate-500 text-[9px]">
-                      <span className="w-2 h-2 rounded-full bg-red-500/80 inline-block" />
-                      <span className="w-2 h-2 rounded-full bg-amber-500/80 inline-block" />
-                      <span className="w-2 h-2 rounded-full bg-emerald-500/80 inline-block" />
+                      <span className="w-2 h-2 rounded-full bg-neutral-600 inline-block" />
+                      <span className="w-2 h-2 rounded-full bg-neutral-500 inline-block" />
+                      <span className="w-2 h-2 rounded-full bg-neutral-400 inline-block" />
                       <span className="ml-1 text-slate-400">Template.tsx</span>
                     </div>
-                    <div className="text-slate-400"><span className="text-amber-400">export default</span> <span className="text-sky-400">App</span>() {'{'}</div>
-                    <div className="pl-3 text-emerald-400">&lt;Hero stack="react" /&gt;</div>
+                    <div className="text-slate-400"><span className="text-white">export default</span> <span className="text-neutral-300">App</span>() {'{'}</div>
+                    <div className="pl-3 text-neutral-300">&lt;Hero stack="react" /&gt;</div>
                     <div className="text-slate-400">{'}'}</div>
                   </div>
                 </div>
 
                 <div className="pt-4 mt-3 border-t border-gray-100 dark:border-zinc-800 flex items-center justify-between text-xs font-bold text-gray-900 dark:text-white">
                   <span>Full TypeScript Support</span>
-                  <ArrowRight className="w-3.5 h-3.5 text-amber-500" />
+                  <ArrowRight className="w-3.5 h-3.5 text-black dark:text-white" />
                 </div>
               </div>
 
@@ -323,10 +323,10 @@ export default function Home() {
               <div className="group relative bg-white dark:bg-zinc-900 rounded-xl border border-gray-200/90 dark:border-zinc-800 p-5 sm:p-6 shadow-xs hover:shadow-lg transition-all duration-300 flex flex-col justify-between overflow-hidden">
                 <div>
                   <div className="flex items-center justify-between mb-4">
-                    <div className="w-10 h-10 rounded-lg bg-emerald-600 text-white flex items-center justify-center shadow-xs">
+                    <div className="w-10 h-10 rounded-lg bg-black dark:bg-white text-white dark:text-black flex items-center justify-center shadow-xs">
                       <Gauge className="w-5 h-5" />
                     </div>
-                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800">
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-zinc-800 px-2 py-0.5 rounded-md border border-gray-200/60 dark:border-zinc-700">
                       100/100 Speed
                     </span>
                   </div>
@@ -339,23 +339,23 @@ export default function Home() {
                   </p>
 
                   {/* Visual Performance Gauge Miniature */}
-                  <div className="p-3 rounded-lg bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200/80 dark:border-emerald-800/60 flex items-center justify-between">
+                  <div className="p-3 rounded-lg bg-neutral-50 dark:bg-zinc-800/60 border border-neutral-200 dark:border-zinc-700 flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
-                      <div className="w-9 h-9 rounded-full border-2 border-emerald-500 flex items-center justify-center font-black text-emerald-600 dark:text-emerald-400 text-xs">
+                      <div className="w-9 h-9 rounded-full border-2 border-black dark:border-white flex items-center justify-center font-black text-black dark:text-white text-xs">
                         100
                       </div>
                       <div>
-                        <div className="text-[11px] font-bold text-emerald-950 dark:text-emerald-100">Core Web Vitals</div>
-                        <div className="text-[9px] text-emerald-600 dark:text-emerald-400 font-medium">0.3s FCP • 0.0 CLS</div>
+                        <div className="text-[11px] font-bold text-black dark:text-white">Core Web Vitals</div>
+                        <div className="text-[9px] text-neutral-500 dark:text-neutral-400 font-medium">0.3s FCP • 0.0 CLS</div>
                       </div>
                     </div>
-                    <span className="text-[10px] font-bold text-emerald-600 bg-emerald-100/80 dark:bg-emerald-900/60 px-1.5 py-0.5 rounded">FAST</span>
+                    <span className="text-[10px] font-bold text-black dark:text-white bg-neutral-200 dark:bg-zinc-700 px-1.5 py-0.5 rounded">FAST</span>
                   </div>
                 </div>
 
                 <div className="pt-4 mt-3 border-t border-gray-100 dark:border-zinc-800 flex items-center justify-between text-xs font-bold text-gray-900 dark:text-white">
                   <span>SEO Optimized</span>
-                  <ArrowRight className="w-3.5 h-3.5 text-amber-500" />
+                  <ArrowRight className="w-3.5 h-3.5 text-black dark:text-white" />
                 </div>
               </div>
 
@@ -381,7 +381,7 @@ export default function Home() {
                   {/* Visual Commercial Verification Miniature */}
                   <div className="p-3 rounded-lg bg-slate-50 dark:bg-zinc-800/70 border border-slate-200/80 dark:border-zinc-700/80 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-md bg-emerald-500/10 text-emerald-600 flex items-center justify-center">
+                      <div className="w-7 h-7 rounded-md bg-black/10 dark:bg-white/10 text-black dark:text-white flex items-center justify-center">
                         <CheckCircle2 className="w-4 h-4" />
                       </div>
                       <div>
@@ -389,7 +389,7 @@ export default function Home() {
                         <div className="text-[9px] text-slate-400">Unlimited Client Sites</div>
                       </div>
                     </div>
-                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/80 px-2 py-0.5 rounded">
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-black dark:text-white bg-neutral-200 dark:bg-zinc-700 px-2 py-0.5 rounded">
                       LIFETIME
                     </span>
                   </div>
@@ -397,7 +397,7 @@ export default function Home() {
 
                 <div className="pt-4 mt-3 border-t border-gray-100 dark:border-zinc-800 flex items-center justify-between text-xs font-bold text-gray-900 dark:text-white">
                   <span>Zero Renewal Fees</span>
-                  <ArrowRight className="w-3.5 h-3.5 text-amber-500" />
+                  <ArrowRight className="w-3.5 h-3.5 text-black dark:text-white" />
                 </div>
               </div>
 
@@ -405,10 +405,10 @@ export default function Home() {
               <div className="group relative bg-white dark:bg-zinc-900 rounded-xl border border-gray-200/90 dark:border-zinc-800 p-5 sm:p-6 shadow-xs hover:shadow-lg transition-all duration-300 flex flex-col justify-between overflow-hidden">
                 <div>
                   <div className="flex items-center justify-between mb-4">
-                    <div className="w-10 h-10 rounded-lg bg-amber-500 text-slate-950 flex items-center justify-center shadow-xs">
+                    <div className="w-10 h-10 rounded-lg bg-black dark:bg-white text-white dark:text-black flex items-center justify-center shadow-xs">
                       <Download className="w-5 h-5" />
                     </div>
-                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 px-2 py-0.5 rounded-md border border-amber-200 dark:border-amber-800">
+                    <span className="text-[10px] font-extrabold uppercase tracking-wider text-gray-500 dark:text-gray-400 bg-gray-100 dark:bg-zinc-800 px-2 py-0.5 rounded-md border border-gray-200/60 dark:border-zinc-700">
                       Automated
                     </span>
                   </div>
@@ -423,7 +423,7 @@ export default function Home() {
                   {/* Visual Package File Miniature */}
                   <div className="p-3 rounded-lg bg-slate-50 dark:bg-zinc-800/70 border border-slate-200/80 dark:border-zinc-700/80 flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <div className="w-7 h-7 rounded-md bg-amber-500/10 text-amber-600 flex items-center justify-center">
+                      <div className="w-7 h-7 rounded-md bg-black/10 dark:bg-white/10 text-black dark:text-white flex items-center justify-center">
                         <Package className="w-4 h-4" />
                       </div>
                       <div>
@@ -439,7 +439,7 @@ export default function Home() {
 
                 <div className="pt-4 mt-3 border-t border-gray-100 dark:border-zinc-800 flex items-center justify-between text-xs font-bold text-gray-900 dark:text-white">
                   <span>Direct Download Link</span>
-                  <ArrowRight className="w-3.5 h-3.5 text-amber-500" />
+                  <ArrowRight className="w-3.5 h-3.5 text-black dark:text-white" />
                 </div>
               </div>
             </div>

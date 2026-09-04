@@ -31,10 +31,10 @@ export function ConfirmModal({ open, onClose, onConfirm, title, message, confirm
       >
         {/* Header icon */}
         <div className="flex flex-col items-center pt-8 pb-4 px-6">
-          <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-4 ${isDanger ? 'bg-red-100 dark:bg-red-500/15' : 'bg-amber-100 dark:bg-amber-500/15'}`}>
+          <div className={`w-14 h-14 rounded-full flex items-center justify-center mb-4 ${isDanger ? 'bg-red-100 dark:bg-red-500/15' : 'bg-neutral-100 dark:bg-zinc-800'}`}>
             {isDanger
               ? <Trash2 className="w-6 h-6 text-red-600 dark:text-red-400" />
-              : <AlertTriangle className="w-6 h-6 text-amber-600 dark:text-amber-400" />
+              : <AlertTriangle className="w-6 h-6 text-black dark:text-white" />
             }
           </div>
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white text-center">{title}</h3>
@@ -51,7 +51,7 @@ export function ConfirmModal({ open, onClose, onConfirm, title, message, confirm
           </button>
           <button
             onClick={() => { onConfirm(); onClose(); }}
-            className={`flex-1 h-11 rounded-xl font-medium text-sm text-white transition-colors cursor-pointer ${isDanger ? 'bg-red-600 hover:bg-red-700' : 'bg-amber-600 hover:bg-amber-700'}`}
+            className={`flex-1 h-11 rounded-xl font-medium text-sm text-white transition-colors cursor-pointer ${isDanger ? 'bg-red-600 hover:bg-red-700' : 'bg-black dark:bg-white dark:text-black hover:bg-neutral-800 dark:hover:bg-neutral-200'}`}
           >
             {confirmText}
           </button>

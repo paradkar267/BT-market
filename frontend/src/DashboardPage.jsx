@@ -678,10 +678,10 @@ export default function DashboardPage() {
                          <td className={`py-4 text-[14px] font-semibold ${isDark ? 'text-white' : 'text-gray-900'}`}>{formatPrice(trx.amount)}</td>
                          <td className="py-4">
                            <div className="flex items-center gap-2">
-                             <div className={`w-1.5 h-1.5 rounded-full ${trx.status === 'Completed' ? 'bg-emerald-500' : 'bg-amber-500'}`}></div>
-                             <span className={`text-[13px] font-medium ${trx.status === 'Completed' ? (isDark ? 'text-emerald-400' : 'text-emerald-600') : (isDark ? 'text-amber-400' : 'text-amber-600')}`}>
-                               {trx.status}
-                             </span>
+                              <div className={`w-1.5 h-1.5 rounded-full ${trx.status === 'Completed' ? 'bg-emerald-500' : 'bg-neutral-400'}`}></div>
+                              <span className={`text-[13px] font-medium ${trx.status === 'Completed' ? (isDark ? 'text-emerald-400' : 'text-emerald-600') : (isDark ? 'text-neutral-400' : 'text-neutral-600')}`}>
+                                {trx.status}
+                              </span>
                            </div>
                          </td>
                          <td className="py-4 pr-4 text-right">

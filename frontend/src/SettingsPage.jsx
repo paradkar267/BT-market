@@ -548,7 +548,7 @@ export default function SettingsPage() {
                       }}
                       className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-gray-200 dark:border-white/15 bg-gray-50 dark:bg-white/5 hover:bg-gray-100 dark:hover:bg-white/10 text-xs font-bold text-gray-700 dark:text-gray-200 transition-all self-start sm:self-auto cursor-pointer"
                     >
-                      <Sparkles className="w-3.5 h-3.5 text-amber-500" /> Send Test Alert
+                      <Sparkles className="w-3.5 h-3.5 text-black dark:text-white" /> Send Test Alert
                     </button>
                   </div>
 

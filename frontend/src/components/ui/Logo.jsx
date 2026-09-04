@@ -10,7 +10,7 @@ export const Logo = ({ className = '' }) => {
       aria-label="Bizleap Home"
     >
       {/* Brand Icon Mark */}
-      <div className="relative flex items-center justify-center w-8 h-8 md:w-9 md:h-9 rounded-xl bg-gradient-to-br from-amber-400 via-amber-500 to-yellow-500 text-slate-950 shadow-sm shadow-amber-500/25 group-hover:shadow-md group-hover:shadow-amber-500/35 group-hover:scale-105 transition-all duration-200">
+      <div className="relative flex items-center justify-center w-8 h-8 md:w-9 md:h-9 rounded-xl bg-black dark:bg-white text-white dark:text-black shadow-xs group-hover:scale-105 transition-all duration-200">
         <svg 
           viewBox="0 0 24 24" 
           fill="none" 
@@ -18,7 +18,7 @@ export const Logo = ({ className = '' }) => {
           strokeWidth="2.5" 
           strokeLinecap="round" 
           strokeLinejoin="round" 
-          className="w-4 h-4 md:w-5 md:h-5 text-black"
+          className="w-4 h-4 md:w-5 md:h-5"
         >
           {/* Growth bars + Leap Arrow */}
           <path d="M4 20h16" strokeWidth="2" opacity="0.6" />
@@ -28,19 +28,17 @@ export const Logo = ({ className = '' }) => {
           <path d="M13 5l4-1 1 4" strokeWidth="2.5" />
           <path d="M6 14l5-5 6-3" strokeWidth="2" />
         </svg>
-        <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-slate-950" />
       </div>
 
       {/* Brand Wordmark */}
       <div className="flex items-baseline gap-1.5">
-        <span className="text-lg md:text-xl font-black tracking-tight text-slate-900 dark:text-white leading-none">
-          BIZ<span className="text-amber-500">LEAP</span>
+        <span className="text-lg md:text-xl font-black tracking-tight text-black dark:text-white leading-none">
+          BIZLEAP
         </span>
-        <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-widest text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/60 border border-amber-200/80 dark:border-amber-800/80 rounded-md leading-none">
+        <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-widest text-neutral-800 dark:text-neutral-200 bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-md leading-none">
           MARKET
         </span>
       </div>
     </Link>
   );
 };
-

@@ -166,7 +166,7 @@ export function ReviewsSection({ templateId }) {
                     </div>
                     <div>
                       <h4 className="font-bold">{review.user_name}</h4>
-                      <div className="flex text-amber-400 mt-1">
+                      <div className="flex text-black dark:text-white mt-1">
                         {[...Array(5)].map((_, i) => (
                           <Star key={i} className={`w-3 h-3 ${i < review.rating ? 'fill-current' : 'text-gray-300 dark:text-gray-700'}`} />
                         ))}
@@ -199,7 +199,7 @@ export function ReviewsSection({ templateId }) {
                           onClick={() => setEditRating(star)}
                           className="p-1 transition-transform hover:scale-110"
                         >
-                          <Star className={`w-5 h-5 ${star <= editRating ? 'fill-amber-400 text-amber-400' : 'text-gray-300 dark:text-gray-700'}`} />
+                          <Star className={`w-5 h-5 ${star <= editRating ? 'fill-black text-black dark:fill-white dark:text-white' : 'text-gray-300 dark:text-gray-700'}`} />
                         </button>
                       ))}
                     </div>
@@ -255,7 +255,7 @@ export function ReviewsSection({ templateId }) {
                         onClick={() => setRating(star)}
                         className={`p-1 transition-transform hover:scale-110`}
                       >
-                        <Star className={`w-6 h-6 ${star <= rating ? 'fill-amber-400 text-amber-400' : 'text-gray-300 dark:text-gray-700'}`} />
+                        <Star className={`w-6 h-6 ${star <= rating ? 'fill-black text-black dark:fill-white dark:text-white' : 'text-gray-300 dark:text-gray-700'}`} />
                       </button>
                     ))}
                   </div>

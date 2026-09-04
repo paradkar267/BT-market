@@ -273,8 +273,8 @@ export default function ProductPage() {
                         </p>
                       </div>
 
-                      <div className="p-5 rounded-2xl bg-amber-50/50 dark:bg-amber-950/20 border border-amber-100 dark:border-amber-900/30">
-                        <div className="flex items-center gap-2.5 text-amber-600 dark:text-amber-400 font-black text-sm mb-1.5">
+                      <div className="p-5 rounded-2xl bg-gray-100 dark:bg-white/[0.04] border border-black/5 dark:border-white/10">
+                        <div className="flex items-center gap-2.5 text-black dark:text-white font-black text-sm mb-1.5">
                           <DownloadCloud className="w-4 h-4" /> Turnkey Production Ready
                         </div>
                         <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
@@ -442,7 +442,7 @@ export default function ProductPage() {
                   <div className="p-5 rounded-2xl bg-gray-50 dark:bg-white/[0.03] border border-black/5 dark:border-white/5">
                     <div className="flex items-baseline justify-between mb-1">
                       <span className="text-[11px] font-extrabold uppercase tracking-wider text-gray-400">One-Time License</span>
-                      <div className="flex items-center gap-1 text-amber-500 text-xs font-black">
+                      <div className="flex items-center gap-1 text-black dark:text-white text-xs font-black">
                         <Star className="w-3.5 h-3.5 fill-current" />
                         <span>{template.rating || '4.9'}</span>
                         <span className="text-gray-400 font-normal">({template.sales || 42} sales)</span>

@@ -38,7 +38,7 @@ export function NavBar({ items, className, activeTab: externalActiveTab, onChang
                 : "text-slate-600 hover:text-slate-950 dark:text-slate-400 dark:hover:text-white"
             )}
           >
-            {Icon && <Icon className={cn("w-3.5 h-3.5 transition-colors", isActive ? "text-amber-500" : "text-slate-400")} />}
+            {Icon && <Icon className={cn("w-3.5 h-3.5 transition-colors", isActive ? "text-black dark:text-white" : "text-neutral-400")} />}
             <span>{item.label || item.name}</span>
 
             {isActive && (

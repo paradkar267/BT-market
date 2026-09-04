@@ -653,7 +653,7 @@ export default function CartPage() {
                                  <Download className="w-3 h-3 text-black dark:text-white" /> Full ZIP Code
                               </span>
                               <span className="inline-flex items-center gap-1 text-[10px] font-bold text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-white/5 px-2 py-0.5 rounded-md">
-                                 <Zap className="w-3 h-3 text-amber-500" /> Commercial Rights
+                                 <Zap className="w-3 h-3 text-black dark:text-white" /> Commercial Rights
                               </span>
                               <span className="inline-flex items-center gap-1 text-[10px] font-bold text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-white/5 px-2 py-0.5 rounded-md">
                                  <RefreshCw className="w-3 h-3 text-emerald-500" /> Lifetime Updates

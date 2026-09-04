@@ -49,7 +49,7 @@ export default function FlashSaleTopBar() {
             button_text: 'Claim 50% OFF Now →',
             button_url: '/explore',
             end_time: new Date(Date.now() + 48 * 3600 * 1000).toISOString(),
-            theme: 'fire',
+            theme: 'cyber',
             is_dismissible: true
           });
         }
@@ -128,14 +128,14 @@ export default function FlashSaleTopBar() {
     return null;
   }
 
-  // Theme Gradients & Accents
+  // Theme Gradients & Accents (Monochrome Luxury)
   const themes = {
     fire: {
-      bar: 'bg-gradient-to-r from-red-700 via-amber-600 to-orange-600 text-white shadow-lg shadow-orange-950/20 border-b border-amber-400/30',
-      badge: 'bg-black/30 border-amber-300/40 text-amber-200',
-      coupon: 'bg-white text-orange-700 hover:bg-orange-50 border-white/60 shadow-sm',
-      cta: 'bg-black/40 hover:bg-black/60 text-white border-amber-300/40',
-      glow: 'from-amber-400 to-red-500'
+      bar: 'bg-zinc-950 text-white shadow-lg border-b border-white/10',
+      badge: 'bg-white/10 border-white/20 text-white',
+      coupon: 'bg-white text-black hover:bg-zinc-200 border-white shadow-sm font-black',
+      cta: 'bg-white/10 hover:bg-white/20 text-white border-white/20',
+      glow: 'from-zinc-700 to-zinc-900'
     },
     cyber: {
       bar: 'bg-zinc-950 text-white shadow-lg border-b border-white/10',
@@ -145,22 +145,22 @@ export default function FlashSaleTopBar() {
       glow: 'from-zinc-700 to-zinc-900'
     },
     emerald: {
-      bar: 'bg-gradient-to-r from-emerald-800 via-teal-700 to-cyan-700 text-white shadow-lg shadow-emerald-950/20 border-b border-emerald-400/30',
-      badge: 'bg-black/30 border-emerald-300/40 text-emerald-200',
-      coupon: 'bg-white text-emerald-700 hover:bg-emerald-50 border-white/60 shadow-sm',
-      cta: 'bg-black/40 hover:bg-black/60 text-white border-emerald-300/40',
-      glow: 'from-emerald-300 to-teal-400'
+      bar: 'bg-zinc-900 text-white shadow-lg border-b border-zinc-700',
+      badge: 'bg-white/10 border-white/20 text-white',
+      coupon: 'bg-white text-black hover:bg-zinc-200 border-white shadow-sm font-black',
+      cta: 'bg-white/10 hover:bg-white/20 text-white border-white/20',
+      glow: 'from-zinc-600 to-zinc-800'
     },
     sunset: {
-      bar: 'bg-gradient-to-r from-rose-700 via-orange-600 to-amber-600 text-white shadow-lg shadow-rose-950/20 border-b border-rose-400/30',
-      badge: 'bg-black/30 border-rose-300/40 text-rose-200',
-      coupon: 'bg-white text-rose-700 hover:bg-rose-50 border-white/60 shadow-sm',
-      cta: 'bg-black/40 hover:bg-black/60 text-white border-rose-300/40',
-      glow: 'from-rose-300 to-amber-400'
+      bar: 'bg-black text-white shadow-lg border-b border-white/15',
+      badge: 'bg-white/10 border-white/20 text-white',
+      coupon: 'bg-white text-black hover:bg-zinc-200 border-white shadow-sm font-black',
+      cta: 'bg-white/10 hover:bg-white/20 text-white border-white/20',
+      glow: 'from-zinc-800 to-black'
     }
   };
 
-  const currentTheme = themes[banner.theme] || themes.fire;
+  const currentTheme = themes[banner.theme] || themes.cyber;
 
   // Format two digits
   const f = (n) => String(n).padStart(2, '0');
@@ -176,7 +176,7 @@ export default function FlashSaleTopBar() {
         <div className="flex items-center gap-2.5 flex-wrap min-w-0">
           {banner.discount_badge && (
             <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider border shadow-sm ${currentTheme.badge}`}>
-              <Flame className="w-3.5 h-3.5 text-amber-300 animate-pulse" />
+              <Flame className="w-3.5 h-3.5 text-white animate-pulse" />
               {banner.discount_badge}
             </span>
           )}
@@ -186,11 +186,11 @@ export default function FlashSaleTopBar() {
           </span>
 
           {/* Real-time Countdown Timer Display */}
-          <div className="inline-flex items-center gap-1 bg-black/30 backdrop-blur-md px-2.5 py-1 rounded-lg border border-white/20 font-mono font-bold text-white tracking-wider text-xs">
-            <Clock className="w-3.5 h-3.5 text-amber-300" />
+          <div className="inline-flex items-center gap-1 bg-black/40 backdrop-blur-md px-2.5 py-1 rounded-lg border border-white/20 font-mono font-bold text-white tracking-wider text-xs">
+            <Clock className="w-3.5 h-3.5 text-neutral-300" />
             {timeLeft.days > 0 && (
               <>
-                <span className="text-amber-200">{timeLeft.days}d</span>
+                <span className="text-white">{timeLeft.days}d</span>
                 <span className="opacity-60">:</span>
               </>
             )}
@@ -198,7 +198,7 @@ export default function FlashSaleTopBar() {
             <span className="opacity-60 animate-pulse">:</span>
             <span>{f(timeLeft.minutes)}m</span>
             <span className="opacity-60 animate-pulse">:</span>
-            <span className="text-amber-300">{f(timeLeft.seconds)}s</span>
+            <span className="text-white">{f(timeLeft.seconds)}s</span>
           </div>
         </div>
 

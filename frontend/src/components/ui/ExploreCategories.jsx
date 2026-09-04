@@ -72,7 +72,7 @@ export function ExploreCategories() {
           {/* Bottom Clean Category Label */}
           <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-white">
             <div>
-              <h3 className="text-base sm:text-lg font-bold tracking-tight text-white group-hover:text-amber-400 transition-colors">
+              <h3 className="text-base sm:text-lg font-bold tracking-tight text-white group-hover:text-neutral-200 transition-colors">
                 {cat.name}
               </h3>
             </div>
