@@ -1,7 +1,10 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { LayoutGrid, ChevronDown, ArrowRight, Sparkles } from 'lucide-react';
-import { useTemplates } from '../../useTemplates';
+import { 
+  LayoutGrid, ChevronDown, ArrowRight, Sparkles,
+  Briefcase, Layers, ShoppingBag, User, Building2,
+  Monitor, LayoutDashboard, Database, MoreHorizontal
+} from 'lucide-react';
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
@@ -9,15 +12,19 @@ export function CategoryDropdown({ isActive, isOpen, setIsOpen }) {
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
-  const { templates } = useTemplates();
 
-  // Extract unique business tags from templates
-  const predefinedTags = [
-    "SaaS", "E-commerce", "Agency", "Dashboards", "Business", 
-    "Startup", "Portfolio", "UI Kits", "Fashion & Clothing", 
-    "Electronics", "Marketplace", "Corporate"
+  // 9 categories as requested
+  const categoriesList = [
+    { name: "Business", tag: "Business", icon: Briefcase, desc: "Corporate & enterprise" },
+    { name: "SaaS", tag: "SaaS", icon: Layers, desc: "Software & cloud apps" },
+    { name: "E-commerce", tag: "E-Commerce", icon: ShoppingBag, desc: "Stores & marketplaces" },
+    { name: "Portfolio", tag: "Portfolio", icon: User, desc: "Creative & personal" },
+    { name: "Agency", tag: "Agency", icon: Building2, desc: "Studio & marketing" },
+    { name: "Landing Page", tag: "Landing Page", icon: Monitor, desc: "High conversion lead gen" },
+    { name: "Admin Dashboard", tag: "Dashboard", icon: LayoutDashboard, desc: "Analytics & control" },
+    { name: "CRM / Software", tag: "CRM", icon: Database, desc: "Operations & tools" },
+    { name: "Other", tag: "Other", icon: MoreHorizontal, desc: "Specialty & niche templates" }
   ];
-  const tags = Array.from(new Set([...predefinedTags, ...templates.map(t => t.tag).filter(Boolean)]));
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -29,10 +36,13 @@ export function CategoryDropdown({ isActive, isOpen, setIsOpen }) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [setIsOpen]);
 
-  const handleSelect = (tag) => {
+  const handleSelect = (category) => {
     setIsOpen(false);
-    const targetPath = location.pathname.startsWith('/ui-kits') ? '/ui-kits' : '/templates';
-    navigate(`${targetPath}?tag=${encodeURIComponent(tag)}`);
+    if (category.name === "Other") {
+      navigate('/templates');
+    } else {
+      navigate(`/templates?tag=${encodeURIComponent(category.tag)}`);
+    }
   };
 
   return (
@@ -64,40 +74,47 @@ export function CategoryDropdown({ isActive, isOpen, setIsOpen }) {
         )}
       </button>
 
-
       {isOpen && (
-        <div className="absolute right-0 mt-2.5 w-64 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-150">
-          <div className="px-3.5 py-2.5 bg-slate-50/80 dark:bg-slate-800/40 border-b border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
+        <div className="absolute left-1/2 -translate-x-1/2 mt-2.5 w-[380px] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+          <div className="px-4 py-2.5 bg-slate-50/80 dark:bg-slate-800/40 border-b border-slate-100 dark:border-slate-800/80 flex items-center justify-between">
             <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
               <Sparkles className="w-3 h-3 text-amber-500" />
               Browse by Industry
             </span>
-            <span className="text-[10px] text-slate-400 font-mono">{tags.length} topics</span>
+            <span className="text-[10px] text-slate-400 font-mono">9 Categories</span>
           </div>
 
-          <div className="p-1.5 max-h-72 overflow-y-auto overscroll-none space-y-0.5" style={{ scrollbarWidth: 'thin' }}>
-            {tags.length > 0 ? (
-              tags.map(tag => (
+          <div className="p-2 grid grid-cols-1 sm:grid-cols-2 gap-1 max-h-[360px] overflow-y-auto overscroll-none" style={{ scrollbarWidth: 'thin' }}>
+            {categoriesList.map(cat => {
+              const Icon = cat.icon;
+              return (
                 <button
-                  key={tag}
+                  key={cat.name}
                   type="button"
-                  onClick={() => handleSelect(tag)}
-                  className="w-full text-left px-3 py-1.5 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-950 dark:hover:text-white transition-colors flex items-center justify-between group"
+                  onClick={() => handleSelect(cat)}
+                  className="w-full text-left p-2 rounded-xl text-xs font-medium text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-slate-950 dark:hover:text-white transition-all flex items-center gap-2.5 group cursor-pointer"
                 >
-                  <span>{tag}</span>
-                  <span className="text-[10px] text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity">→</span>
+                  <div className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-slate-800 group-hover:bg-amber-50 dark:group-hover:bg-amber-950/40 flex items-center justify-center shrink-0 transition-colors">
+                    <Icon className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400 group-hover:text-amber-500 transition-colors" />
+                  </div>
+                  <div className="min-w-0">
+                    <span className="font-semibold block truncate text-slate-800 dark:text-slate-200 group-hover:text-slate-950 dark:group-hover:text-white">
+                      {cat.name}
+                    </span>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 block truncate">
+                      {cat.desc}
+                    </span>
+                  </div>
                 </button>
-              ))
-            ) : (
-              <div className="px-3 py-2 text-xs text-slate-400">Loading...</div>
-            )}
+              );
+            })}
           </div>
 
           <div className="p-2 bg-slate-50/60 dark:bg-slate-800/30 border-t border-slate-100 dark:border-slate-800/80">
             <Link 
               to="/templates" 
               onClick={() => setIsOpen(false)}
-              className="w-full flex items-center justify-center gap-1 px-3 py-1.5 text-xs font-semibold text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-50/60 dark:hover:bg-amber-950/40 rounded-xl transition-colors"
+              className="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-amber-600 dark:text-amber-400 hover:text-amber-700 dark:hover:text-amber-300 hover:bg-amber-50/60 dark:hover:bg-amber-950/40 rounded-xl transition-colors"
             >
               <span>Explore All Templates</span>
               <ArrowRight className="w-3 h-3" />
@@ -108,4 +125,3 @@ export function CategoryDropdown({ isActive, isOpen, setIsOpen }) {
     </div>
   );
 }
-

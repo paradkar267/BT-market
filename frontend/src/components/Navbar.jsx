@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
   Search, ShoppingCart, Menu, X, Home, LayoutTemplate, 
-  MessageSquare, Sparkles, ChevronRight, Layers, LayoutGrid
+  MessageSquare, Sparkles, ChevronRight, Layers, LayoutGrid,
+  Info, ArrowRight, Gift, Crown, TrendingUp, Compass
 } from 'lucide-react';
 import { useCart } from '../CartContext';
 import { useAuth } from '../AuthContext';
@@ -20,14 +21,30 @@ export default function Navbar() {
   // Close mobile drawer on route change
   useEffect(() => {
     setMobileOpen(false);
-  }, [location.pathname]);
+  }, [location.pathname, location.search]);
 
   const openSearch = () => {
     window.dispatchEvent(new CustomEvent('open-command-palette'));
   };
 
   const categories = [
-    'SaaS', 'E-commerce', 'Agency', 'Dashboards', 'UI Kits', 'Portfolio'
+    { name: "Business", tag: "Business" },
+    { name: "SaaS", tag: "SaaS" },
+    { name: "E-commerce", tag: "E-Commerce" },
+    { name: "Portfolio", tag: "Portfolio" },
+    { name: "Agency", tag: "Agency" },
+    { name: "Landing Page", tag: "Landing Page" },
+    { name: "Admin Dashboard", tag: "Dashboard" },
+    { name: "CRM / Software", tag: "CRM" },
+    { name: "Other", tag: "Other" }
+  ];
+
+  const templateCurations = [
+    { name: "All Templates", url: "/templates", icon: LayoutTemplate },
+    { name: "Latest", url: "/templates?sort=newest", icon: Sparkles },
+    { name: "Popular", url: "/templates?sort=popular", icon: TrendingUp },
+    { name: "Free Kits", url: "/templates?price=free", icon: Gift },
+    { name: "Premium Pro", url: "/templates?price=premium", icon: Crown }
   ];
 
   return (
@@ -38,16 +55,16 @@ export default function Navbar() {
           <Logo />
         </div>
 
-        {/* Center: Desktop Navigation Capsule */}
+        {/* Center: Desktop Navigation Capsule (Home, Templates, Categories, About Us, Contact) */}
         <CenterNav />
 
-        {/* Right: Unified Controls Cluster */}
+        {/* Right: Unified Controls Cluster + Primary CTA */}
         <div className="flex items-center gap-2 shrink-0">
           {/* Search Trigger (⌘K) */}
           <button
             type="button"
             onClick={openSearch}
-            className="hidden sm:inline-flex items-center justify-between gap-2.5 h-9 w-36 lg:w-44 px-3 text-xs text-slate-500 hover:text-slate-950 dark:text-slate-400 dark:hover:text-white bg-slate-100/70 hover:bg-slate-100 dark:bg-slate-900/70 dark:hover:bg-slate-850 border border-slate-200/80 dark:border-slate-800 hover:border-amber-500/40 rounded-xl transition-all duration-150 cursor-pointer group select-none shadow-xs"
+            className="hidden sm:inline-flex items-center justify-between gap-2 h-9 w-32 lg:w-40 px-3 text-xs text-slate-500 hover:text-slate-950 dark:text-slate-400 dark:hover:text-white bg-slate-100/70 hover:bg-slate-100 dark:bg-slate-900/70 dark:hover:bg-slate-850 border border-slate-200/80 dark:border-slate-800 hover:border-amber-500/40 rounded-xl transition-all duration-150 cursor-pointer group select-none shadow-xs"
             title="Search templates (⌘K)"
           >
             <div className="flex items-center gap-2 min-w-0">
@@ -85,6 +102,15 @@ export default function Navbar() {
             )}
           </button>
 
+          {/* Right-Side Primary CTA: Browse Templates */}
+          <Link
+            to="/templates"
+            className="hidden lg:inline-flex items-center gap-1.5 h-9 px-3.5 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold rounded-xl transition-all duration-150 shadow-sm hover:shadow-md cursor-pointer select-none group shrink-0"
+          >
+            <span>Browse Templates</span>
+            <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+          </Link>
+
           {/* Currency + User Menu Dropdown */}
           <UserMenu />
 
@@ -97,13 +123,12 @@ export default function Navbar() {
           >
             {mobileOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
           </button>
-
         </div>
       </div>
 
       {/* Mobile Drawer Navigation */}
       {mobileOpen && (
-        <div className="md:hidden border-t border-slate-200/80 dark:border-slate-850 bg-white/95 dark:bg-slate-950/95 backdrop-blur-2xl animate-in slide-in-from-top duration-200">
+        <div className="md:hidden border-t border-slate-200/80 dark:border-slate-850 bg-white/95 dark:bg-slate-950/95 backdrop-blur-2xl animate-in slide-in-from-top duration-200 max-h-[85vh] overflow-y-auto">
           <div className="max-w-[1400px] mx-auto px-4 py-4 space-y-4">
             {/* Quick Search in Mobile Menu */}
             <button
@@ -121,54 +146,91 @@ export default function Navbar() {
               <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded text-slate-400">⌘K</kbd>
             </button>
 
-            {/* Primary Nav Links */}
-            <div className="grid grid-cols-3 gap-2">
+            {/* Primary Nav Links Grid */}
+            <div className="grid grid-cols-4 gap-2">
               <Link
                 to="/"
                 onClick={() => setMobileOpen(false)}
-                className={`flex flex-col items-center justify-center p-3 rounded-2xl border text-center transition-all ${
+                className={`flex flex-col items-center justify-center p-2.5 rounded-xl border text-center transition-all ${
                   location.pathname === '/'
                     ? 'bg-amber-50/80 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400 font-semibold'
                     : 'bg-slate-50 dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-medium'
                 }`}
               >
                 <Home className="w-4 h-4 mb-1" />
-                <span className="text-xs">Home</span>
+                <span className="text-[11px]">Home</span>
               </Link>
 
               <Link
                 to="/templates"
                 onClick={() => setMobileOpen(false)}
-                className={`flex flex-col items-center justify-center p-3 rounded-2xl border text-center transition-all ${
+                className={`flex flex-col items-center justify-center p-2.5 rounded-xl border text-center transition-all ${
                   location.pathname === '/templates'
                     ? 'bg-amber-50/80 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400 font-semibold'
                     : 'bg-slate-50 dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-medium'
                 }`}
               >
                 <LayoutTemplate className="w-4 h-4 mb-1" />
-                <span className="text-xs">Templates</span>
+                <span className="text-[11px]">Templates</span>
+              </Link>
+
+              <Link
+                to="/about"
+                onClick={() => setMobileOpen(false)}
+                className={`flex flex-col items-center justify-center p-2.5 rounded-xl border text-center transition-all ${
+                  location.pathname === '/about'
+                    ? 'bg-amber-50/80 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400 font-semibold'
+                    : 'bg-slate-50 dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-medium'
+                }`}
+              >
+                <Info className="w-4 h-4 mb-1" />
+                <span className="text-[11px]">About</span>
               </Link>
 
               <Link
                 to="/contact"
                 onClick={() => setMobileOpen(false)}
-                className={`flex flex-col items-center justify-center p-3 rounded-2xl border text-center transition-all ${
+                className={`flex flex-col items-center justify-center p-2.5 rounded-xl border text-center transition-all ${
                   location.pathname === '/contact'
                     ? 'bg-amber-50/80 dark:bg-amber-950/40 border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400 font-semibold'
                     : 'bg-slate-50 dark:bg-slate-900 border-slate-200/80 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-medium'
                 }`}
               >
                 <MessageSquare className="w-4 h-4 mb-1" />
-                <span className="text-xs">Contact</span>
+                <span className="text-[11px]">Contact</span>
               </Link>
             </div>
 
-            {/* Popular Categories in Mobile */}
+            {/* Templates Quick Curations */}
+            <div className="pt-2 border-t border-slate-100 dark:border-slate-850">
+              <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5 mb-2">
+                <Sparkles className="w-3 h-3 text-amber-500" />
+                Explore Curations
+              </span>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                {templateCurations.map((cur) => {
+                  const Icon = cur.icon;
+                  return (
+                    <Link
+                      key={cur.name}
+                      to={cur.url}
+                      onClick={() => setMobileOpen(false)}
+                      className="flex items-center gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-900 hover:bg-slate-100 dark:hover:bg-slate-850 border border-slate-200/70 dark:border-slate-800 text-xs font-medium text-slate-700 dark:text-slate-300 transition-colors"
+                    >
+                      <Icon className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                      <span className="truncate">{cur.name}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 9 Categories in Mobile */}
             <div className="pt-2 border-t border-slate-100 dark:border-slate-850">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
                   <LayoutGrid className="w-3 h-3 text-amber-500" />
-                  Popular Categories
+                  Categories
                 </span>
                 <Link 
                   to="/templates" 
@@ -182,18 +244,31 @@ export default function Navbar() {
               <div className="flex flex-wrap gap-1.5">
                 {categories.map((cat) => (
                   <button
-                    key={cat}
+                    key={cat.name}
                     type="button"
                     onClick={() => {
                       setMobileOpen(false);
-                      navigate(`/templates?tag=${encodeURIComponent(cat)}`);
+                      if (cat.name === "Other") navigate('/templates');
+                      else navigate(`/templates?tag=${encodeURIComponent(cat.tag)}`);
                     }}
                     className="px-2.5 py-1 text-xs font-medium rounded-lg bg-slate-100 dark:bg-slate-800/60 hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 transition-colors cursor-pointer"
                   >
-                    {cat}
+                    {cat.name}
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Mobile Bottom CTA */}
+            <div className="pt-2 border-t border-slate-100 dark:border-slate-850">
+              <Link
+                to="/templates"
+                onClick={() => setMobileOpen(false)}
+                className="w-full py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold rounded-xl flex items-center justify-center gap-2 shadow-xs"
+              >
+                <span>Browse All Templates</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
             </div>
           </div>
         </div>

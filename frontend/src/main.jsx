@@ -22,6 +22,7 @@ import AdminDashboard from './AdminDashboard.jsx'
 import PrivacyPage from './PrivacyPage.jsx'
 import CookiePage from './CookiePage.jsx'
 import PreviewPage from './PreviewPage.jsx'
+import AboutPage from './AboutPage.jsx'
 
 import { ThemeProvider } from './ThemeContext'
 import { AuthProvider, useAuth } from './AuthContext'
@@ -105,6 +106,7 @@ createRoot(document.getElementById('root')).render(
                       <Route path="/profile" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
                       <Route path="/settings" element={<ProtectedRoute><SettingsPage /></ProtectedRoute>} />
                       <Route path="/dashboard" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
+                      <Route path="/about" element={<AboutPage />} />
                       <Route path="/contact" element={<ContactPage />} />
                       <Route path="/ui-kits" element={<UiKitsPage />} />
                       <Route path="/reset-password" element={<ResetPasswordPage />} />

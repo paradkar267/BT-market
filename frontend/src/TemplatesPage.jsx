@@ -38,8 +38,29 @@ export default function TemplatesPage() {
     window.scrollTo(0, 0);
   }, []);
 
-  const activeTag = selectedTag || paramTag;
-  const activeTechs = selectedTechs.length > 0 ? selectedTechs : (paramTech ? [paramTech] : []);
+  // Sync state with URL search parameters whenever location.search changes
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const pTech = params.get('tech') || params.get('category');
+    const pTag = params.get('tag');
+    const pSearch = params.get('search') || params.get('q');
+    const pSort = params.get('sort');
+    const pPrice = params.get('price');
+
+    if (pSearch !== null) setSearchQuery(pSearch);
+    if (pTag !== null) setSelectedTag(pTag);
+    else if (!params.has('tag')) setSelectedTag("");
+
+    if (pTech) setSelectedTechs([pTech]);
+    else if (!params.has('tech') && !params.has('category')) setSelectedTechs([]);
+
+    if (pSort) setSortOrder(pSort);
+    if (pPrice) setPriceRange(pPrice);
+    else if (!params.has('price')) setPriceRange("all");
+  }, [location.search]);
+
+  const activeTag = selectedTag;
+  const activeTechs = selectedTechs;
 
   const { templates, loading } = useTemplates();
 
@@ -85,6 +106,7 @@ export default function TemplatesPage() {
       const high = convertPrice(8000);
       let matchesPrice = true;
       if (priceRange === "free") matchesPrice = convertedPrice === 0;
+      else if (priceRange === "premium") matchesPrice = convertedPrice > 0;
       else if (priceRange === "under6000") matchesPrice = convertedPrice > 0 && convertedPrice < low;
       else if (priceRange === "6000to8000") matchesPrice = convertedPrice >= low && convertedPrice <= high;
       else if (priceRange === "over8000") matchesPrice = convertedPrice > high;
@@ -171,7 +193,8 @@ export default function TemplatesPage() {
         <div className="space-y-2">
           {[
             { id: "all", label: "Any Price" },
-            { id: "free", label: "Free" },
+            { id: "free", label: "Free Templates" },
+            { id: "premium", label: "Premium Templates" },
             { id: "under6000", label: `Under ${formatPrice(6000)}` },
             { id: "6000to8000", label: `${formatPrice(6000)} to ${formatPrice(8000)}` },
             { id: "over8000", label: `${formatPrice(8000)} & Above` },
