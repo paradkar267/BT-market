@@ -21,12 +21,13 @@ export const requireAuth = async (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-    if (!decoded || !decoded.id) {
+    const userId = decoded?.id;
+    if (!decoded || !userId || (typeof userId !== 'string' && typeof userId !== 'number') || !String(userId).trim()) {
       return res.status(401).json({ error: 'Invalid or expired authentication token' });
     }
 
     // Fetch user from Neon database
-    const { rows } = await query('SELECT id, email, password_hash, full_name, avatar_url, role, purchased_templates, wishlist_templates FROM users WHERE id = $1', [decoded.id]);
+    const { rows } = await query('SELECT id, email, password_hash, full_name, avatar_url, role, purchased_templates, wishlist_templates FROM users WHERE id = $1', [userId]);
     
     if (!rows.length) {
       return res.status(401).json({ error: 'User account not found' });
@@ -35,7 +36,9 @@ export const requireAuth = async (req, res, next) => {
     req.user = rows[0];
     next();
   } catch (error) {
-    console.error('Auth verification error:', error.message);
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('Auth token warning:', error.message);
+    }
     return res.status(401).json({ error: 'Invalid or expired authentication token' });
   }
 };
@@ -51,11 +54,12 @@ export const requireAdmin = async (req, res, next) => {
 
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-    if (!decoded || !decoded.id) {
+    const userId = decoded?.id;
+    if (!decoded || !userId || (typeof userId !== 'string' && typeof userId !== 'number') || !String(userId).trim()) {
       return res.status(401).json({ error: 'Invalid or expired token' });
     }
 
-    const { rows } = await query('SELECT id, email, full_name, avatar_url, role FROM users WHERE id = $1', [decoded.id]);
+    const { rows } = await query('SELECT id, email, full_name, avatar_url, role FROM users WHERE id = $1', [userId]);
     if (!rows.length) {
       return res.status(401).json({ error: 'User not found' });
     }
@@ -70,7 +74,9 @@ export const requireAdmin = async (req, res, next) => {
 
     return res.status(403).json({ error: 'Forbidden: Administrator privileges required' });
   } catch (error) {
-    console.error('Admin auth error:', error.message);
+    if (process.env.NODE_ENV !== 'production') {
+      console.warn('Admin token warning:', error.message);
+    }
     return res.status(401).json({ error: 'Invalid or expired authentication token' });
   }
 };

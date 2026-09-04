@@ -63,17 +63,22 @@ const getActiveUserPurchasedIds = async (userId, fallbackList = []) => {
 // POST /api/auth/register
 router.post('/register', async (req, res) => {
   try {
-    const { email, password, fullName } = req.body;
+    const { email, password, fullName } = req.body || {};
 
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required' });
+    const cleanEmail = String(email || '').trim().toLowerCase();
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!cleanEmail || cleanEmail.length > 255 || !emailRegex.test(cleanEmail)) {
+      return res.status(400).json({ error: 'Please enter a valid email address' });
     }
 
-    if (password.length < 6) {
-      return res.status(400).json({ error: 'Password must be at least 6 characters' });
+    if (!password || typeof password !== 'string' || password.length < 8) {
+      return res.status(400).json({ error: 'Password must be at least 8 characters long' });
     }
 
-    const cleanEmail = email.trim().toLowerCase();
+    // Ensure password includes at least one number or special character
+    if (!/(?=.*[0-9])|(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?])/.test(password)) {
+      return res.status(400).json({ error: 'Password must include at least one number or special symbol' });
+    }
 
     // Check if user already exists
     const existing = await query('SELECT id FROM users WHERE email = $1', [cleanEmail]);
@@ -85,7 +90,7 @@ router.post('/register', async (req, res) => {
     const passwordHash = await bcrypt.hash(password, salt);
 
     const role = cleanEmail === ADMIN_EMAIL ? 'admin' : 'user';
-    const cleanName = fullName?.trim() || cleanEmail.split('@')[0];
+    const cleanName = String(fullName || '').trim().substring(0, 100) || cleanEmail.split('@')[0];
 
     const insertResult = await query(`
       INSERT INTO users (email, password_hash, full_name, role)
@@ -283,11 +288,11 @@ router.get('/me', requireAuth, async (req, res) => {
 // PUT /api/auth/password - Set or update password
 router.put('/password', requireAuth, async (req, res) => {
   try {
-    const { newPassword, currentPassword } = req.body;
+    const { newPassword, currentPassword } = req.body || {};
     const userId = req.user.id;
 
-    if (!newPassword || typeof newPassword !== 'string' || newPassword.trim().length < 6) {
-      return res.status(400).json({ error: 'Password must be at least 6 characters long' });
+    if (!newPassword || typeof newPassword !== 'string' || newPassword.trim().length < 8) {
+      return res.status(400).json({ error: 'New password must be at least 8 characters long' });
     }
 
     // Fetch user password_hash

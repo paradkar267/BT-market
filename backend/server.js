@@ -28,12 +28,28 @@ const PORT = process.env.PORT || 3000;
 // Trust reverse proxy
 app.set('trust proxy', 1);
 
-// Security Middlewares
+// Production Environment Sanity Audit
+if (process.env.NODE_ENV === 'production') {
+  if (!process.env.DATABASE_URL) {
+    console.error('FATAL CONFIG: DATABASE_URL is missing in production environment!');
+  }
+  if (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'bizleap_jwt_secret_key_neon_2026_super_secure') {
+    console.warn('SECURITY WARNING: Using default JWT_SECRET in production. Set a custom unique JWT_SECRET in Render dashboard.');
+  }
+  if (!process.env.RAZORPAY_KEY_SECRET) {
+    console.warn('PAYMENT NOTICE: RAZORPAY_KEY_SECRET is not set in production. Real payment verification requires key secret.');
+  }
+}
+
+// Security Middlewares with Strict HTTP Security Headers
 app.use(helmet({
   crossOriginResourcePolicy: false, // Allow loading local uploads & images
   noSniff: true,
   xssFilter: true,
-  hidePoweredBy: true
+  hidePoweredBy: true,
+  frameguard: { action: 'sameorigin' }, // Clickjacking protection
+  dnsPrefetchControl: { allow: false },
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' }
 }));
 
 // Rate Limiter: General API
@@ -78,11 +94,37 @@ const contactLimiter = rateLimit({
   legacyHeaders: false,
 });
 
+// Download Rate Limiter (Anti-Scraping / Bandwidth Protection)
+const downloadLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30, // Max 30 download attempts per 15 mins per IP
+  skip: (req) => {
+    const ip = req.ip || req.connection?.remoteAddress || '';
+    return ip === '127.0.0.1' || ip === '::1' || ip.includes('127.0.0.1');
+  },
+  message: { error: 'Download limit reached. Please wait a few minutes before downloading again.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Receipt Email Limiter
+const emailLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { error: 'Too many email requests sent. Please wait before submitting again.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 app.use('/api/', apiLimiter);
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
 app.use('/api/auth/password', authLimiter);
 app.use('/api/contact', contactLimiter);
+app.use('/api/download', downloadLimiter);
+app.use('/api/download-template', downloadLimiter);
+app.use('/api/generate-download', downloadLimiter);
+app.use('/api/send-receipt', emailLimiter);
 
 // Flexible & Secure CORS
 const allowedOrigins = [
@@ -152,10 +194,12 @@ app.get('/api/health', async (req, res) => {
       timestamp: new Date().toISOString()
     });
   } catch (err) {
+    console.error('Health check database error:', err.message);
+    const isProd = process.env.NODE_ENV === 'production';
     res.status(500).json({
       status: 'error',
       message: 'Failed to connect to Neon Postgres',
-      error: err.message,
+      error: isProd ? 'Database connection unavailable' : err.message,
       database_connected: false
     });
   }

@@ -13,6 +13,17 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const JWT_SECRET = process.env.JWT_SECRET || 'bizleap_jwt_secret_key_neon_2026_super_secure';
 
+// Helper to strictly prevent directory traversal attacks
+const isPathSafe = (targetPath, allowedRoots) => {
+  if (!targetPath || typeof targetPath !== 'string') return false;
+  const resolved = path.resolve(targetPath);
+  return allowedRoots.some(root => {
+    const resolvedRoot = path.resolve(root);
+    const rel = path.relative(resolvedRoot, resolved);
+    return !rel.startsWith('..') && !path.isAbsolute(rel);
+  });
+};
+
 const router = express.Router();
 
 // ==========================================
@@ -348,22 +359,40 @@ router.post('/create-order', requireAuth, async (req, res) => {
 });
 
 router.post('/verify-payment', requireAuth, async (req, res) => {
-  const { paymentId, orderId, signature, cartItems, couponCode, couponId, invoicePdfBase64 } = req.body;
+  const { paymentId, orderId, signature, cartItems, couponCode, couponId, invoicePdfBase64 } = req.body || {};
   const user = req.user;
 
-  if (!paymentId || !cartItems || !cartItems.length) {
+  if (!paymentId || !cartItems || !Array.isArray(cartItems) || !cartItems.length) {
     return res.status(400).json({ error: 'Missing payment information or cart is empty' });
   }
 
-  // Cryptographic Signature Verification if RAZORPAY_KEY_SECRET is configured
+  const isProduction = process.env.NODE_ENV === 'production';
   const razorpayKeySecret = process.env.RAZORPAY_KEY_SECRET;
-  if (razorpayKeySecret && orderId && signature && !orderId.startsWith('order_sim_')) {
+
+  const isSimulatedOrder =
+    (orderId && String(orderId).startsWith('order_sim_')) ||
+    (paymentId && (String(paymentId).startsWith('sim_') || String(paymentId).startsWith('pay_mock_') || String(paymentId).startsWith('test_')));
+
+  // In production, strictly block mock / simulated orders unless user is admin
+  if (isProduction && isSimulatedOrder && user.role !== 'admin') {
+    return res.status(400).json({ error: 'Simulated and test payments are disabled in production environment.' });
+  }
+
+  // Cryptographic Signature Verification if RAZORPAY_KEY_SECRET is configured
+  if (razorpayKeySecret && !isSimulatedOrder) {
+    if (!orderId || !signature) {
+      return res.status(400).json({ error: 'Missing orderId or signature for authentic payment verification.' });
+    }
+
     const expectedSignature = crypto
       .createHmac('sha256', razorpayKeySecret)
       .update(`${orderId}|${paymentId}`)
       .digest('hex');
 
-    if (expectedSignature !== signature) {
+    const expectedBuf = Buffer.from(expectedSignature, 'utf8');
+    const receivedBuf = Buffer.from(String(signature), 'utf8');
+
+    if (expectedBuf.length !== receivedBuf.length || !crypto.timingSafeEqual(expectedBuf, receivedBuf)) {
       console.error('Payment signature mismatch:', { expected: expectedSignature, received: signature });
       return res.status(400).json({ error: 'Payment signature verification failed. Untrusted payment.' });
     }
@@ -371,26 +400,49 @@ router.post('/verify-payment', requireAuth, async (req, res) => {
 
   try {
     // Replay attack prevention: check if this paymentId was already recorded
-    if (!paymentId.startsWith('sim_') && !paymentId.startsWith('admin_') && !paymentId.startsWith('pay_mock_') && !paymentId.startsWith('test_')) {
+    if (!isSimulatedOrder) {
       const existingPayment = await query('SELECT id FROM purchases WHERE payment_id = $1 LIMIT 1', [paymentId]);
       if (existingPayment.rows.length > 0) {
         return res.status(400).json({ error: 'This payment transaction has already been processed.' });
       }
     }
 
-    const templateIds = cartItems.map(item => parseInt(item.id, 10));
-
-    // 1. Insert records into Neon purchases table
+    // Validate cart items format and IDs
+    const templateIds = [];
     for (const item of cartItems) {
+      const numId = parseInt(item.id, 10);
+      if (!Number.isInteger(numId) || numId <= 0) {
+        return res.status(400).json({ error: 'Invalid template ID in cart.' });
+      }
+      templateIds.push(numId);
+    }
+
+    // Verify templates exist in database
+    const { rows: dbTemplates } = await query(
+      'SELECT id, title, price FROM templates WHERE id = ANY($1::int[])',
+      [templateIds]
+    );
+    if (dbTemplates.length !== templateIds.length) {
+      return res.status(400).json({ error: 'One or more items in your cart do not exist.' });
+    }
+
+    const templateMap = new Map(dbTemplates.map(t => [t.id, t]));
+
+    // 1. Insert records into Neon purchases table with verified prices
+    for (const item of cartItems) {
+      const numId = parseInt(item.id, 10);
+      const dbT = templateMap.get(numId);
+      const verifiedPrice = dbT ? parseFloat(dbT.price || 0) : parseFloat(item.price || 0);
+
       await query(`
         INSERT INTO purchases (user_id, template_id, payment_id, amount)
         VALUES ($1, $2, $3, $4)
-      `, [user.id, parseInt(item.id, 10), paymentId, parseFloat(item.price || 0)]);
+      `, [user.id, numId, paymentId, verifiedPrice]);
     }
 
     // 2. Update user's purchased_templates JSON array in Neon
     const existing = Array.isArray(user.purchased_templates) ? user.purchased_templates : [];
-    const merged = [...new Set([...existing, ...templateIds])];
+    const merged = [...new Set([...existing.map(Number), ...templateIds])].filter(n => !isNaN(n));
 
     await query(`
       UPDATE users 
@@ -413,8 +465,11 @@ router.post('/verify-payment', requireAuth, async (req, res) => {
       `, [couponCode.trim().toUpperCase()]);
     }
 
-    // 4. Automatic Luxury Invoice Email Dispatch with attached PDF (Awaited for guaranteed delivery)
-    const totalAmount = cartItems.reduce((sum, it) => sum + parseFloat(it.price || 0), 0);
+    // 4. Automatic Luxury Invoice Email Dispatch with attached PDF
+    const totalAmount = cartItems.reduce((sum, it) => {
+      const dbT = templateMap.get(parseInt(it.id, 10));
+      return sum + (dbT ? parseFloat(dbT.price || 0) : parseFloat(it.price || 0));
+    }, 0);
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
 
     try {
@@ -423,12 +478,15 @@ router.post('/verify-payment', requireAuth, async (req, res) => {
         {
           orderId: paymentId,
           total: totalAmount.toFixed(2),
-          items: cartItems.map(it => ({
-            id: it.id,
-            title: it.title,
-            price: it.price,
-            category: it.category || 'Web Template'
-          }))
+          items: cartItems.map(it => {
+            const dbT = templateMap.get(parseInt(it.id, 10));
+            return {
+              id: it.id,
+              title: dbT?.title || it.title,
+              price: dbT ? String(dbT.price) : String(it.price || 0),
+              category: it.category || 'Web Template'
+            };
+          })
         },
         frontendUrl,
         invoicePdfBase64
@@ -451,7 +509,7 @@ router.post('/verify-payment', requireAuth, async (req, res) => {
 // Helper: Locate or generate zip for template on local disk
 const getTemplateZipPath = async (templateId) => {
   const { rows } = await query('SELECT title FROM templates WHERE id = $1', [templateId]);
-  const templateTitle = rows[0]?.title || `Template_${templateId}`;
+  const templateTitle = (rows[0]?.title || `Template_${templateId}`).replace(/[^a-zA-Z0-9_-]/g, '_');
 
   const privateStorageDir = path.resolve(__dirname, '../private_storage/templates');
   if (!fs.existsSync(privateStorageDir)) fs.mkdirSync(privateStorageDir, { recursive: true });
@@ -475,21 +533,6 @@ const getTemplateZipPath = async (templateId) => {
     return generatedZipPath;
   }
 
-  // Check 4: Any matching directory in templates/
-  const dirs = fs.readdirSync(templatesRootDir);
-  const matched = dirs.find(d => d.toLowerCase().includes(templateTitle.toLowerCase().split(' ')[0]));
-  if (matched) {
-    const fullPath = path.join(templatesRootDir, matched);
-    if (fullPath.endsWith('.zip') && fs.existsSync(fullPath)) return fullPath;
-    if (fs.lstatSync(fullPath).isDirectory()) {
-      const zip = new AdmZip();
-      zip.addLocalFolder(fullPath);
-      const generatedZipPath = path.join(privateStorageDir, `${templateTitle}.zip`);
-      zip.writeZip(generatedZipPath);
-      return generatedZipPath;
-    }
-  }
-
   // Fallback: Default starter template package
   const fallbackZip = path.join(privateStorageDir, `${templateTitle}.zip`);
   const zip = new AdmZip();
@@ -502,6 +545,10 @@ const getTemplateZipPath = async (templateId) => {
 const handleTemplateDownload = async (req, res) => {
   try {
     const templateId = parseInt(req.params.templateId, 10);
+    if (!Number.isInteger(templateId) || templateId <= 0) {
+      return res.status(400).json({ error: 'Invalid template ID parameter' });
+    }
+
     const user = req.user;
 
     // Check latest status of this template purchase
@@ -535,6 +582,10 @@ const handleTemplateDownload = async (req, res) => {
       return res.status(403).json({ error: 'You have not purchased this template or access has been revoked.' });
     }
 
+    // Set download security headers
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Content-Security-Policy', "default-src 'none'");
+
     // Audit Trail: Record download in purchases
     await query(`
       UPDATE purchases 
@@ -551,24 +602,35 @@ const handleTemplateDownload = async (req, res) => {
 
     if (storageRes.rows.length > 0 && storageRes.rows[0].file_data) {
       const row = storageRes.rows[0];
-      const filename = row.file_name || `template-${templateId}.zip`;
+      const filename = (row.file_name || `template-${templateId}.zip`).replace(/[^a-zA-Z0-9._-]/g, '_');
       res.setHeader('Content-Type', 'application/zip');
       res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
       if (row.file_size) res.setHeader('Content-Length', row.file_size);
       return res.send(row.file_data);
     }
 
-    // 2. Check template_files table
+    // 2. Check template_files table with strict path traversal check
+    const allowedRoots = [
+      path.resolve(__dirname, '../private_storage/templates'),
+      path.resolve(__dirname, '../../templates'),
+      path.resolve(__dirname, '../uploads')
+    ];
+
     const fileRes = await query('SELECT file_path, file_name FROM template_files WHERE template_id = $1 ORDER BY id DESC LIMIT 1', [templateId]);
-    if (fileRes.rows.length > 0 && fs.existsSync(fileRes.rows[0].file_path)) {
-      return res.download(fileRes.rows[0].file_path, fileRes.rows[0].file_name || `template-${templateId}.zip`);
+    if (fileRes.rows.length > 0) {
+      const targetFilePath = fileRes.rows[0].file_path;
+      if (isPathSafe(targetFilePath, allowedRoots) && fs.existsSync(targetFilePath)) {
+        const safeName = (fileRes.rows[0].file_name || `template-${templateId}.zip`).replace(/[^a-zA-Z0-9._-]/g, '_');
+        return res.download(targetFilePath, safeName);
+      }
     }
 
     // 3. Fallback: generate dynamic ZIP
-    const { rows: tRows } = await query('SELECT title, preview_url, demo_url, category FROM templates WHERE id = $1', [templateId]);
+    const { rows: tRows } = await query('SELECT title FROM templates WHERE id = $1', [templateId]);
     const tmpl = tRows[0] || { title: `Template-${templateId}` };
     const fallbackZip = await getTemplateZipPath(templateId);
-    return res.download(fallbackZip, `${(tmpl.title || 'template').replace(/[^a-z0-9]/gi, '_')}.zip`);
+    const safeTitleName = (tmpl.title || 'template').replace(/[^a-zA-Z0-9_-]/g, '_');
+    return res.download(fallbackZip, `${safeTitleName}.zip`);
   } catch (error) {
     console.error('Download error:', error);
     res.status(500).json({ error: 'Failed to process template download' });
@@ -581,10 +643,13 @@ router.get('/download-template/:templateId', requireAuth, handleTemplateDownload
 // POST /api/generate-download - Generates direct download URL
 router.post('/generate-download', requireAuth, async (req, res) => {
   try {
-    const { templateId } = req.body;
-    const user = req.user;
-
+    const { templateId } = req.body || {};
     const tId = parseInt(templateId, 10);
+    if (!Number.isInteger(tId) || tId <= 0) {
+      return res.status(400).json({ error: 'Invalid template ID parameter' });
+    }
+
+    const user = req.user;
 
     // Check latest status of this template purchase
     const latestCheck = await query(`
@@ -619,11 +684,11 @@ router.post('/generate-download', requireAuth, async (req, res) => {
 
     // Direct download URL served by our backend with secure signed token
     const downloadToken = jwt.sign(
-      { id: user.id, email: user.email, templateId: parseInt(templateId, 10), type: 'download' },
+      { id: user.id, email: user.email, templateId: tId, type: 'download' },
       JWT_SECRET,
       { expiresIn: '15m' }
     );
-    const downloadUrl = `/api/download/${templateId}?token=${encodeURIComponent(downloadToken)}`;
+    const downloadUrl = `/api/download/${tId}?token=${encodeURIComponent(downloadToken)}`;
     res.json({ downloadUrl, downloadToken });
   } catch (error) {
     console.error('Generate download error:', error);
@@ -755,10 +820,12 @@ router.post('/request-refund', requireAuth, async (req, res) => {
 
 router.post('/send-receipt', async (req, res) => {
   const { to, email, orderDetails, cartItems, totalAmount, paymentId, frontendUrl, invoicePdfBase64 } = req.body || {};
-  const recipientEmail = to || email;
+  const recipientEmail = String(to || email || '').trim().toLowerCase();
 
-  if (!recipientEmail) {
-    return res.status(400).json({ error: 'Missing recipient email' });
+  // Basic email syntax validation to avoid mail relay abuse
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!recipientEmail || recipientEmail.length > 255 || !emailRegex.test(recipientEmail)) {
+    return res.status(400).json({ error: 'Valid recipient email is required' });
   }
 
   let normalizedOrderDetails = orderDetails;
@@ -774,49 +841,6 @@ router.post('/send-receipt', async (req, res) => {
     }
   }
 
-  // Safety net: ensure purchase records exist in Neon even if called via send-receipt
-  try {
-    const cleanEmail = recipientEmail.trim().toLowerCase();
-    const userRes = await query('SELECT id, purchased_templates FROM users WHERE email = $1', [cleanEmail]);
-    if (userRes.rows.length > 0) {
-      const dbUser = userRes.rows[0];
-      const itemsToRecord = cartItems || normalizedOrderDetails?.items || [];
-      const newTemplateIds = [];
-
-      for (const it of itemsToRecord) {
-        const tId = parseInt(it.id, 10);
-        if (!isNaN(tId)) {
-          newTemplateIds.push(tId);
-          const existing = await query(
-            'SELECT id FROM purchases WHERE user_id = $1 AND template_id = $2 AND (payment_id = $3 OR $3 IS NULL) LIMIT 1',
-            [dbUser.id, tId, paymentId || null]
-          );
-          if (!existing.rows.length) {
-            await query(`
-              INSERT INTO purchases (user_id, template_id, payment_id, amount)
-              VALUES ($1, $2, $3, $4)
-            `, [dbUser.id, tId, paymentId || `ord_${Date.now()}`, parseFloat(it.price || 0)]);
-          }
-        }
-      }
-
-      if (newTemplateIds.length > 0) {
-        let existingList = [];
-        if (Array.isArray(dbUser.purchased_templates)) existingList = dbUser.purchased_templates;
-        else if (typeof dbUser.purchased_templates === 'string') {
-          try { existingList = JSON.parse(dbUser.purchased_templates); } catch {}
-        }
-        const mergedList = [...new Set([...existingList.map(Number), ...newTemplateIds])].filter(n => !isNaN(n));
-        await query('UPDATE users SET purchased_templates = $1, updated_at = NOW() WHERE id = $2', [
-          JSON.stringify(mergedList),
-          dbUser.id
-        ]);
-      }
-    }
-  } catch (syncErr) {
-    console.warn('send-receipt DB sync note:', syncErr.message);
-  }
-
   try {
     const info = await sendReceiptEmail(recipientEmail, normalizedOrderDetails, frontendUrl, invoicePdfBase64);
     res.status(200).json({ success: true, messageId: info.messageId });
@@ -827,14 +851,26 @@ router.post('/send-receipt', async (req, res) => {
 });
 
 router.post('/contact', async (req, res) => {
-  const { firstName, lastName, email, subject, message } = req.body;
+  const { firstName, lastName, email, subject, message } = req.body || {};
 
   if (!firstName || !lastName || !email || !message) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
 
+  const cleanEmail = String(email).trim().toLowerCase();
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (cleanEmail.length > 255 || !emailRegex.test(cleanEmail)) {
+    return res.status(400).json({ error: 'Invalid email address' });
+  }
+
+  // Sanitize headers to prevent CRLF injection in SMTP headers
+  const cleanFirstName = String(firstName).trim().substring(0, 100).replace(/[\r\n]/g, '');
+  const cleanLastName = String(lastName).trim().substring(0, 100).replace(/[\r\n]/g, '');
+  const cleanSubject = String(subject || 'General Inquiry').trim().substring(0, 200).replace(/[\r\n]/g, '');
+  const cleanMessage = String(message).trim().substring(0, 5000);
+
   try {
-    const info = await sendContactEmail(firstName, lastName, email, subject, message);
+    const info = await sendContactEmail(cleanFirstName, cleanLastName, cleanEmail, cleanSubject, cleanMessage);
     res.status(200).json({ success: true, messageId: info.messageId });
   } catch (error) {
     console.error('Error sending contact email:', error);
