@@ -41,7 +41,7 @@ export function CategoryDropdown({ isActive, isOpen, setIsOpen }) {
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         className={cn(
-          "relative cursor-pointer text-[13px] font-medium tracking-normal px-3.5 py-1.5 rounded-full transition-colors duration-150 flex items-center gap-1.5 z-10 select-none",
+          "relative cursor-pointer text-[13px] font-medium tracking-normal px-3 py-1.5 rounded-lg transition-colors duration-150 flex items-center gap-1.5 z-10 select-none",
           isActive
             ? "text-slate-950 dark:text-white font-semibold"
             : "text-slate-600 hover:text-slate-950 dark:text-slate-400 dark:hover:text-white"
@@ -54,7 +54,7 @@ export function CategoryDropdown({ isActive, isOpen, setIsOpen }) {
         {isActive && (
           <motion.div
             layoutId="activeNavPill"
-            className="absolute inset-0 bg-white dark:bg-slate-900 rounded-full shadow-[0_1px_3px_rgba(0,0,0,0.08)] -z-10 border border-black/[0.04] dark:border-white/[0.08]"
+            className="absolute inset-0 bg-white dark:bg-slate-900 rounded-lg shadow-[0_1px_3px_rgba(0,0,0,0.08)] -z-10 border border-black/[0.04] dark:border-white/[0.08]"
             transition={{
               type: "spring",
               stiffness: 450,
@@ -63,6 +63,7 @@ export function CategoryDropdown({ isActive, isOpen, setIsOpen }) {
           />
         )}
       </button>
+
 
       {isOpen && (
         <div className="absolute right-0 mt-2.5 w-64 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-150">

@@ -6,7 +6,7 @@ export function CurrencySelector() {
   const { currency, changeCurrency } = useCurrency();
 
   return (
-    <div className="relative inline-flex items-center bg-slate-100/70 hover:bg-slate-100 dark:bg-slate-850/70 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800 rounded-full h-9 px-3 transition-colors group cursor-pointer">
+    <div className="relative inline-flex items-center bg-slate-100/70 hover:bg-slate-100 dark:bg-slate-850/70 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800 rounded-xl h-9 px-3 transition-colors group cursor-pointer">
       <Globe className="w-3.5 h-3.5 text-slate-400 group-hover:text-amber-500 mr-1.5 shrink-0 transition-colors" />
       <select 
         value={currency} 

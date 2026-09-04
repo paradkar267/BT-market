@@ -22,8 +22,8 @@ export default function UserMenu() {
   if (loading) {
     return (
       <div className="flex items-center gap-2">
-        <div className="w-16 h-9 rounded-full bg-slate-200 dark:bg-slate-800 animate-pulse" />
-        <div className="w-9 h-9 rounded-full bg-slate-200 dark:bg-slate-800 animate-pulse" />
+        <div className="w-16 h-9 rounded-xl bg-slate-200 dark:bg-slate-800 animate-pulse" />
+        <div className="w-9 h-9 rounded-xl bg-slate-200 dark:bg-slate-800 animate-pulse" />
       </div>
     );
   }
@@ -36,10 +36,10 @@ export default function UserMenu() {
           <button
             type="button"
             onClick={() => setIsOpen(!isOpen)}
-            className="flex items-center gap-1 p-0.5 rounded-full border border-slate-200/80 dark:border-slate-700 hover:border-amber-500/50 transition-all cursor-pointer select-none group"
+            className="flex items-center gap-1 p-0.5 rounded-xl border border-slate-200/80 dark:border-slate-700 hover:border-amber-500/50 transition-all cursor-pointer select-none group"
             aria-label="User profile menu"
           >
-            <div className="w-8 h-8 rounded-full overflow-hidden bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-white shadow-xs">
+            <div className="w-8 h-8 rounded-lg overflow-hidden bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-white shadow-xs">
               {profile?.avatar_url ? (
                 <img src={profile.avatar_url} alt="User avatar" className="w-full h-full object-cover" />
               ) : (
@@ -54,12 +54,13 @@ export default function UserMenu() {
           <button
             type="button"
             onClick={openAuthModal}
-            className="flex items-center gap-1.5 h-9 px-4 rounded-full bg-slate-950 hover:bg-black text-white dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100 text-xs font-semibold shadow-xs hover:shadow-md transition-all duration-150 cursor-pointer select-none"
+            className="flex items-center gap-1.5 h-9 px-4 rounded-xl bg-slate-950 hover:bg-black text-white dark:bg-white dark:text-slate-950 dark:hover:bg-slate-100 text-xs font-semibold shadow-xs hover:shadow-md transition-all duration-150 cursor-pointer select-none"
           >
             <User className="w-3.5 h-3.5" />
             <span>Sign In</span>
           </button>
         )}
+
 
         {/* Dropdown Menu (only if logged in) */}
         {isOpen && user && (

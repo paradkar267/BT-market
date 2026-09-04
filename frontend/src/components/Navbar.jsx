@@ -47,7 +47,7 @@ export default function Navbar() {
           <button
             type="button"
             onClick={openSearch}
-            className="hidden sm:inline-flex items-center justify-between gap-2.5 h-9 w-36 lg:w-44 px-3 text-xs text-slate-500 hover:text-slate-950 dark:text-slate-400 dark:hover:text-white bg-slate-100/70 hover:bg-slate-100 dark:bg-slate-900/70 dark:hover:bg-slate-850 border border-slate-200/80 dark:border-slate-800 hover:border-amber-500/40 rounded-full transition-all duration-150 cursor-pointer group select-none shadow-xs"
+            className="hidden sm:inline-flex items-center justify-between gap-2.5 h-9 w-36 lg:w-44 px-3 text-xs text-slate-500 hover:text-slate-950 dark:text-slate-400 dark:hover:text-white bg-slate-100/70 hover:bg-slate-100 dark:bg-slate-900/70 dark:hover:bg-slate-850 border border-slate-200/80 dark:border-slate-800 hover:border-amber-500/40 rounded-xl transition-all duration-150 cursor-pointer group select-none shadow-xs"
             title="Search templates (⌘K)"
           >
             <div className="flex items-center gap-2 min-w-0">
@@ -63,7 +63,7 @@ export default function Navbar() {
           <button
             type="button"
             onClick={openSearch}
-            className="sm:hidden flex items-center justify-center w-9 h-9 text-slate-600 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white bg-slate-100/70 hover:bg-slate-100 dark:bg-slate-900/70 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800 rounded-full transition-colors cursor-pointer"
+            className="sm:hidden flex items-center justify-center w-9 h-9 text-slate-600 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white bg-slate-100/70 hover:bg-slate-100 dark:bg-slate-900/70 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800 rounded-xl transition-colors cursor-pointer"
             aria-label="Open search"
           >
             <Search className="w-4 h-4" />
@@ -73,7 +73,7 @@ export default function Navbar() {
           <button
             type="button"
             onClick={() => requireAuth(() => navigate('/cart'))}
-            className="relative flex items-center justify-center w-9 h-9 text-slate-700 hover:text-slate-950 dark:text-slate-200 dark:hover:text-white bg-slate-100/70 hover:bg-slate-100 dark:bg-slate-900/70 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800 hover:border-amber-500/40 rounded-full transition-all duration-150 cursor-pointer select-none group"
+            className="relative flex items-center justify-center w-9 h-9 text-slate-700 hover:text-slate-950 dark:text-slate-200 dark:hover:text-white bg-slate-100/70 hover:bg-slate-100 dark:bg-slate-900/70 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800 hover:border-amber-500/40 rounded-xl transition-all duration-150 cursor-pointer select-none group"
             title="Shopping Cart"
             aria-label="Shopping Cart"
           >
@@ -85,7 +85,6 @@ export default function Navbar() {
             )}
           </button>
 
-
           {/* Currency + User Menu Dropdown */}
           <UserMenu />
 
@@ -93,11 +92,12 @@ export default function Navbar() {
           <button
             type="button"
             onClick={() => setMobileOpen(!mobileOpen)}
-            className="md:hidden flex items-center justify-center w-9 h-9 text-slate-700 hover:text-slate-950 dark:text-slate-200 dark:hover:text-white bg-slate-100/70 hover:bg-slate-100 dark:bg-slate-850/70 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800 rounded-full transition-colors cursor-pointer select-none"
+            className="md:hidden flex items-center justify-center w-9 h-9 text-slate-700 hover:text-slate-950 dark:text-slate-200 dark:hover:text-white bg-slate-100/70 hover:bg-slate-100 dark:bg-slate-850/70 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800 rounded-xl transition-colors cursor-pointer select-none"
             aria-label={mobileOpen ? "Close menu" : "Open menu"}
           >
             {mobileOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
           </button>
+
         </div>
       </div>
 
