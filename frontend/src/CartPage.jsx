@@ -33,7 +33,6 @@ export default function CartPage() {
   const { user, requireAuth } = useAuth();
   const navigate = useNavigate();
   const isDark = theme === 'dark';
-  const [isProcessing, setIsProcessing] = useState(false);
 
   // Promo Code State
   const [couponInput, setCouponInput] = useState('');
@@ -373,137 +372,120 @@ export default function CartPage() {
     }
   };
 
-  const processSuccessfulPayment = async (paymentId, razorpayMeta = {}) => {
-    setIsProcessing(true);
-    const toastId = toast.loading('Securing your order and generating invoice...');
+  const processSuccessfulPayment = (paymentId, razorpayMeta = {}) => {
+    const customerEmail = user?.email || '';
+    const customerName = user?.full_name || user?.user_metadata?.full_name || 'Customer';
 
-    let activeUser = user;
-    if (!activeUser) {
+    // 1. INSTANT Checkout & IMMEDIATE Redirect to My Templates (0ms UI wait!)
+    checkout(paymentId, cartItems);
+    toast.success('🎉 Purchase complete! Your templates are ready.');
+    navigate('/my-templates', { state: { showConfetti: true } });
+
+    // 2. Fire-and-Forget Background Task: DB Record Sync in Neon & Invoice Email Dispatch
+    (async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        activeUser = session?.user || null;
-      } catch {}
-    }
-
-    const customerEmail = activeUser?.email || user?.email || '';
-    const customerName = activeUser?.user_metadata?.full_name || user?.user_metadata?.full_name || 'Customer';
-
-    try {
-      // 1. Generate PDF Invoice
-      let invoicePdfBase64 = null;
-      try {
-        invoicePdfBase64 = await generateInvoicePDF(paymentId);
-      } catch (pdfErr) {
-        console.warn("PDF generation note:", pdfErr?.message);
-      }
-
-      // 2. Verify payment & send invoice email via backend
-      const token = localStorage.getItem('bizleap_token') || '';
-      const verifyPayload = {
-        paymentId: paymentId,
-        orderId: razorpayMeta?.razorpay_order_id || `order_${paymentId}`,
-        signature: razorpayMeta?.razorpay_signature || '',
-        cartItems: cartItems.map(it => ({ id: it.id, title: it.title, price: it.price, category: it.category })),
-        couponCode: appliedCoupon ? appliedCoupon.code : null,
-        couponId: appliedCoupon ? appliedCoupon.id : null,
-        invoicePdfBase64: invoicePdfBase64
-      };
-
-      const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3000' : '');
-      const targetUrls = [];
-      if (backendUrl) targetUrls.push(`${backendUrl}/api/verify-payment`);
-      targetUrls.push('/api/verify-payment');
-
-      let verified = false;
-      for (const url of targetUrls) {
+        // Generate PDF
+        let invoicePdfBase64 = null;
         try {
-          const res = await fetch(url, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-            },
-            body: JSON.stringify(verifyPayload)
-          });
-          if (res.ok) {
-            verified = true;
-            break;
-          }
-        } catch (e) {
-          console.warn('verify-payment attempt note:', e?.message);
+          invoicePdfBase64 = await generateInvoicePDF(paymentId);
+        } catch (pdfErr) {
+          console.warn("PDF generation note:", pdfErr?.message);
         }
-      }
 
-      // 3. Failsafe backup email dispatch if verify-payment didn't finish
-      if (!verified) {
-        const emailPayload = {
-          to: customerEmail,
-          email: customerEmail,
-          customerName: customerName,
+        const token = localStorage.getItem('bizleap_token') || '';
+        const verifyPayload = {
           paymentId: paymentId,
-          totalAmount: finalPayableTotal,
-          frontendUrl: window.location.origin,
-          orderDetails: {
-            orderId: paymentId,
-            total: finalPayableTotal.toFixed(2),
-            subtotal: cartTotal.toFixed(2),
-            discount: appliedCoupon ? appliedCoupon.discount : 0,
-            couponCode: appliedCoupon ? appliedCoupon.code : null,
-            items: cartItems.map(item => ({
+          orderId: razorpayMeta?.razorpay_order_id || `order_${paymentId}`,
+          signature: razorpayMeta?.razorpay_signature || '',
+          cartItems: cartItems.map(it => ({ id: it.id, title: it.title, price: it.price, category: it.category })),
+          couponCode: appliedCoupon ? appliedCoupon.code : null,
+          couponId: appliedCoupon ? appliedCoupon.id : null,
+          invoicePdfBase64: invoicePdfBase64
+        };
+
+        const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3000' : '');
+        const targetUrls = [];
+        if (backendUrl) targetUrls.push(`${backendUrl}/api/verify-payment`);
+        targetUrls.push('/api/verify-payment');
+
+        let verified = false;
+        for (const url of targetUrls) {
+          try {
+            const res = await fetch(url, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+              },
+              body: JSON.stringify(verifyPayload),
+              keepalive: true
+            });
+            if (res.ok) {
+              verified = true;
+              window.dispatchEvent(new Event('purchases_updated'));
+              window.dispatchEvent(new Event('templates_updated'));
+              break;
+            }
+          } catch (e) {
+            console.warn('verify-payment attempt note:', e?.message);
+          }
+        }
+
+        // Failsafe backup email dispatch if verify-payment didn't finish
+        if (!verified) {
+          const emailPayload = {
+            to: customerEmail,
+            email: customerEmail,
+            customerName: customerName,
+            paymentId: paymentId,
+            totalAmount: finalPayableTotal,
+            frontendUrl: window.location.origin,
+            orderDetails: {
+              orderId: paymentId,
+              total: finalPayableTotal.toFixed(2),
+              subtotal: cartTotal.toFixed(2),
+              discount: appliedCoupon ? appliedCoupon.discount : 0,
+              couponCode: appliedCoupon ? appliedCoupon.code : null,
+              items: cartItems.map(item => ({
+                id: item.id,
+                title: item.title,
+                price: item.price,
+                author: item.author || 'Bizleap Partner',
+                category: item.category || 'Web',
+                downloadUrl: `${window.location.origin}/my-templates?download=${item.id}&payment_id=${paymentId}`
+              }))
+            },
+            cartItems: cartItems.map(item => ({
               id: item.id,
               title: item.title,
               price: item.price,
               author: item.author || 'Bizleap Partner',
               category: item.category || 'Web',
               downloadUrl: `${window.location.origin}/my-templates?download=${item.id}&payment_id=${paymentId}`
-            }))
-          },
-          cartItems: cartItems.map(item => ({
-            id: item.id,
-            title: item.title,
-            price: item.price,
-            author: item.author || 'Bizleap Partner',
-            category: item.category || 'Web',
-            downloadUrl: `${window.location.origin}/my-templates?download=${item.id}&payment_id=${paymentId}`
-          })),
-          invoicePdfBase64: invoicePdfBase64
-        };
+            })),
+            invoicePdfBase64: invoicePdfBase64
+          };
 
-        const emailTargetUrls = [];
-        if (backendUrl) emailTargetUrls.push(`${backendUrl}/api/send-receipt`);
-        emailTargetUrls.push('/api/send-receipt');
+          const emailTargetUrls = [];
+          if (backendUrl) emailTargetUrls.push(`${backendUrl}/api/send-receipt`);
+          emailTargetUrls.push('/api/send-receipt');
 
-        for (const url of emailTargetUrls) {
-          try {
-            const res = await fetch(url, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(emailPayload)
-            });
-            if (res.ok) break;
-          } catch {}
+          for (const url of emailTargetUrls) {
+            try {
+              const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(emailPayload),
+                keepalive: true
+              });
+              if (res.ok) break;
+            } catch {}
+          }
         }
+      } catch (bgErr) {
+        console.warn("Background order/email dispatch note:", bgErr);
       }
-
-      // 4. Update local Cart & My Templates State
-      await checkout(paymentId, cartItems);
-      if (loadPurchasedTemplates) {
-        await loadPurchasedTemplates();
-      }
-      window.dispatchEvent(new Event('purchases_updated'));
-      window.dispatchEvent(new Event('templates_updated'));
-
-      toast.dismiss(toastId);
-      toast.success('🎉 Purchase complete! Receipt email sent & templates ready.');
-      navigate('/my-templates');
-    } catch (err) {
-      console.error('Payment completion error:', err);
-      toast.dismiss(toastId);
-      toast.success('🎉 Payment recorded! Your templates are ready.');
-      navigate('/my-templates');
-    } finally {
-      setIsProcessing(false);
-    }
+    })();
   };
 
   const handleCheckout = async () => {
@@ -545,8 +527,8 @@ export default function CartPage() {
       name: 'Bizleap Marketplace',
       description: appliedCoupon ? `Discount applied: ${appliedCoupon.code}` : 'Premium Templates & UI Kits',
       image: 'https://cdn-icons-png.flaticon.com/512/3176/3176366.png',
-      handler: async function (response) {
-        await processSuccessfulPayment(response.razorpay_payment_id, response);
+      handler: function (response) {
+        processSuccessfulPayment(response.razorpay_payment_id, response);
       },
       prefill: {
         name: activeUser?.user_metadata?.full_name || '',
@@ -575,13 +557,6 @@ export default function CartPage() {
 
   return (
     <>
-    {isProcessing && (
-      <div className="fixed inset-0 z-[9999] bg-black/70 backdrop-blur-md flex flex-col items-center justify-center text-white">
-        <div className="w-16 h-16 border-4 border-white/20 border-t-white rounded-full animate-spin mb-6"></div>
-        <h2 className="text-2xl font-black mb-2 tracking-tight">Securing Your Order...</h2>
-        <p className="text-white/70 text-sm">Generating license keys & invoice. Please don't refresh.</p>
-      </div>
-    )}
 
     <div className={`min-h-screen font-sans pb-24 transition-colors duration-1000 ${isDark ? 'bg-[#0a0a0a] text-white' : 'bg-gray-50 text-black'}`}>
       {/* Mini Nav */}
