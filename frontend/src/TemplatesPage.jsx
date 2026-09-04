@@ -11,7 +11,7 @@ import { useTheme } from './ThemeContext';
 import Navbar from './components/Navbar';
 import SEO from './components/SEO';
 import { useCurrency } from './CurrencyContext';
-
+import { useAuth } from './AuthContext';
 
 export default function TemplatesPage() {
   const { cartItems } = useCart();

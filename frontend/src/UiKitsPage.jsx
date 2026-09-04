@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { useTheme } from './ThemeContext';
 import Navbar from './components/Navbar';
 import SEO from './components/SEO';
+import { useAuth } from './AuthContext';
 
 
 function SidebarFilters({ searchQuery, setSearchQuery, priceRange, setPriceRange, isDark }) {
