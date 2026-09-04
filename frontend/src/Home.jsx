@@ -107,55 +107,59 @@ export default function Home() {
               Curated React and Tailwind templates with full source code, lifetime commercial license, and instant automated delivery.
             </p>
 
-            {/* Minimalist Search Bar in Hero */}
-            <div className="max-w-xl mb-6">
-              <div 
-                onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))}
-                className="relative flex items-center p-1.5 bg-white dark:bg-zinc-900 rounded-xl border border-gray-200/90 dark:border-zinc-800 shadow-xs hover:border-gray-400 dark:hover:border-zinc-600 transition-all cursor-pointer group select-none"
+            {/* Primary & Secondary Action CTAs */}
+            <div className="flex flex-wrap items-center gap-3 mb-8">
+              <Link
+                to="/templates"
+                className="px-6 py-3.5 bg-black hover:bg-neutral-800 text-white text-sm font-bold rounded-xl transition-all shadow-sm hover:shadow-md flex items-center gap-2 group cursor-pointer"
               >
-                <Search className="w-4 h-4 text-gray-400 group-hover:text-gray-700 dark:group-hover:text-white ml-3.5 shrink-0 transition-colors" />
-                <div className="w-full px-3 py-2 text-sm text-gray-400 font-normal flex items-center justify-between">
-                  <span>Search templates...</span>
-                  <kbd className="hidden sm:inline-flex items-center px-1.5 py-0.5 text-[10px] font-mono text-gray-400 bg-gray-100 dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded">⌘K</kbd>
-                </div>
-                <button
-                  type="button"
-                  className="px-4 py-2 bg-black hover:bg-zinc-800 text-white text-xs font-semibold rounded-lg transition-all cursor-pointer shrink-0 shadow-xs flex items-center gap-1.5"
-                >
-                  <span>Search</span>
-                  <ArrowRight className="w-3.5 h-3.5" />
-                </button>
-              </div>
-
-              {/* Minimal Quick Filter Tags */}
-              <div className="flex flex-wrap items-center gap-1.5 mt-3 text-xs text-gray-400">
-                <span className="text-[11px] font-medium mr-1 text-gray-400">Popular:</span>
-                {[
-                  { label: 'React', path: '/templates?tech=React' },
-                  { label: 'Next.js', path: '/templates?tech=Next.js' },
-                  { label: 'Dashboards', path: '/templates?tag=Dashboard' },
-                  { label: 'SaaS', path: '/templates?tag=SaaS' },
-                  { label: 'E-Commerce', path: '/templates?tag=E-Commerce' },
-                ].map(chip => (
-                  <button
-                    key={chip.label}
-                    type="button"
-                    onClick={() => navigate(chip.path)}
-                    className="px-2.5 py-0.5 rounded-md bg-gray-100 dark:bg-zinc-800 hover:bg-gray-200 dark:hover:bg-zinc-700 text-gray-600 dark:text-gray-300 font-medium transition-colors cursor-pointer text-xs"
-                  >
-                    {chip.label}
-                  </button>
-                ))}
-              </div>
+                <span>Explore Templates</span>
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              </Link>
+              
+              <Link
+                to="/about"
+                className="px-5 py-3.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 text-sm font-semibold rounded-xl transition-all border border-neutral-200/80 flex items-center gap-2 cursor-pointer"
+              >
+                <span>About Bizleap</span>
+              </Link>
             </div>
 
-            {/* Minimal Trust Line */}
-            <div className="flex items-center gap-4 text-xs text-gray-400 font-medium pt-2">
-              <span>Full Source Code</span>
-              <span className="text-gray-300 dark:text-zinc-700">•</span>
-              <span>Commercial License</span>
-              <span className="text-gray-300 dark:text-zinc-700">•</span>
-              <span>Instant Download</span>
+            {/* Quick Popular Categories */}
+            <div className="flex flex-wrap items-center gap-2 mb-8">
+              <span className="text-xs font-semibold text-neutral-400 uppercase tracking-wider mr-1">Browse:</span>
+              {[
+                { label: 'SaaS', path: '/templates?tag=SaaS' },
+                { label: 'E-Commerce', path: '/templates?tag=E-Commerce' },
+                { label: 'Dashboards', path: '/templates?tag=Dashboard' },
+                { label: 'Agency', path: '/templates?tag=Agency' },
+                { label: 'Landing Page', path: '/templates?tag=Landing%20Page' },
+              ].map(chip => (
+                <button
+                  key={chip.label}
+                  type="button"
+                  onClick={() => navigate(chip.path)}
+                  className="px-3 py-1 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-neutral-700 font-medium transition-colors cursor-pointer text-xs"
+                >
+                  {chip.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Trust Highlights Strip */}
+            <div className="pt-6 border-t border-neutral-100 grid grid-cols-3 gap-4 max-w-lg">
+              <div className="flex items-center gap-2 text-xs text-neutral-600 font-medium">
+                <Code2 className="w-4 h-4 text-black shrink-0" />
+                <span>Full Source Code</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-neutral-600 font-medium">
+                <ShieldCheck className="w-4 h-4 text-black shrink-0" />
+                <span>Commercial License</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-neutral-600 font-medium">
+                <Download className="w-4 h-4 text-black shrink-0" />
+                <span>Instant Download</span>
+              </div>
             </div>
           </div>
         </div>
