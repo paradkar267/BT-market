@@ -148,13 +148,13 @@ router.get('/announcement-banner', async (req, res) => {
     if (!rows.length) {
       const defaultBanner = {
         id: 'primary_banner',
-        is_enabled: true,
-        headline: '🔥 Weekend Mega Flash Sale Ends in:',
-        coupon_code: 'LAUNCH50',
-        discount_badge: '50% OFF',
-        button_text: 'Claim 50% OFF Now →',
+        is_enabled: false,
+        headline: '',
+        coupon_code: '',
+        discount_badge: '',
+        button_text: '',
         button_url: '/explore',
-        end_time: new Date(Date.now() + 48 * 3600 * 1000).toISOString(),
+        end_time: null,
         theme: 'fire',
         is_dismissible: true
       };

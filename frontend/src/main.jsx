@@ -32,7 +32,6 @@ import { GradientBackground } from '@/components/ui/gradient-background-4'
 import SmoothScroll from './SmoothScroll'
 import { CommandPalette } from './components/ui/CommandPalette'
 import { SocialProofToast } from './components/ui/SocialProofToast'
-import FlashSaleTopBar from './components/ui/FlashSaleTopBar'
 import { ErrorBoundary } from './ErrorBoundary.jsx'
 
 // Guard for normal logged in users
@@ -94,7 +93,6 @@ createRoot(document.getElementById('root')).render(
                     <SocialProofToast />
                     <Toaster position="top-center" richColors />
                     <CommandPalette />
-                    <FlashSaleTopBar />
                     <Routes>
                       <Route path="/" element={<App />} />
                       <Route path="/product/:id" element={<ProductPage />} />
