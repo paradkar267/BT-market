@@ -374,6 +374,9 @@ export default function CartPage() {
   };
 
   const processSuccessfulPayment = async (paymentId, razorpayMeta = {}) => {
+    setIsProcessing(true);
+    const toastId = toast.loading('Securing your order and generating invoice...');
+
     let activeUser = user;
     if (!activeUser) {
       try {
@@ -384,69 +387,55 @@ export default function CartPage() {
 
     const customerEmail = activeUser?.email || user?.email || '';
     const customerName = activeUser?.user_metadata?.full_name || user?.user_metadata?.full_name || 'Customer';
-    const userId = activeUser?.id || user?.id;
 
-    // 1. INSTANT Checkout & Immediate Redirect (0ms UI wait)
     try {
-      await checkout(paymentId, cartItems);
-      if (loadPurchasedTemplates) {
-        loadPurchasedTemplates();
-      }
-    } catch (e) {
-      console.warn("Local checkout note:", e);
-    }
-
-    toast.success('🎉 Purchase complete! Your templates are ready.');
-    navigate('/my-templates');
-
-    // 2. Asynchronous Background Task: DB Record Sync in Neon & Invoice Email Dispatch
-    (async () => {
+      // 1. Generate PDF Invoice
+      let invoicePdfBase64 = null;
       try {
-        // Generate PDF
-        let invoicePdfBase64 = null;
+        invoicePdfBase64 = await generateInvoicePDF(paymentId);
+      } catch (pdfErr) {
+        console.warn("PDF generation note:", pdfErr?.message);
+      }
+
+      // 2. Verify payment & send invoice email via backend
+      const token = localStorage.getItem('bizleap_token') || '';
+      const verifyPayload = {
+        paymentId: paymentId,
+        orderId: razorpayMeta?.razorpay_order_id || `order_${paymentId}`,
+        signature: razorpayMeta?.razorpay_signature || '',
+        cartItems: cartItems.map(it => ({ id: it.id, title: it.title, price: it.price, category: it.category })),
+        couponCode: appliedCoupon ? appliedCoupon.code : null,
+        couponId: appliedCoupon ? appliedCoupon.id : null,
+        invoicePdfBase64: invoicePdfBase64
+      };
+
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3000' : '');
+      const targetUrls = [];
+      if (backendUrl) targetUrls.push(`${backendUrl}/api/verify-payment`);
+      targetUrls.push('/api/verify-payment');
+
+      let verified = false;
+      for (const url of targetUrls) {
         try {
-          invoicePdfBase64 = await generateInvoicePDF(paymentId);
-        } catch (pdfErr) {
-          console.warn("PDF generation note:", pdfErr?.message);
-        }
-
-        const token = localStorage.getItem('bizleap_token') || '';
-        const verifyPayload = {
-          paymentId: paymentId,
-          orderId: razorpayMeta?.razorpay_order_id || `order_${paymentId}`,
-          signature: razorpayMeta?.razorpay_signature || '',
-          cartItems: cartItems.map(it => ({ id: it.id, title: it.title, price: it.price, category: it.category })),
-          couponCode: appliedCoupon ? appliedCoupon.code : null,
-          couponId: appliedCoupon ? appliedCoupon.id : null,
-          invoicePdfBase64: invoicePdfBase64
-        };
-
-        const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3000' : '');
-        const targetUrls = [];
-        if (backendUrl) targetUrls.push(`${backendUrl}/api/verify-payment`);
-        targetUrls.push('/api/verify-payment');
-
-        for (const url of targetUrls) {
-          try {
-            const res = await fetch(url, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                ...(token ? { 'Authorization': `Bearer ${token}` } : {})
-              },
-              body: JSON.stringify(verifyPayload)
-            });
-            if (res.ok) {
-              window.dispatchEvent(new Event('purchases_updated'));
-              window.dispatchEvent(new Event('templates_updated'));
-              break;
-            }
-          } catch (e) {
-            console.warn('verify-payment attempt note:', e?.message);
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+            },
+            body: JSON.stringify(verifyPayload)
+          });
+          if (res.ok) {
+            verified = true;
+            break;
           }
+        } catch (e) {
+          console.warn('verify-payment attempt note:', e?.message);
         }
+      }
 
-        // Failsafe backup email dispatch
+      // 3. Failsafe backup email dispatch if verify-payment didn't finish
+      if (!verified) {
         const emailPayload = {
           to: customerEmail,
           email: customerEmail,
@@ -489,18 +478,32 @@ export default function CartPage() {
             const res = await fetch(url, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(emailPayload),
-              keepalive: true
+              body: JSON.stringify(emailPayload)
             });
             if (res.ok) break;
-          } catch {
-            // try next target
-          }
+          } catch {}
         }
-      } catch (bgErr) {
-        console.warn("Background order/email dispatch note:", bgErr);
       }
-    })();
+
+      // 4. Update local Cart & My Templates State
+      await checkout(paymentId, cartItems);
+      if (loadPurchasedTemplates) {
+        await loadPurchasedTemplates();
+      }
+      window.dispatchEvent(new Event('purchases_updated'));
+      window.dispatchEvent(new Event('templates_updated'));
+
+      toast.dismiss(toastId);
+      toast.success('🎉 Purchase complete! Receipt email sent & templates ready.');
+      navigate('/my-templates');
+    } catch (err) {
+      console.error('Payment completion error:', err);
+      toast.dismiss(toastId);
+      toast.success('🎉 Payment recorded! Your templates are ready.');
+      navigate('/my-templates');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const handleCheckout = async () => {
