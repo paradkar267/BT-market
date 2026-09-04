@@ -1,23 +1,25 @@
 import React from 'react';
 import { useCurrency } from '../../CurrencyContext';
-import { Globe } from 'lucide-react';
+import { Globe, ChevronDown } from 'lucide-react';
 
 export function CurrencySelector() {
   const { currency, changeCurrency } = useCurrency();
 
   return (
-    <div className="relative flex items-center bg-gray-50 dark:bg-gray-800/80 border border-gray-200 dark:border-gray-700 rounded-full px-2.5 py-1.5 shadow-sm hover:border-gray-300 dark:hover:border-gray-600 transition-colors">
-      <Globe className="w-3.5 h-3.5 text-gray-400 mr-1.5 shrink-0" />
+    <div className="relative inline-flex items-center bg-slate-100/70 hover:bg-slate-100 dark:bg-slate-850/70 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-slate-800 rounded-full h-9 px-3 transition-colors group cursor-pointer">
+      <Globe className="w-3.5 h-3.5 text-slate-400 group-hover:text-amber-500 mr-1.5 shrink-0 transition-colors" />
       <select 
         value={currency} 
         onChange={(e) => changeCurrency(e.target.value)}
-        className="bg-transparent text-xs font-semibold text-gray-700 dark:text-gray-200 outline-none cursor-pointer appearance-none pr-4"
-        style={{ backgroundImage: 'url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 20 20\'%3E%3Cpath stroke=\'%236b7280\' stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'1.5\' d=\'m6 8 4 4 4-4\'/%3E%3C/svg%3E")', backgroundPosition: 'right 0 center', backgroundRepeat: 'no-repeat', backgroundSize: '1.2em 1.2em' }}
+        className="bg-transparent text-xs font-semibold text-slate-700 dark:text-slate-200 outline-none cursor-pointer appearance-none pr-3.5"
+        aria-label="Select Currency"
       >
-        <option value="INR" className="bg-white text-gray-900 dark:bg-gray-900 dark:text-white">₹ INR</option>
-        <option value="USD" className="bg-white text-gray-900 dark:bg-gray-900 dark:text-white">$ USD</option>
-        <option value="GBP" className="bg-white text-gray-900 dark:bg-gray-900 dark:text-white">£ GBP</option>
+        <option value="INR" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-white">₹ INR</option>
+        <option value="USD" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-white">$ USD</option>
+        <option value="GBP" className="bg-white text-slate-900 dark:bg-slate-900 dark:text-white">£ GBP</option>
       </select>
+      <ChevronDown className="w-3 h-3 text-slate-400 pointer-events-none absolute right-2.5" />
     </div>
   );
 }
+

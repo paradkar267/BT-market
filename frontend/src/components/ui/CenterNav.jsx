@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { NavBar } from './tubelight-navbar';
-import { Home, LayoutTemplate, MessageCircle } from 'lucide-react';
+import { Home, LayoutTemplate, MessageSquare } from 'lucide-react';
 import { CategoryDropdown } from './CategoryDropdown';
 
 export function CenterNav() {
@@ -10,19 +10,17 @@ export function CenterNav() {
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
 
   // Determine active tab based on current path
-  let activeTab = "TEMPLATES";
+  let activeTab = "Templates";
   const params = new URLSearchParams(location.search);
   
   if (isCategoryOpen || params.get("tag")) {
-    activeTab = "CATEGORIES";
+    activeTab = "Categories";
   } else if (location.pathname === "/") {
-    activeTab = "HOME";
-  } else if (location.pathname === "/ui-kits") {
-    activeTab = "UI KITS";
+    activeTab = "Home";
   } else if (location.pathname === "/templates") {
-    activeTab = "TEMPLATES";
+    activeTab = "Templates";
   } else if (location.pathname === "/contact") {
-    activeTab = "CONTACT";
+    activeTab = "Contact";
   }
 
   return (
@@ -30,19 +28,18 @@ export function CenterNav() {
       <NavBar 
         activeTab={activeTab}
         onChange={(name) => {
-          if (name === "HOME") return navigate("/");
-          else if (name === "TEMPLATES") return navigate("/templates");
-          else if (name === "UI KITS") return navigate("/ui-kits");
-          else if (name === "CONTACT") return navigate("/contact");
+          if (name === "Home") return navigate("/");
+          else if (name === "Templates") return navigate("/templates");
+          else if (name === "Contact") return navigate("/contact");
         }}
         items={[
-          { name: "HOME", url: "/", icon: Home },
-          { name: "TEMPLATES", url: "/templates", icon: LayoutTemplate },
-          { name: "CONTACT", url: "/contact", icon: MessageCircle }
+          { name: "Home", label: "Home", url: "/", icon: Home },
+          { name: "Templates", label: "Templates", url: "/templates", icon: LayoutTemplate },
+          { name: "Contact", label: "Contact", url: "/contact", icon: MessageSquare }
         ]} 
       >
         <CategoryDropdown 
-          isActive={activeTab === "CATEGORIES"} 
+          isActive={activeTab === "Categories"} 
           isOpen={isCategoryOpen} 
           setIsOpen={setIsCategoryOpen} 
         />
@@ -50,3 +47,4 @@ export function CenterNav() {
     </div>
   );
 }
+

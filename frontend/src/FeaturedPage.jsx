@@ -7,10 +7,9 @@ import { DenseCard } from './Home';
 import { SkeletonCard } from './components/ui/Skeleton';
 import UserMenu from './UserMenu';
 import { useTheme } from './ThemeContext';
-import { useAuth } from './AuthContext';
-import { Logo } from './components/ui/Logo';
-import { CenterNav } from './components/ui/CenterNav';
+import Navbar from './components/Navbar';
 import SEO from './components/SEO';
+
 
 export default function FeaturedPage() {
   const { cartItems } = useCart();
@@ -45,28 +44,8 @@ export default function FeaturedPage() {
       />
       
       {/* Navigation */}
-      <nav className="sticky top-0 z-50 w-full bg-white/90 backdrop-blur-xl border-b border-gray-200/80">
-        <div className="max-w-[1400px] mx-auto px-5 md:px-10 h-[64px] flex items-center justify-between gap-4">
-          <Logo />
-          <CenterNav />
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => requireAuth(() => navigate('/cart'))}
-              className="relative flex items-center justify-center w-8 h-8 text-gray-600 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-full transition-colors cursor-pointer"
-              title="Cart"
-            >
-              <ShoppingCart className="w-3.5 h-3.5" />
-              {cartItems.length > 0 && (
-                <span className="absolute -top-1 -right-1 bg-black text-white dark:bg-white dark:text-black text-[9px] font-bold w-4 h-4 flex items-center justify-center rounded-full shadow-sm">
-                  {cartItems.length}
-                </span>
-              )}
-            </button>
-            <UserMenu />
-          </div>
-        </div>
-      </nav>
+      <Navbar />
+
 
       {/* Main Content */}
       <div className="max-w-[1600px] w-full mx-auto px-8 md:px-16 mt-12 flex flex-col">

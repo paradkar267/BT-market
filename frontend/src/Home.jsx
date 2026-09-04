@@ -10,11 +10,10 @@ import { useAuth } from './AuthContext';
 
 import { ExploreCategories } from './components/ui/ExploreCategories';
 import { InteractiveProductCard } from './components/ui/card-7';
-import { CenterNav } from './components/ui/CenterNav';
-import UserMenu from './UserMenu';
+import Navbar from './components/Navbar';
 import { Footerdemo } from '@/components/ui/footer-section';
 import { FAQSection } from './components/ui/FAQSection';
-import { Logo } from './components/ui/Logo';
+
 
 // DenseCard delegates to InteractiveProductCard
 export const DenseCard = ({ template }) => (
@@ -58,44 +57,7 @@ export default function Home() {
     <div className="relative w-full min-h-screen flex flex-col font-sans bg-white text-gray-900">
 
       {/* ─── NAVBAR ──────────────────────────────────────────────────────── */}
-      <nav className="sticky top-0 z-[100] w-full bg-white/90 backdrop-blur-xl border-b border-gray-200/80 pointer-events-auto">
-        <div className="max-w-[1400px] mx-auto px-5 md:px-10 h-[64px] flex items-center justify-between gap-4">
-          {/* Logo */}
-          <Logo />
-
-          {/* Center Nav */}
-          <CenterNav />
-
-          {/* Right actions */}
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => window.dispatchEvent(new CustomEvent('open-command-palette'))}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-gray-500 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-full transition-colors cursor-pointer"
-              title="Search (⌘K)"
-            >
-              <Search className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline text-gray-400 text-[10px] font-mono">⌘K</span>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => requireAuth(() => navigate('/cart'))}
-              className="relative flex items-center justify-center w-8 h-8 text-gray-600 hover:text-gray-900 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-full transition-colors cursor-pointer"
-              title="Cart"
-            >
-              <ShoppingCart className="w-3.5 h-3.5" />
-              {cartItems.length > 0 && (
-                <span className="absolute -top-1 -right-1 bg-black text-white dark:bg-white dark:text-black text-[9px] font-bold w-4 h-4 flex items-center justify-center rounded-full shadow-sm">
-                  {cartItems.length}
-                </span>
-              )}
-            </button>
-
-            <UserMenu />
-          </div>
-        </div>
-      </nav>
+      <Navbar />
 
       {/* ─── BESPOKE DEVELOPER HERO ────────────────── */}
       <section className="relative w-full min-h-[620px] md:min-h-[700px] bg-white border-b border-gray-100 flex items-center overflow-hidden pointer-events-auto">
