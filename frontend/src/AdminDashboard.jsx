@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useAuth } from './AuthContext';
 import { useTemplates } from './useTemplates';
 import { useCurrency } from './CurrencyContext';
@@ -244,7 +244,9 @@ export default function AdminDashboard() {
     }
   }, [session, isAdmin, navigate]);
 
-  // Lock background body scroll whenever any admin modal is open
+  const mainScrollRef = useRef(null);
+
+  // Lock background body scroll whenever any admin modal is open and restore previous scroll position
   const isAnyModalOpen = Boolean(
     editingTemplate ||
     selectedOrder ||
@@ -264,10 +266,26 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     if (isAnyModalOpen) {
-      const originalOverflow = document.body.style.overflow;
+      const previousScrollY = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || 0;
+      const previousContainerScrollTop = mainScrollRef.current ? mainScrollRef.current.scrollTop : 0;
+      const originalBodyOverflow = document.body.style.overflow;
+      const originalHtmlOverflow = document.documentElement.style.overflow;
+      const originalContainerOverflow = mainScrollRef.current ? mainScrollRef.current.style.overflow : '';
+
       document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
+      if (mainScrollRef.current) {
+        mainScrollRef.current.style.overflow = 'hidden';
+      }
+
       return () => {
-        document.body.style.overflow = originalOverflow;
+        document.body.style.overflow = originalBodyOverflow;
+        document.documentElement.style.overflow = originalHtmlOverflow;
+        if (mainScrollRef.current) {
+          mainScrollRef.current.style.overflow = originalContainerOverflow;
+          mainScrollRef.current.scrollTop = previousContainerScrollTop;
+        }
+        window.scrollTo(0, previousScrollY);
       };
     }
   }, [isAnyModalOpen]);
@@ -1871,7 +1889,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Main Content Viewport */}
-      <div className="flex-1 overflow-y-auto p-8 lg:p-12">
+      <div ref={mainScrollRef} className="flex-1 overflow-y-auto p-8 lg:p-12">
 
         {/* ══════════════════════════════════════════════
             1. OVERVIEW & VENDOR ANALYTICS TAB
@@ -4102,10 +4120,18 @@ export default function AdminDashboard() {
 
       {/* ── Create Promotional Campaign Modal ── */}
       {isCreateCampaignOpen && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6" onClick={() => setIsCreateCampaignOpen(false)}>
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 overflow-hidden overscroll-contain"
+          style={{ position: 'fixed', inset: 0, overscrollBehavior: 'contain' }}
+          onClick={() => setIsCreateCampaignOpen(false)}
+        >
           <div
-            className="relative w-full max-w-5xl bg-white dark:bg-[#111111] rounded-2xl shadow-2xl border border-gray-200 dark:border-white/10 overflow-hidden flex flex-col h-[90vh] max-h-[90vh]"
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onTouchMove={e => e.preventDefault()}
+          />
+          <div
+            className="relative w-full max-w-5xl bg-white dark:bg-[#111111] rounded-2xl shadow-2xl border border-gray-200 dark:border-white/10 overflow-hidden flex flex-col h-[calc(100dvh-2rem)] sm:h-[calc(100dvh-3.5rem)] max-h-[calc(100dvh-2rem)] sm:max-h-[calc(100dvh-3.5rem)] overscroll-contain"
+            style={{ overscrollBehavior: 'contain' }}
             onClick={e => e.stopPropagation()}
           >
             {/* Header */}
@@ -4125,9 +4151,30 @@ export default function AdminDashboard() {
             </div>
 
             {/* Modal Body - 2 Columns */}
-            <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-gray-200 dark:border-white/10 overflow-y-auto lg:overflow-hidden">
+            <div
+              className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-12 divide-y lg:divide-y-0 lg:divide-x divide-gray-200 dark:border-white/10 overflow-hidden"
+              style={{ maxHeight: 'calc(100dvh - 12.5rem)' }}
+            >
               {/* Form Controls Column (7 cols) */}
-              <div className="lg:col-span-7 p-6 space-y-5 lg:overflow-y-auto lg:h-full">
+              <div
+                className="lg:col-span-7 p-6 space-y-5 overflow-y-auto h-full overscroll-contain"
+                style={{ overflowY: 'auto', overscrollBehavior: 'contain' }}
+                onWheel={(e) => {
+                  const el = e.currentTarget;
+                  const isScrollingUp = e.deltaY < 0;
+                  const isScrollingDown = e.deltaY > 0;
+                  if (
+                    (isScrollingUp && el.scrollTop <= 0) ||
+                    (isScrollingDown && el.scrollTop + el.clientHeight >= el.scrollHeight - 1)
+                  ) {
+                    e.preventDefault();
+                  }
+                  e.stopPropagation();
+                }}
+                onTouchMove={(e) => {
+                  e.stopPropagation();
+                }}
+              >
                 {/* Presets Strip */}
                 <div>
                   <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-500 mb-2">
@@ -4329,7 +4376,7 @@ export default function AdminDashboard() {
               </div>
 
               {/* Live Responsive Email Preview Column (5 cols) */}
-              <div className="lg:col-span-5 p-6 bg-gray-100 dark:bg-black/50 lg:overflow-y-auto lg:h-full flex flex-col">
+              <div className="lg:col-span-5 p-6 bg-gray-100 dark:bg-black/50 overflow-hidden h-full flex flex-col shrink-0">
                 <div className="flex items-center justify-between mb-4 shrink-0">
                   <div className="flex items-center gap-2">
                     <Eye className="w-4 h-4 text-purple-500" />
