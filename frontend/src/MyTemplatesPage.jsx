@@ -275,7 +275,7 @@ export default function MyTemplatesPage() {
   return (
     <div className="min-h-screen bg-[#fafafa] dark:bg-[#07090c] text-black dark:text-white font-sans flex flex-col justify-between transition-colors duration-500 relative overflow-hidden">
       {/* Subtle Ambient Background Mesh Highlights */}
-      <div className="absolute -top-40 left-1/4 w-[500px] h-[350px] bg-indigo-500/[0.04] dark:bg-indigo-500/[0.06] blur-[140px] pointer-events-none rounded-full" />
+      <div className="absolute -top-40 left-1/4 w-[500px] h-[350px] bg-amber-500/[0.03] dark:bg-amber-500/[0.04] blur-[140px] pointer-events-none rounded-full" />
       <div className="absolute top-96 right-10 w-[450px] h-[300px] bg-amber-500/[0.03] dark:bg-amber-500/[0.05] blur-[120px] pointer-events-none rounded-full" />
 
       <div>
@@ -304,7 +304,7 @@ export default function MyTemplatesPage() {
           {/* Page Heading & Header Stats */}
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10 pb-8 border-b border-black/[0.06] dark:border-white/10">
             <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 dark:bg-indigo-500/15 border border-indigo-500/20 text-indigo-700 dark:text-indigo-400 text-xs font-black uppercase tracking-wider mb-3">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 dark:bg-amber-500/15 border border-amber-500/20 text-amber-700 dark:text-amber-400 text-xs font-black uppercase tracking-wider mb-3">
                 <Package className="w-3.5 h-3.5" />
                 <span>Your Digital Vault</span>
               </div>
@@ -339,14 +339,14 @@ export default function MyTemplatesPage() {
               {/* Main Hero Empty Card */}
               <div className="relative rounded-3xl bg-white/80 dark:bg-white/[0.02] backdrop-blur-2xl border border-black/[0.08] dark:border-white/10 p-10 sm:p-14 md:p-16 shadow-xl shadow-black/[0.02] text-center overflow-hidden">
                 {/* Subtle Inner Glow */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-80 h-32 bg-gradient-to-b from-indigo-500/10 to-transparent blur-2xl pointer-events-none" />
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-80 h-32 bg-gradient-to-b from-amber-500/10 to-transparent blur-2xl pointer-events-none" />
 
                 {/* Floating Modern Icon Stack */}
                 <div className="relative w-24 h-24 mx-auto mb-6 flex items-center justify-center">
-                  <div className="absolute inset-0 rounded-3xl bg-gradient-to-tr from-indigo-500 to-purple-600 opacity-20 blur-xl animate-pulse" />
+                  <div className="absolute inset-0 rounded-3xl bg-gradient-to-tr from-amber-500 to-amber-600 opacity-20 blur-xl animate-pulse" />
                   <div className="relative w-20 h-20 rounded-2xl bg-gradient-to-tr from-gray-100 to-white dark:from-zinc-900 dark:to-zinc-800 border border-black/10 dark:border-white/15 flex items-center justify-center shadow-lg">
-                    <FolderCode className="w-9 h-9 text-indigo-600 dark:text-indigo-400" />
-                    <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-white shadow-md">
+                    <FolderCode className="w-9 h-9 text-amber-500 dark:text-amber-400" />
+                    <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-black shadow-md">
                       <Sparkles className="w-3 h-3" />
                     </span>
                   </div>
@@ -405,7 +405,7 @@ export default function MyTemplatesPage() {
 
                     <Link 
                       to="/templates" 
-                      className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 group"
+                      className="text-xs font-bold text-amber-600 dark:text-amber-400 hover:underline flex items-center gap-1 group"
                     >
                       <span>View All</span>
                       <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
@@ -415,7 +415,7 @@ export default function MyTemplatesPage() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {recommendedTemplates.map((template) => (
                       <div 
-                        key={template.id}
+                        key={template.id} 
                         className="group rounded-2xl bg-white dark:bg-white/[0.02] border border-black/[0.08] dark:border-white/10 overflow-hidden shadow-sm hover:shadow-xl hover:border-black/20 dark:hover:border-white/20 transition-all duration-300 flex flex-col"
                       >
                         <div className="relative aspect-[16/10] bg-gray-100 dark:bg-zinc-800 overflow-hidden">
@@ -435,7 +435,7 @@ export default function MyTemplatesPage() {
                               <Link 
                                 to={template.previewUrl}
                                 target="_blank"
-                                className="px-3.5 py-1.5 rounded-xl bg-indigo-600 text-white font-bold text-xs shadow-md flex items-center gap-1.5 hover:scale-105 transition-transform"
+                                className="px-3.5 py-1.5 rounded-xl bg-black dark:bg-white text-white dark:text-black font-bold text-xs shadow-md flex items-center gap-1.5 hover:scale-105 transition-transform"
                               >
                                 <ExternalLink className="w-3.5 h-3.5" /> Live Demo
                               </Link>
@@ -448,7 +448,7 @@ export default function MyTemplatesPage() {
 
                         <div className="p-5 flex-1 flex flex-col justify-between">
                           <div>
-                            <h4 className="font-bold text-base text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-1">
+                            <h4 className="font-bold text-base text-gray-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors line-clamp-1">
                               {template.title}
                             </h4>
                             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2 leading-relaxed">
@@ -487,7 +487,7 @@ export default function MyTemplatesPage() {
                 </div>
 
                 <div className="p-5 rounded-2xl bg-white/60 dark:bg-white/[0.02] border border-black/[0.06] dark:border-white/10 flex items-center gap-3.5">
-                  <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                  <div className="w-10 h-10 rounded-xl bg-zinc-100 dark:bg-white/10 text-gray-900 dark:text-white flex items-center justify-center shrink-0">
                     <ShieldCheck className="w-5 h-5" />
                   </div>
                   <div>
@@ -546,7 +546,7 @@ export default function MyTemplatesPage() {
 
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-1.5">
-                        <p className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">
+                        <p className="text-[10px] font-black text-amber-600 dark:text-amber-400 uppercase tracking-widest">
                           {template.category || 'React'}
                         </p>
                         <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
@@ -566,7 +566,7 @@ export default function MyTemplatesPage() {
                       {isDownloading && !isDone && (
                         <div className="absolute top-0 left-0 w-full h-1 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden mb-2 -mt-2">
                           <div 
-                            className="h-full bg-indigo-500 transition-all duration-300 ease-out" 
+                            className="h-full bg-amber-500 transition-all duration-300 ease-out" 
                             style={{ width: `${progress}%` }}
                           />
                         </div>
@@ -596,7 +596,7 @@ export default function MyTemplatesPage() {
                             }`}
                           >
                             {isDownloading ? (
-                              <><Loader2 className="w-4 h-4 animate-spin text-indigo-500" /> Generating Token... {progress}%</>
+                              <><Loader2 className="w-4 h-4 animate-spin text-amber-500" /> Generating Token... {progress}%</>
                             ) : (
                               <><Download className="w-4 h-4" /> Generate Download Link</>
                             )}
