@@ -1,15 +1,42 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import confetti from 'canvas-confetti';
-import { Download, LayoutTemplate, ArrowLeft, Loader2, CheckCircle2, Eye, RotateCcw, X } from 'lucide-react';
+import { 
+  Download, 
+  LayoutTemplate, 
+  ArrowLeft, 
+  Loader2, 
+  CheckCircle2, 
+  Eye, 
+  RotateCcw, 
+  X,
+  Sparkles,
+  Package,
+  ArrowRight,
+  ShieldCheck,
+  Zap,
+  Tag,
+  ExternalLink,
+  Layers,
+  FolderCode,
+  Star,
+  Check,
+  Clock,
+  Code2
+} from 'lucide-react';
 import { useCart } from './CartContext';
+import { useTemplates } from './useTemplates';
+import { useCurrency } from './CurrencyContext';
 import UserMenu from './UserMenu';
 import { toast } from 'sonner';
 import { Logo } from './components/ui/Logo';
 import Navbar from './components/Navbar';
+import { Footerdemo } from './components/ui/footer-section';
 
 export default function MyTemplatesPage() {
   const { purchasedTemplates, loadPurchasedTemplates } = useCart();
+  const { templates } = useTemplates();
+  const { currency } = useCurrency ? useCurrency() : { currency: 'INR' };
   const [downloading, setDownloading] = useState({});
   const location = useLocation();
   const navigate = useNavigate();
@@ -19,6 +46,11 @@ export default function MyTemplatesPage() {
   const [refundReasonCategory, setRefundReasonCategory] = useState('');
   const [refundReasonDetails, setRefundReasonDetails] = useState('');
   const [refundSubmitting, setRefundSubmitting] = useState(false);
+
+  // Recommended templates when empty
+  const recommendedTemplates = (templates || []).slice(0, 3);
+
+  const currencySymbol = currency === 'USD' ? '$' : currency === 'GBP' ? '£' : '₹';
 
   const handleRequestRefund = async () => {
     const combinedReason = [refundReasonCategory, refundReasonDetails.trim()].filter(Boolean).join(': ');
@@ -85,14 +117,14 @@ export default function MyTemplatesPage() {
     setDownloading(prev => ({ ...prev, [templateId]: { progress: 0, done: false, link: null } }));
     toast.info(`Authenticating & generating secure token for ${templateTitle}...`);
     
-    // Fake progress animation for UX
+    // Smooth progress animation for UX
     let progress = 0;
     const progressInterval = setInterval(() => {
-      progress += Math.floor(Math.random() * 20) + 10;
+      progress += Math.floor(Math.random() * 20) + 12;
       if (progress < 90) {
         setDownloading(prev => ({ ...prev, [templateId]: { progress, done: false, link: null } }));
       }
-    }, 400);
+    }, 350);
 
     try {
       const token = localStorage.getItem('bizleap_token');
@@ -140,7 +172,7 @@ export default function MyTemplatesPage() {
       }));
       
       toast.success(`Secure temporary link generated!`, {
-        icon: <CheckCircle2 className="w-5 h-5 text-green-500" />
+        icon: <CheckCircle2 className="w-5 h-5 text-emerald-500" />
       });
 
       // Automatically reset the link right before it expires (55 seconds)
@@ -148,7 +180,7 @@ export default function MyTemplatesPage() {
         setDownloading(prev => {
           const newState = { ...prev };
           if (newState[templateId]?.done) {
-            delete newState[templateId]; // reset entirely
+            delete newState[templateId];
           }
           return newState;
         });
@@ -194,7 +226,6 @@ export default function MyTemplatesPage() {
       toast.success(`${templateTitle} downloaded successfully!`, { id: toastId });
     } catch (err) {
       console.error('Blob download error, falling back to direct link:', err);
-      // Fallback to direct navigation since link has signed token
       window.location.href = link;
       toast.dismiss(toastId);
     }
@@ -242,55 +273,300 @@ export default function MyTemplatesPage() {
   }, [location.search, purchasedTemplates, downloading, handleDownload, navigate]);
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-black text-black dark:text-white font-sans pb-24 transition-colors duration-500">
-      <Navbar />
+    <div className="min-h-screen bg-[#fafafa] dark:bg-[#07090c] text-black dark:text-white font-sans flex flex-col justify-between transition-colors duration-500 relative overflow-hidden">
+      {/* Subtle Ambient Background Mesh Highlights */}
+      <div className="absolute -top-40 left-1/4 w-[500px] h-[350px] bg-indigo-500/[0.04] dark:bg-indigo-500/[0.06] blur-[140px] pointer-events-none rounded-full" />
+      <div className="absolute top-96 right-10 w-[450px] h-[300px] bg-amber-500/[0.03] dark:bg-amber-500/[0.05] blur-[120px] pointer-events-none rounded-full" />
 
-      <div className="max-w-[1200px] mx-auto px-8 md:px-16 mt-12 relative">
-        <Link to="/templates" className="inline-flex items-center gap-2 text-gray-500 font-bold hover:text-black dark:text-white mb-8 transition-colors">
-          <ArrowLeft className="w-5 h-5" /> Back to Market
-        </Link>
+      <div>
+        <Navbar />
 
-        <h1 className="text-4xl md:text-5xl font-black tracking-tight mb-12">My Templates</h1>
+        <main className="max-w-[1300px] mx-auto px-5 sm:px-8 md:px-12 pt-8 pb-20 relative z-10">
+          
+          {/* Breadcrumb & Navigation Link */}
+          <div className="flex items-center justify-between gap-4 mb-6">
+            <Link 
+              to="/templates" 
+              className="group inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white dark:bg-white/[0.04] border border-black/[0.08] dark:border-white/10 hover:border-black/20 dark:hover:border-white/20 text-gray-600 dark:text-gray-300 font-bold text-xs hover:text-black dark:hover:text-white transition-all shadow-xs cursor-pointer"
+            >
+              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
+              <span>Back to Marketplace</span>
+            </Link>
 
-        {!purchasedTemplates || purchasedTemplates.length === 0 ? (
-          <div className="bg-white/50 dark:bg-white/[0.02] backdrop-blur-xl p-16 md:p-32 rounded-[3rem] border border-black/[0.04] dark:border-white/[0.05] shadow-[0_20px_40px_rgba(0,0,0,0.02)] text-center">
-             <div className="w-32 h-32 bg-gray-100 dark:bg-gray-900 rounded-[2rem] flex items-center justify-center mx-auto mb-8">
-                <LayoutTemplate className="w-12 h-12 text-gray-300 dark:text-gray-600" />
-             </div>
-             <h2 className="text-3xl font-black text-gray-900 dark:text-gray-100 mb-4">No templates yet</h2>
-             <p className="text-lg text-gray-500 mb-8 max-w-md mx-auto">
-               You haven't purchased any templates. Explore the marketplace to find the perfect template for your next project.
-             </p>
-             <Link to="/" className="px-8 py-4 bg-black dark:bg-white text-white dark:text-black rounded-full font-bold hover:scale-105 transition-transform shadow-lg inline-block">
-                Explore Market
-             </Link>
+            {purchasedTemplates && purchasedTemplates.length > 0 && (
+              <div className="hidden sm:flex items-center gap-2 text-xs font-semibold text-gray-500 dark:text-gray-400">
+                <ShieldCheck className="w-4 h-4 text-emerald-500" />
+                <span>Commercial License Active</span>
+              </div>
+            )}
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 relative z-10">
-            {purchasedTemplates.map(template => {
-              const isDownloading = downloading[template.id] !== undefined;
-              const progress = isDownloading ? downloading[template.id].progress : 0;
-              const isDone = isDownloading && downloading[template.id].done;
 
-              return (
-                <div key={template.id} className="glass-panel p-6 rounded-[2rem] flex flex-col group hover:shadow-2xl transition-all duration-300 border border-gray-200 dark:border-white/10 bg-white dark:bg-gray-900/50 relative overflow-hidden">
-                   <div className="w-full aspect-[16/10] bg-gray-100 dark:bg-gray-800 rounded-xl overflow-hidden mb-6 relative group/img cursor-pointer">
-                      <img src={template.image} alt={template.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-                      <Link to={`/product/${template.id}`} className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center">
-                        <span className="bg-white text-black px-4 py-2 rounded-full font-bold flex items-center gap-2 shadow-lg scale-90 group-hover/img:scale-100 transition-transform">
-                          <Eye className="w-4 h-4"/> View Template
+          {/* Page Heading & Header Stats */}
+          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10 pb-8 border-b border-black/[0.06] dark:border-white/10">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 dark:bg-indigo-500/15 border border-indigo-500/20 text-indigo-700 dark:text-indigo-400 text-xs font-black uppercase tracking-wider mb-3">
+                <Package className="w-3.5 h-3.5" />
+                <span>Your Digital Vault</span>
+              </div>
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-black tracking-tight text-gray-900 dark:text-white">
+                My Templates
+              </h1>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 max-w-xl leading-relaxed">
+                Access your production source codes, generate secure temporary download tokens, and claim lifetime framework updates.
+              </p>
+            </div>
+
+            {purchasedTemplates && purchasedTemplates.length > 0 && (
+              <div className="flex items-center gap-3 shrink-0">
+                <div className="px-4 py-2.5 rounded-2xl bg-white dark:bg-white/[0.03] border border-black/10 dark:border-white/10 shadow-xs text-center">
+                  <div className="text-xs font-bold text-gray-400 uppercase tracking-wider">Purchased</div>
+                  <div className="text-xl font-black text-gray-900 dark:text-white">{purchasedTemplates.length}</div>
+                </div>
+                <div className="px-4 py-2.5 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-500/20 shadow-xs text-center">
+                  <div className="text-xs font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Updates</div>
+                  <div className="text-xl font-black text-emerald-700 dark:text-emerald-400">Lifetime</div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* ══════════════════════════════════════════════
+              EMPTY STATE (ELEVATED LUXURY DESIGN)
+          ══════════════════════════════════════════════ */}
+          {!purchasedTemplates || purchasedTemplates.length === 0 ? (
+            <div className="space-y-12">
+              
+              {/* Main Hero Empty Card */}
+              <div className="relative rounded-3xl bg-white/80 dark:bg-white/[0.02] backdrop-blur-2xl border border-black/[0.08] dark:border-white/10 p-10 sm:p-14 md:p-16 shadow-xl shadow-black/[0.02] text-center overflow-hidden">
+                {/* Subtle Inner Glow */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-80 h-32 bg-gradient-to-b from-indigo-500/10 to-transparent blur-2xl pointer-events-none" />
+
+                {/* Floating Modern Icon Stack */}
+                <div className="relative w-24 h-24 mx-auto mb-6 flex items-center justify-center">
+                  <div className="absolute inset-0 rounded-3xl bg-gradient-to-tr from-indigo-500 to-purple-600 opacity-20 blur-xl animate-pulse" />
+                  <div className="relative w-20 h-20 rounded-2xl bg-gradient-to-tr from-gray-100 to-white dark:from-zinc-900 dark:to-zinc-800 border border-black/10 dark:border-white/15 flex items-center justify-center shadow-lg">
+                    <FolderCode className="w-9 h-9 text-indigo-600 dark:text-indigo-400" />
+                    <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-white shadow-md">
+                      <Sparkles className="w-3 h-3" />
+                    </span>
+                  </div>
+                </div>
+
+                <h2 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white mb-3 tracking-tight">
+                  Your library is waiting for its first build
+                </h2>
+                
+                <p className="text-sm sm:text-base text-gray-500 dark:text-gray-400 max-w-lg mx-auto mb-8 leading-relaxed font-normal">
+                  You haven't unlocked any website templates yet. Discover high-performance React 19 UI kits, Next.js stacks, and SaaS dashboards with full commercial source code.
+                </p>
+
+                {/* Dual Interactive Action Buttons */}
+                <div className="flex flex-wrap items-center justify-center gap-3.5">
+                  <Link 
+                    to="/templates" 
+                    className="px-7 py-3.5 bg-black hover:bg-zinc-800 text-white dark:bg-white dark:hover:bg-gray-100 dark:text-black rounded-2xl font-black text-sm flex items-center gap-2 shadow-lg hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                  >
+                    <Zap className="w-4 h-4 text-amber-400 dark:text-amber-500" />
+                    <span>Explore 50+ Templates</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+
+                  <Link 
+                    to="/featured" 
+                    className="px-6 py-3.5 bg-gray-100 hover:bg-gray-200 dark:bg-white/5 dark:hover:bg-white/10 text-gray-800 dark:text-gray-200 rounded-2xl font-bold text-sm flex items-center gap-2 border border-black/5 dark:border-white/10 transition-all cursor-pointer"
+                  >
+                    <span>🔥 View Featured Drops</span>
+                  </Link>
+                </div>
+
+                {/* Welcome Discount Coupon Perk */}
+                <div className="mt-10 pt-6 border-t border-black/[0.06] dark:border-white/[0.08] inline-flex flex-wrap items-center justify-center gap-2.5 text-xs text-gray-500 dark:text-gray-400">
+                  <span className="font-semibold text-gray-700 dark:text-gray-300">🎁 First-time builder discount:</span>
+                  <span className="font-mono font-black bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20 px-2.5 py-1 rounded-lg">
+                    WELCOME10
+                  </span>
+                  <span>Apply at checkout for 10% OFF</span>
+                </div>
+              </div>
+
+              {/* ── Popular Starter Picks Strip ── */}
+              {recommendedTemplates.length > 0 && (
+                <div className="pt-2">
+                  <div className="flex items-center justify-between mb-6">
+                    <div>
+                      <h3 className="text-xl font-black text-gray-900 dark:text-white flex items-center gap-2">
+                        <Star className="w-5 h-5 text-amber-500 fill-amber-500" />
+                        <span>Recommended Starter Templates</span>
+                      </h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        Top-rated templates chosen by other founders and developers this week.
+                      </p>
+                    </div>
+
+                    <Link 
+                      to="/templates" 
+                      className="text-xs font-bold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1 group"
+                    >
+                      <span>View All</span>
+                      <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                    </Link>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {recommendedTemplates.map((template) => (
+                      <div 
+                        key={template.id}
+                        className="group rounded-2xl bg-white dark:bg-white/[0.02] border border-black/[0.08] dark:border-white/10 overflow-hidden shadow-sm hover:shadow-xl hover:border-black/20 dark:hover:border-white/20 transition-all duration-300 flex flex-col"
+                      >
+                        <div className="relative aspect-[16/10] bg-gray-100 dark:bg-zinc-800 overflow-hidden">
+                          <img 
+                            src={template.image} 
+                            alt={template.title} 
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                            <Link 
+                              to={`/product/${template.id}`}
+                              className="px-3.5 py-1.5 rounded-xl bg-white text-black font-bold text-xs shadow-md flex items-center gap-1.5 hover:scale-105 transition-transform"
+                            >
+                              <Eye className="w-3.5 h-3.5" /> Details
+                            </Link>
+                            {template.previewUrl && (
+                              <Link 
+                                to={template.previewUrl}
+                                target="_blank"
+                                className="px-3.5 py-1.5 rounded-xl bg-indigo-600 text-white font-bold text-xs shadow-md flex items-center gap-1.5 hover:scale-105 transition-transform"
+                              >
+                                <ExternalLink className="w-3.5 h-3.5" /> Live Demo
+                              </Link>
+                            )}
+                          </div>
+                          <span className="absolute top-3 left-3 px-2.5 py-1 rounded-lg bg-black/70 backdrop-blur-md text-white font-black text-[10px] uppercase tracking-wider">
+                            {template.category || 'React'}
+                          </span>
+                        </div>
+
+                        <div className="p-5 flex-1 flex flex-col justify-between">
+                          <div>
+                            <h4 className="font-bold text-base text-gray-900 dark:text-white group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors line-clamp-1">
+                              {template.title}
+                            </h4>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2 leading-relaxed">
+                              {template.description || 'Production-grade responsive UI kit with complete source code included.'}
+                            </p>
+                          </div>
+
+                          <div className="mt-4 pt-4 border-t border-black/[0.06] dark:border-white/10 flex items-center justify-between">
+                            <div className="text-sm font-black text-gray-900 dark:text-white">
+                              {currencySymbol}{Number(template.price || 0).toLocaleString()}
+                            </div>
+                            <Link 
+                              to={`/product/${template.id}`}
+                              className="px-3 py-1.5 rounded-xl bg-gray-100 dark:bg-white/5 hover:bg-black hover:text-white dark:hover:bg-white dark:hover:text-black font-bold text-xs transition-colors"
+                            >
+                              Get Template →
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* ── 3 Trust Features Strip ── */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4">
+                <div className="p-5 rounded-2xl bg-white/60 dark:bg-white/[0.02] border border-black/[0.06] dark:border-white/10 flex items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
+                    <Zap className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h5 className="text-xs font-black text-gray-900 dark:text-white">Instant ZIP Delivery</h5>
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400">Download starts immediately after checkout.</p>
+                  </div>
+                </div>
+
+                <div className="p-5 rounded-2xl bg-white/60 dark:bg-white/[0.02] border border-black/[0.06] dark:border-white/10 flex items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center shrink-0">
+                    <ShieldCheck className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h5 className="text-xs font-black text-gray-900 dark:text-white">Commercial License</h5>
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400">Unlimited client and personal production apps.</p>
+                  </div>
+                </div>
+
+                <div className="p-5 rounded-2xl bg-white/60 dark:bg-white/[0.02] border border-black/[0.06] dark:border-white/10 flex items-center gap-3.5">
+                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                    <RotateCcw className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h5 className="text-xs font-black text-gray-900 dark:text-white">14-Day Money Back</h5>
+                    <p className="text-[11px] text-gray-500 dark:text-gray-400">Hassle-free guarantee if code has issues.</p>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          ) : (
+            /* ══════════════════════════════════════════════
+               POPULATED STATE (PURCHASED TEMPLATES CARDS)
+            ══════════════════════════════════════════════ */
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 relative z-10">
+              {purchasedTemplates.map(template => {
+                const isDownloading = downloading[template.id] !== undefined;
+                const progress = isDownloading ? downloading[template.id].progress : 0;
+                const isDone = isDownloading && downloading[template.id].done;
+
+                return (
+                  <div 
+                    key={template.id} 
+                    className="glass-panel p-6 rounded-3xl flex flex-col group hover:shadow-2xl transition-all duration-300 border border-gray-200/80 dark:border-white/10 bg-white/90 dark:bg-gray-900/60 relative overflow-hidden backdrop-blur-md"
+                  >
+                    {/* Top Image Preview */}
+                    <div className="w-full aspect-[16/10] bg-gray-100 dark:bg-gray-800 rounded-2xl overflow-hidden mb-5 relative group/img cursor-pointer shadow-inner">
+                      <img 
+                        src={template.image} 
+                        alt={template.title} 
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" 
+                      />
+                      <Link 
+                        to={`/product/${template.id}`} 
+                        className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center"
+                      >
+                        <span className="bg-white text-black px-4 py-2 rounded-xl font-black text-xs flex items-center gap-2 shadow-lg scale-90 group-hover/img:scale-100 transition-transform">
+                          <Eye className="w-4 h-4"/> View Template Details
                         </span>
                       </Link>
-                   </div>
-                   <div className="flex-1">
-                      <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">{template.category}</p>
-                      <h3 className="text-xl font-bold mb-2 text-gray-900 dark:text-gray-100">{template.title}</h3>
-                   </div>
-                   <div className="pt-6 border-t border-gray-100 dark:border-white/10 mt-6 relative">
+
+                      <div className="absolute top-3 left-3 px-2.5 py-1 rounded-lg bg-black/70 backdrop-blur-md text-white font-bold text-[10px] uppercase tracking-wider flex items-center gap-1">
+                        <Check className="w-3 h-3 text-emerald-400" /> Owned
+                      </div>
+                    </div>
+
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-1.5">
+                        <p className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest">
+                          {template.category || 'React'}
+                        </p>
+                        <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                          <Clock className="w-3 h-3" /> Lifetime Updates
+                        </span>
+                      </div>
+                      <h3 className="text-lg font-black mb-2 text-gray-900 dark:text-gray-100 leading-snug">
+                        {template.title}
+                      </h3>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2 leading-relaxed">
+                        {template.description || 'Full React & Next.js codebase, clean component architecture, and commercial license.'}
+                      </p>
+                    </div>
+
+                    {/* Download Controls & Actions */}
+                    <div className="pt-5 border-t border-gray-100 dark:border-white/10 mt-5 relative">
                       {isDownloading && !isDone && (
                         <div className="absolute top-0 left-0 w-full h-1 bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden mb-2 -mt-2">
                           <div 
-                            className="h-full bg-blue-500 transition-all duration-300 ease-out" 
+                            className="h-full bg-indigo-500 transition-all duration-300 ease-out" 
                             style={{ width: `${progress}%` }}
                           />
                         </div>
@@ -301,50 +577,55 @@ export default function MyTemplatesPage() {
                           <div className="flex-1 flex flex-col gap-2">
                             <button 
                               onClick={() => handleExecuteDownload(template.id, template.title, downloading[template.id].link)}
-                              className="w-full py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-md bg-green-500 text-white hover:bg-green-600 cursor-pointer"
+                              className="w-full py-3.5 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all shadow-md bg-emerald-600 hover:bg-emerald-500 text-white cursor-pointer"
                             >
-                              <CheckCircle2 className="w-5 h-5" /> Download Ready
+                              <Download className="w-4 h-4" /> Download ZIP Now
                             </button>
                             <p className="text-[10px] text-gray-500 dark:text-gray-400 text-center font-medium">
-                              Link expires in 60 seconds.
+                              Link expires in 60s for your security.
                             </p>
                           </div>
                         ) : (
                           <button 
                             onClick={() => handleDownload(template.id, template.title)}
                             disabled={isDownloading}
-                            className={`flex-1 py-4 rounded-xl font-bold flex items-center justify-center gap-2 transition-all shadow-md ${
+                            className={`flex-1 py-3.5 rounded-2xl font-black text-sm flex items-center justify-center gap-2 transition-all shadow-sm ${
                               isDownloading
-                                ? 'bg-gray-100 dark:bg-gray-800 text-gray-500 cursor-not-allowed'
-                                : 'bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200'
+                                ? 'bg-gray-100 dark:bg-gray-800 text-gray-400 cursor-not-allowed'
+                                : 'bg-black dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-gray-100 cursor-pointer shadow-md'
                             }`}
                           >
                             {isDownloading ? (
-                              <><Loader2 className="w-5 h-5 animate-spin" /> Generating Token... {progress}%</>
+                              <><Loader2 className="w-4 h-4 animate-spin text-indigo-500" /> Generating Token... {progress}%</>
                             ) : (
-                              <><Download className="w-5 h-5" /> Generate Secure Link</>
+                              <><Download className="w-4 h-4" /> Generate Download Link</>
                             )}
                           </button>
                         )}
                         
-                        {/* Request Refund */}
+                        {/* Request Refund Action */}
                         {!isDownloading && !isDone && (
                           <button
                             onClick={() => { setRefundTarget(template); setRefundReasonCategory("Technical issue / can't open files"); setRefundReasonDetails(''); }}
-                            className="px-3 py-4 rounded-xl border border-gray-200 dark:border-white/10 text-gray-400 hover:text-red-500 hover:border-red-300 dark:hover:border-red-500/40 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all cursor-pointer"
+                            className="px-3 py-3.5 rounded-2xl border border-gray-200 dark:border-white/10 text-gray-400 hover:text-red-500 hover:border-red-300 dark:hover:border-red-500/40 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all cursor-pointer"
                             title="Request a Refund"
                           >
                             <RotateCcw className="w-4 h-4" />
                           </button>
                         )}
                       </div>
-                   </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+        </main>
       </div>
+
+      {/* Upgraded Luxury Marketplace Footer */}
+      <Footerdemo />
 
       {/* ── Refund Request Modal ── */}
       {refundTarget && (
