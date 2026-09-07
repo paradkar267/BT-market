@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Star, ShoppingCart, Check, ShieldCheck, Zap, Search, Heart, Eye,
   ExternalLink, Sparkles, CheckCircle2, Lock, Laptop, Layers, FileCode2,
-  DownloadCloud, Share2, BadgeCheck, Clock, ArrowRight
+  DownloadCloud, Share2, BadgeCheck, Clock, ArrowRight, Loader2
 } from 'lucide-react';
 import { useTemplates } from './useTemplates';
 import { useCart } from './CartContext';
@@ -26,19 +26,140 @@ import { toast } from 'sonner';
 export default function ProductPage() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { addToCart, cartItems, purchasedTemplates } = useCart();
+  const { addToCart, cartItems, purchasedTemplates, checkout } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const { templates, loading } = useTemplates();
-  const { requireAuth } = useAuth();
-  const { formatPrice } = useCurrency();
+  const { requireAuth, user } = useAuth();
+  const { formatPrice, currency, convertPrice } = useCurrency();
   const [activeTab, setActiveTab] = useState('overview'); // 'overview' | 'tech' | 'pages' | 'license'
+  const [isBuying, setIsBuying] = useState(false);
 
   // Scroll to top on mount
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [id]);
+
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      if (window.Razorpay) return resolve(true);
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
+  const handleBuyNow = async () => {
+    if (isOwned || !template) return;
+    if (!user) {
+      toast.info('Please sign in or create an account to proceed with purchase.');
+      requireAuth(() => handleBuyNow());
+      return;
+    }
+
+    setIsBuying(true);
+    const res = await loadRazorpayScript();
+    if (!res) {
+      toast.error('Payment gateway failed to load. Please check your connection.');
+      setIsBuying(false);
+      return;
+    }
+
+    const processDirectBuySuccess = (paymentId, razorpayMeta = {}) => {
+      // Directly complete purchase without adding to cart
+      checkout(paymentId, [template]);
+      toast.success(`🎉 Purchase complete! ${template.title} is now in your collection.`);
+      setIsBuying(false);
+      navigate('/my-templates', { state: { showConfetti: true } });
+
+      // Background order record in Neon DB
+      (async () => {
+        try {
+          const token = localStorage.getItem('bizleap_token') || '';
+          const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3000' : '');
+          const targetUrls = [];
+          if (backendUrl) targetUrls.push(`${backendUrl}/api/verify-payment`);
+          targetUrls.push('/api/verify-payment');
+
+          const verifyPayload = {
+            paymentId: paymentId,
+            orderId: razorpayMeta?.razorpay_order_id || `order_${paymentId}`,
+            signature: razorpayMeta?.razorpay_signature || '',
+            cartItems: [{ id: template.id, title: template.title, price: template.price, category: template.category }]
+          };
+
+          for (const url of targetUrls) {
+            try {
+              const resp = await fetch(url, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                },
+                body: JSON.stringify(verifyPayload),
+                keepalive: true
+              });
+              if (resp.ok) {
+                window.dispatchEvent(new Event('purchases_updated'));
+                window.dispatchEvent(new Event('templates_updated'));
+                break;
+              }
+            } catch {}
+          }
+        } catch (err) {
+          console.warn('Background payment verify error:', err);
+        }
+      })();
+    };
+
+    const razorpayKey = 
+      import.meta.env.VITE_RAZORPAY_KEY || 
+      import.meta.env.VITE_RAZORPAY_KEY_ID || 
+      import.meta.env.VITE_RAZORPAY_TEST_KEY || 
+      'rzp_test_T7Lp0cSak0qDp4';
+
+    const targetAmount = Math.max(100, Math.round((convertPrice ? convertPrice(template.price) : template.price) * 100));
+    const options = {
+      key: razorpayKey,
+      amount: targetAmount,
+      currency: currency || 'INR',
+      name: 'Bizleap Marketplace',
+      description: `Direct Purchase: ${template.title}`,
+      image: 'https://cdn-icons-png.flaticon.com/512/3176/3176366.png',
+      handler: function (response) {
+        processDirectBuySuccess(response.razorpay_payment_id, response);
+      },
+      prefill: {
+        name: user?.full_name || user?.user_metadata?.full_name || '',
+        email: user?.email || '',
+      },
+      theme: {
+        color: isDark ? '#000000' : '#111827',
+      },
+      modal: {
+        ondismiss: function () {
+          setIsBuying(false);
+          toast.info('Payment cancelled');
+        }
+      }
+    };
+
+    try {
+      const paymentObject = new window.Razorpay(options);
+      paymentObject.on('payment.failed', function (response) {
+        toast.error('Payment failed: ' + (response.error?.description || 'Transaction cancelled'));
+        setIsBuying(false);
+      });
+      paymentObject.open();
+    } catch (error) {
+      console.error("Razorpay initialization error:", error);
+      toast.error("Failed to open payment gateway. Please try again.");
+      setIsBuying(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -62,7 +183,7 @@ export default function ProductPage() {
     return (
       <div className={`min-h-screen flex items-center justify-center ${isDark ? 'bg-transparent text-white' : 'bg-white dark:bg-black text-black dark:text-white'}`}>
         <div className="text-center flex flex-col items-center">
-          <h1 className="text-4xl font-black mb-4">Template Not Found</h1>
+          <h1 className="text-4xl font-bold tracking-tight mb-4">Template Not Found</h1>
           <p className="text-gray-500 mb-6">The requested template could not be located in our catalog.</p>
           <Link to="/templates" className="px-6 py-3 bg-black text-white dark:bg-white dark:text-black font-bold rounded-xl">
             Browse All Templates
@@ -122,7 +243,7 @@ export default function ProductPage() {
                 {template.category}
               </Link>
               <span>/</span>
-              <span className="text-gray-900 dark:text-white font-bold truncate max-w-[200px] sm:max-w-xs">{template.title}</span>
+              <span className="text-gray-900 dark:text-white font-bold truncate max-w-[200px] sm:max-w-xs capitalize">{template.title}</span>
             </div>
 
             <div className="flex items-center gap-2">
@@ -144,10 +265,10 @@ export default function ProductPage() {
               
               {/* Product Header (Title & Short Bio) */}
               <div>
-                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-gray-950 dark:text-white font-display mb-4">
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-[#172033] dark:text-white capitalize mb-4">
                   {template.title}
                 </h1>
-                <p className="text-base sm:text-lg text-gray-600 dark:text-gray-300 font-normal leading-relaxed">
+                <p className="text-base sm:text-lg text-[#556075] dark:text-gray-300 font-normal leading-relaxed">
                   {template.headline || "A state-of-the-art web application template designed for maximum conversion and speed."}
                 </p>
               </div>
@@ -202,7 +323,7 @@ export default function ProductPage() {
                     <Link
                       to={`/preview/${template.id}`}
                       target="_blank"
-                      className="inline-flex items-center gap-3 px-8 py-4 rounded-full bg-white text-gray-950 font-black text-base shadow-[0_20px_50px_rgba(0,0,0,0.5)] hover:scale-105 active:scale-95 transition-all transform translate-y-4 group-hover:translate-y-0 duration-300"
+                      className="inline-flex items-center gap-3 px-8 py-4 rounded-full bg-white text-gray-950 font-bold text-base shadow-[0_20px_50px_rgba(0,0,0,0.5)] hover:scale-105 active:scale-95 transition-all transform translate-y-4 group-hover:translate-y-0 duration-300"
                     >
                       <Eye className="w-5 h-5 text-black" />
                       <span>Launch Live Preview</span>
@@ -245,7 +366,7 @@ export default function ProductPage() {
                 {activeTab === 'overview' && (
                   <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }} className="space-y-8">
                     <div>
-                      <h3 className="text-xl font-black text-gray-900 dark:text-white mb-3">Product Overview</h3>
+                      <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">Product Overview</h3>
                       <p className="text-base text-gray-600 dark:text-gray-300 leading-relaxed font-normal">
                         {template.description || "A clean, modern, and production-ready React & Tailwind CSS web template crafted for developers, agencies, and high-growth businesses."}
                       </p>
@@ -254,7 +375,7 @@ export default function ProductPage() {
                     {/* 4 Feature Bento Highlights */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="p-5 rounded-2xl bg-gray-100 dark:bg-white/[0.04] border border-black/5 dark:border-white/10">
-                        <div className="flex items-center gap-2.5 text-black dark:text-white font-black text-sm mb-1.5">
+                        <div className="flex items-center gap-2.5 text-black dark:text-white font-bold text-sm mb-1.5">
                           <Zap className="w-4 h-4" /> 99+ Lighthouse Score
                         </div>
                         <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
@@ -263,7 +384,7 @@ export default function ProductPage() {
                       </div>
 
                       <div className="p-5 rounded-2xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30">
-                        <div className="flex items-center gap-2.5 text-emerald-600 dark:text-emerald-400 font-black text-sm mb-1.5">
+                        <div className="flex items-center gap-2.5 text-emerald-600 dark:text-emerald-400 font-bold text-sm mb-1.5">
                           <Laptop className="w-4 h-4" /> 100% Fully Responsive
                         </div>
                         <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
@@ -272,7 +393,7 @@ export default function ProductPage() {
                       </div>
 
                       <div className="p-5 rounded-2xl bg-gray-100 dark:bg-white/[0.04] border border-black/5 dark:border-white/10">
-                        <div className="flex items-center gap-2.5 text-black dark:text-white font-black text-sm mb-1.5">
+                        <div className="flex items-center gap-2.5 text-black dark:text-white font-bold text-sm mb-1.5">
                           <Layers className="w-4 h-4" /> Modular Architecture
                         </div>
                         <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
@@ -281,7 +402,7 @@ export default function ProductPage() {
                       </div>
 
                       <div className="p-5 rounded-2xl bg-gray-100 dark:bg-white/[0.04] border border-black/5 dark:border-white/10">
-                        <div className="flex items-center gap-2.5 text-black dark:text-white font-black text-sm mb-1.5">
+                        <div className="flex items-center gap-2.5 text-black dark:text-white font-bold text-sm mb-1.5">
                           <DownloadCloud className="w-4 h-4" /> Turnkey Production Ready
                         </div>
                         <p className="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
@@ -328,7 +449,7 @@ export default function ProductPage() {
                 {activeTab === 'tech' && (
                   <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }} className="space-y-6">
                     <div>
-                      <h3 className="text-xl font-black text-gray-900 dark:text-white mb-2">Technology & Architecture</h3>
+                      <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Technology & Architecture</h3>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
                         Built with an industry-standard stack for maximum performance, maintainability, and clean customization.
                       </p>
@@ -356,7 +477,7 @@ export default function ProductPage() {
                 {activeTab === 'pages' && (
                   <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }} className="space-y-6">
                     <div>
-                      <h3 className="text-xl font-black text-gray-900 dark:text-white mb-2">Pages & Screens Included</h3>
+                      <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Pages & Screens Included</h3>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
                         Every template includes fully styled pages and functional state ready to deploy.
                       </p>
@@ -384,7 +505,7 @@ export default function ProductPage() {
                 {activeTab === 'license' && (
                   <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }} className="space-y-6">
                     <div>
-                      <h3 className="text-xl font-black text-gray-900 dark:text-white mb-2">Commercial License Agreement</h3>
+                      <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">Commercial License Agreement</h3>
                       <p className="text-sm text-gray-500 dark:text-gray-400">
                         All templates from BizLeap Market include full commercial deployment rights with zero recurring fees.
                       </p>
@@ -421,7 +542,7 @@ export default function ProductPage() {
                   {/* Category & Verified Tag */}
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
-                      <span className="px-3 py-1 text-[11px] font-black uppercase tracking-wider rounded-full bg-black text-white dark:bg-white dark:text-black">
+                      <span className="px-3 py-1 text-[11px] font-bold uppercase tracking-wider rounded-full bg-black text-white dark:bg-white dark:text-black">
                         {template.category}
                       </span>
                       {template.tag && (
@@ -437,7 +558,7 @@ export default function ProductPage() {
 
                   {/* Title & Creator */}
                   <div>
-                    <h1 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white tracking-tight leading-tight font-display mb-2">
+                    <h1 className="text-2xl sm:text-3xl font-bold text-[#172033] dark:text-white tracking-tight leading-tight capitalize mb-2">
                       {template.title}
                     </h1>
                     <p className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">
@@ -449,7 +570,7 @@ export default function ProductPage() {
                   <div className="p-5 rounded-2xl bg-gray-50 dark:bg-white/[0.03] border border-black/5 dark:border-white/5">
                     <div className="flex items-baseline justify-between mb-1">
                       <span className="text-[11px] font-extrabold uppercase tracking-wider text-gray-400">One-Time License</span>
-                      <div className="flex items-center gap-1 text-black dark:text-white text-xs font-black">
+                      <div className="flex items-center gap-1 text-black dark:text-white text-xs font-bold">
                         <Star className="w-3.5 h-3.5 fill-current" />
                         <span>{template.rating || '4.9'}</span>
                         <span className="text-gray-400 font-normal">({template.sales || 42} sales)</span>
@@ -457,7 +578,7 @@ export default function ProductPage() {
                     </div>
 
                     <div className="flex items-baseline gap-3">
-                      <span className="text-4xl sm:text-5xl font-black text-gray-900 dark:text-white tracking-tight font-display">
+                      <span className="text-4xl sm:text-5xl font-extrabold text-[#172033] dark:text-white tracking-tight">
                         {formatPrice(template.price)}
                       </span>
                       {template.price && (
@@ -475,17 +596,13 @@ export default function ProductPage() {
                   <div className="space-y-3">
                     {/* Primary Buy Now Button */}
                     <button 
-                      onClick={() => {
-                        if (isOwned) return;
-                        requireAuth(() => {
-                          if (!inCart) addToCart(template);
-                          navigate('/cart');
-                        });
-                      }}
-                      disabled={isOwned}
-                      className={`w-full py-4 rounded-2xl font-black text-sm sm:text-base flex items-center justify-center gap-2.5 transition-all duration-200 cursor-pointer shadow-lg active:scale-95 ${
+                      onClick={handleBuyNow}
+                      disabled={isOwned || isBuying}
+                      className={`w-full py-4 rounded-2xl font-bold text-sm sm:text-base flex items-center justify-center gap-2.5 transition-all duration-200 cursor-pointer shadow-lg active:scale-95 ${
                         isOwned
                           ? 'bg-gray-200 dark:bg-white/10 text-gray-500 cursor-not-allowed'
+                          : isBuying
+                          ? 'bg-neutral-800 text-white cursor-wait opacity-90'
                           : 'bg-black dark:bg-white hover:bg-neutral-800 dark:hover:bg-neutral-100 text-white dark:text-black shadow-black/20 dark:shadow-white/20'
                       }`}
                     >
@@ -493,6 +610,11 @@ export default function ProductPage() {
                         <>
                           <Check className="w-5 h-5" />
                           <span>Already Purchased</span>
+                        </>
+                      ) : isBuying ? (
+                        <>
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                          <span>Processing Checkout...</span>
                         </>
                       ) : (
                         <>
@@ -585,7 +707,7 @@ export default function ProductPage() {
           <div className="flex items-center justify-between mb-10">
             <div>
               <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">More Like This</p>
-              <h2 className="text-2xl sm:text-3xl font-black text-gray-900 dark:text-white font-display">You Might Also Like</h2>
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white tracking-tight">You Might Also Like</h2>
             </div>
             <Link to="/templates" className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-bold text-black dark:text-white hover:underline">
               <span>View Catalog</span>

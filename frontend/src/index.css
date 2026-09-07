@@ -3,6 +3,11 @@
 @import "tailwindcss";
 @config "../tailwind.config.js";
 
+@theme {
+  --font-sans: "Plus Jakarta Sans", "Inter", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: "Plus Jakarta Sans", sans-serif;
+}
+
 @layer base {
   html {
     scroll-behavior: smooth;
@@ -12,7 +17,6 @@
   body {
     @apply bg-white text-gray-900 font-sans antialiased overflow-x-hidden;
     font-family: "Plus Jakarta Sans", "Inter", system-ui, -apple-system, sans-serif;
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11", "ss01";
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -23,7 +27,7 @@
 
   h1, h2, h3, h4, h5, h6 {
     font-family: "Plus Jakarta Sans", sans-serif;
-    letter-spacing: -0.03em;
+    letter-spacing: -0.025em;
   }
 
   html.lenis,
@@ -45,15 +49,6 @@
 
   .lenis.lenis-smooth iframe {
     pointer-events: none;
-  }
-
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    @apply font-display tracking-tight;
   }
 }
 

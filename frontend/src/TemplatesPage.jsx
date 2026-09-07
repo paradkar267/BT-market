@@ -239,10 +239,10 @@ export default function TemplatesPage() {
         </Link>
 
         {/* Clean page header */}
-        <div className="mb-6 pb-6 border-b border-gray-200">
+        <div className="mb-6 pb-6 border-b border-gray-200 dark:border-white/10 text-center">
           <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">All Templates</p>
-          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-1">Browse Templates</h1>
-          <p className="text-gray-500 text-sm">{filteredTemplates.length} results — premium website templates with full source code</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white mb-1">Browse Templates</h1>
+          <p className="text-gray-500 text-sm max-w-xl mx-auto">{filteredTemplates.length} results — premium website templates with full source code</p>
         </div>
 
         {/* Mobile Filter & Sort */}

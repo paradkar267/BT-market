@@ -110,8 +110,10 @@ export default function CartPage() {
 
   const loadRazorpayScript = () => {
     return new Promise((resolve) => {
+      if (typeof window !== 'undefined' && window.Razorpay) return resolve(true);
       const script = document.createElement('script');
       script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.async = true;
       script.onload = () => resolve(true);
       script.onerror = () => resolve(false);
       document.body.appendChild(script);
@@ -494,27 +496,35 @@ export default function CartPage() {
       return;
     }
 
+    if (cartItems.length === 0) {
+      toast.error('Your cart is empty');
+      return;
+    }
+
+    if (finalPayableTotal <= 0) {
+      toast.success('Free coupon applied! Order confirmed.');
+      processSuccessfulPayment(`free_pay_${Date.now()}`);
+      return;
+    }
+
     const res = await loadRazorpayScript();
-    if (!res) {
+    if (!res || typeof window === 'undefined' || !window.Razorpay) {
       toast.error('Razorpay SDK failed to load. Please check your connection.');
       return;
     }
 
-    const razorpayKey = import.meta.env.VITE_RAZORPAY_KEY || import.meta.env.VITE_RAZORPAY_TEST_KEY || 'rzp_test_1DP5mmOlF5G5ag';
+    const razorpayKey = 
+      import.meta.env.VITE_RAZORPAY_KEY || 
+      import.meta.env.VITE_RAZORPAY_KEY_ID || 
+      import.meta.env.VITE_RAZORPAY_TEST_KEY || 
+      'rzp_test_T7Lp0cSak0qDp4';
 
-    if (razorpayKey === 'rzp_test_1DP5mmOlF5G5ag') {
-      toast.loading('Simulating payment (dummy key detected)...', { id: 'mock-payment' });
-      setTimeout(() => {
-        toast.dismiss('mock-payment');
-        processSuccessfulPayment('pay_mock_' + Math.random().toString(36).substr(2, 9));
-      }, 2000);
-      return;
-    }
+    const calculatedAmount = Math.max(100, Math.round((convertPrice ? convertPrice(finalPayableTotal) : finalPayableTotal) * 100));
 
     const options = {
       key: razorpayKey,
-      amount: Math.round(convertPrice(finalPayableTotal) * 100),
-      currency: currency,
+      amount: calculatedAmount,
+      currency: currency || 'INR',
       name: 'Bizleap Marketplace',
       description: appliedCoupon ? `Discount applied: ${appliedCoupon.code}` : 'Premium Templates & UI Kits',
       image: 'https://cdn-icons-png.flaticon.com/512/3176/3176366.png',
@@ -522,18 +532,23 @@ export default function CartPage() {
         processSuccessfulPayment(response.razorpay_payment_id, response);
       },
       prefill: {
-        name: activeUser?.user_metadata?.full_name || '',
-        email: activeUser?.email || '',
+        name: user?.full_name || user?.user_metadata?.full_name || '',
+        email: user?.email || '',
       },
       theme: {
         color: isDark ? '#000000' : '#111827',
       },
+      modal: {
+        ondismiss: function () {
+          toast.info('Payment cancelled');
+        }
+      }
     };
 
     try {
       const paymentObject = new window.Razorpay(options);
       paymentObject.on('payment.failed', function (response) {
-        toast.error('Payment failed: ' + response.error.description);
+        toast.error('Payment failed: ' + (response?.error?.description || 'Transaction declined'));
       });
       paymentObject.open();
     } catch (error) {

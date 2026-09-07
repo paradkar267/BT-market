@@ -135,12 +135,19 @@ export const CartProvider = ({ children }) => {
       return combined;
     });
 
-    setCartItems([]);
-    try {
-      localStorage.removeItem('bt_cart');
-    } catch {
-      // Ignore
-    }
+    setCartItems(prev => {
+      const remaining = prev.filter(c => !itemsToBuy.some(bought => String(bought.id) === String(c.id)));
+      try {
+        if (remaining.length === 0) {
+          localStorage.removeItem('bt_cart');
+        } else {
+          localStorage.setItem('bt_cart', JSON.stringify(remaining));
+        }
+      } catch {
+        // Ignore
+      }
+      return remaining;
+    });
 
     window.dispatchEvent(new Event('templates_updated'));
   };

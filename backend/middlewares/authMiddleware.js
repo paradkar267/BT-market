@@ -66,8 +66,7 @@ export const requireAdmin = async (req, res, next) => {
 
     const user = rows[0];
     const adminEmails = [
-      (process.env.ADMIN_EMAIL || 'bizleap1@gmail.com').toLowerCase(),
-      'yashparadkar63@gmail.com'
+      (process.env.ADMIN_EMAIL || 'bizleap1@gmail.com').toLowerCase()
     ];
 
     if (user.role === 'admin' || adminEmails.includes(user.email.toLowerCase())) {
