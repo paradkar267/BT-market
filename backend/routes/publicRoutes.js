@@ -5,7 +5,7 @@ import AdmZip from 'adm-zip';
 import { fileURLToPath } from 'url';
 import { query } from '../config/db.js';
 import { requireAuth } from '../middlewares/authMiddleware.js';
-import { sendReceiptEmail, sendContactEmail } from '../services/emailService.js';
+import { sendReceiptEmail, sendContactEmail, sendVipWelcomeEmail } from '../services/emailService.js';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
 
@@ -878,4 +878,71 @@ router.post('/contact', async (req, res) => {
   }
 });
 
+// ==========================================
+// 6. VIP NEWSLETTER & DROP ALERTS
+// ==========================================
+const handleNewsletterSubscription = async (req, res) => {
+  const { email, source = 'footer_vip' } = req.body || {};
+
+  if (!email) {
+    return res.status(400).json({ error: 'Work email is required' });
+  }
+
+  const cleanEmail = String(email).trim().toLowerCase();
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (cleanEmail.length > 255 || !emailRegex.test(cleanEmail)) {
+    return res.status(400).json({ error: 'Please enter a valid email address' });
+  }
+
+  try {
+    // 1. Record subscription in Neon DB
+    await query(`
+      CREATE TABLE IF NOT EXISTS newsletter_subscribers (
+        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+        email VARCHAR(255) UNIQUE NOT NULL,
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+        source VARCHAR(50) DEFAULT 'footer_vip'
+      );
+    `);
+
+    const result = await query(`
+      INSERT INTO newsletter_subscribers (email, source)
+      VALUES ($1, $2)
+      ON CONFLICT (email) DO NOTHING
+      RETURNING id, email, created_at;
+    `, [cleanEmail, source]);
+
+    const isNew = result.rows.length > 0;
+
+    // 2. Ensure VIP15 coupon is active
+    await query(`
+      INSERT INTO coupons (code, discount_type, discount_value, min_order_amount, usage_limit, is_active)
+      VALUES ('VIP15', 'percentage', 15, 0, 10000, true)
+      ON CONFLICT (code) DO UPDATE SET is_active = true;
+    `);
+
+    // 3. Dispatch VIP Welcome email with coupon code
+    try {
+      await sendVipWelcomeEmail(cleanEmail, 'VIP15', 15);
+    } catch (mailErr) {
+      console.warn('VIP email notification notice:', mailErr?.message);
+    }
+
+    return res.status(200).json({
+      success: true,
+      isNewSubscriber: isNew,
+      message: 'Welcome to the BizLeap VIP Club!',
+      couponCode: 'VIP15',
+      discount: 15
+    });
+  } catch (error) {
+    console.error('Newsletter subscribe error:', error);
+    return res.status(500).json({ error: 'Failed to complete subscription. Please try again.' });
+  }
+};
+
+router.post('/newsletter/subscribe', handleNewsletterSubscription);
+router.post('/subscribe', handleNewsletterSubscription);
+
 export default router;
+

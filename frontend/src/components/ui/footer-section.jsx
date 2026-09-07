@@ -26,8 +26,12 @@ import {
   ExternalLink,
   Layers,
   Star,
-  Check
+  Check,
+  Copy,
+  Ticket,
+  Loader2
 } from "lucide-react"
+import confetti from "canvas-confetti"
 import { FaInstagram, FaLinkedin, FaGithub, FaTwitter } from "react-icons/fa"
 import { Link } from "react-router-dom"
 import { Logo } from "@/components/ui/Logo"
@@ -36,18 +40,72 @@ import { toast } from "sonner"
 function Footerdemo() {
   const [email, setEmail] = useState("")
   const [isSubscribed, setIsSubscribed] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [couponCode, setCouponCode] = useState("VIP15")
+  const [copied, setCopied] = useState(false)
 
-  const handleSubscribe = (e) => {
+  const handleSubscribe = async (e) => {
     e.preventDefault()
-    if (!email || !email.includes("@")) {
-      toast.error("Please enter a valid work email.")
+    const cleanEmail = email.trim().toLowerCase()
+    if (!cleanEmail || !cleanEmail.includes("@") || !cleanEmail.includes(".")) {
+      toast.error("Please enter a valid work email address.")
       return
     }
-    setIsSubscribed(true)
-    toast.success("Welcome to the BizLeap VIP Club!", {
-      description: "You'll receive exclusive template drops and discount codes."
-    })
-    setEmail("")
+
+    setIsLoading(true)
+    try {
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_API_URL || ''
+      const targetUrls = []
+      if (backendUrl) targetUrls.push(`${backendUrl}/api/newsletter/subscribe`)
+      targetUrls.push('/api/newsletter/subscribe')
+      targetUrls.push('/api/subscribe')
+
+      let successData = null
+      for (const url of targetUrls) {
+        try {
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: cleanEmail, source: 'footer_vip' })
+          })
+          if (res.ok) {
+            successData = await res.json()
+            break
+          }
+        } catch {
+          // try next
+        }
+      }
+
+      setIsSubscribed(true)
+      if (successData?.couponCode) {
+        setCouponCode(successData.couponCode)
+      }
+
+      try {
+        confetti({
+          particleCount: 60,
+          spread: 60,
+          origin: { y: 0.85 }
+        })
+      } catch {}
+
+      toast.success("Welcome to the BizLeap VIP Club!", {
+        description: `Your 15% OFF code VIP15 has been activated.`
+      })
+      setEmail("")
+    } catch (err) {
+      toast.error(err.message || "Failed to subscribe. Please try again.")
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleCopyCoupon = () => {
+    navigator.clipboard.writeText(couponCode)
+    setCopied(true)
+    toast.success(`Coupon code ${couponCode} copied to clipboard!`)
+    setTimeout(() => setCopied(false), 2000)
   }
 
   const scrollToTop = () => {
@@ -60,7 +118,7 @@ function Footerdemo() {
   return (
     <footer className="relative border-t border-black/[0.08] dark:border-white/10 bg-gradient-to-b from-white via-gray-50/50 to-gray-100/70 dark:from-[#090b0e] dark:via-[#07080a] dark:to-[#040507] text-foreground transition-colors duration-300 overflow-hidden">
       {/* Background Ambient Glow Highlights */}
-      <div className="absolute -top-32 left-1/3 w-[500px] h-[300px] bg-indigo-500/[0.04] dark:bg-indigo-500/[0.07] blur-[120px] pointer-events-none rounded-full" />
+      <div className="absolute -top-32 left-1/3 w-[500px] h-[300px] bg-emerald-500/[0.03] dark:bg-emerald-500/[0.05] blur-[120px] pointer-events-none rounded-full" />
       <div className="absolute top-1/2 right-10 w-[420px] h-[260px] bg-amber-500/[0.03] dark:bg-amber-500/[0.05] blur-[100px] pointer-events-none rounded-full" />
 
       <div className="max-w-[1400px] mx-auto px-5 sm:px-8 md:px-12 pt-14 pb-10 relative z-10">
@@ -321,9 +379,9 @@ function Footerdemo() {
 
           {/* Column 5: VIP Newsletter Card (2 Cols) */}
           <div className="lg:col-span-2 space-y-4">
-            <div className="p-4 rounded-2xl bg-white/80 dark:bg-white/[0.03] border border-black/10 dark:border-white/10 shadow-sm backdrop-blur-md">
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/20 mb-2.5">
-                <Sparkles className="w-3 h-3 text-indigo-500" />
+            <div className="p-4 rounded-2xl bg-white/80 dark:bg-white/[0.03] border border-black/10 dark:border-white/10 shadow-xs backdrop-blur-md">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 mb-2.5">
+                <Sparkles className="w-3 h-3 text-emerald-500" />
                 <span>VIP DROP ALERTS</span>
               </div>
               <h3 className="text-sm font-extrabold text-gray-900 dark:text-white tracking-tight">
@@ -333,28 +391,60 @@ function Footerdemo() {
                 Join 3,500+ developers getting weekly releases and secret discount codes.
               </p>
 
-              <form onSubmit={handleSubscribe} className="mt-3.5 space-y-2">
-                <div className="relative">
-                  <Input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Enter work email..."
-                    className="pr-10 h-10 rounded-xl backdrop-blur-sm bg-white dark:bg-black/40 border-black/15 dark:border-white/15 text-xs focus-visible:ring-indigo-500 shadow-inner"
-                  />
-                  <Button
-                    type="submit"
-                    size="icon"
-                    className="absolute right-1 top-1 h-8 w-8 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white shadow-sm transition-all hover:scale-105 cursor-pointer"
-                  >
-                    {isSubscribed ? <Check className="h-3.5 w-3.5 text-white" /> : <Send className="h-3.5 w-3.5" />}
-                    <span className="sr-only">Subscribe</span>
-                  </Button>
+              {isSubscribed ? (
+                <div className="mt-3.5 p-3 rounded-xl bg-emerald-50/70 dark:bg-emerald-500/10 border border-emerald-500/20 text-center space-y-2">
+                  <div className="flex items-center justify-center gap-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-400">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                    <span>You're in the VIP Club!</span>
+                  </div>
+                  <div className="flex items-center justify-between bg-white dark:bg-black/40 px-3 py-1.5 rounded-lg border border-emerald-500/30 shadow-xs">
+                    <div className="flex items-center gap-1.5">
+                      <Ticket className="w-3.5 h-3.5 text-emerald-500" />
+                      <span className="font-mono font-black text-xs text-gray-900 dark:text-white tracking-wider">{couponCode}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleCopyCoupon}
+                      className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 hover:underline flex items-center gap-1 cursor-pointer"
+                    >
+                      {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
+                      {copied ? "Copied" : "Copy"}
+                    </button>
+                  </div>
+                  <p className="text-[10px] text-gray-500 dark:text-gray-400">
+                    Use code at checkout for 15% instant discount.
+                  </p>
                 </div>
-                <p className="text-[10px] text-gray-400 dark:text-gray-500 flex items-center gap-1">
-                  <Lock className="w-2.5 h-2.5 text-gray-400 shrink-0" /> Zero spam. 1-click unsubscribe.
-                </p>
-              </form>
+              ) : (
+                <form onSubmit={handleSubscribe} className="mt-3.5 space-y-2">
+                  <div className="relative">
+                    <Input
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="Enter work email..."
+                      disabled={isLoading}
+                      className="pr-10 h-10 rounded-xl backdrop-blur-sm bg-white dark:bg-black/40 border-black/15 dark:border-white/15 text-xs focus-visible:ring-black dark:focus-visible:ring-white shadow-inner"
+                    />
+                    <Button
+                      type="submit"
+                      size="icon"
+                      disabled={isLoading}
+                      className="absolute right-1 top-1 h-8 w-8 rounded-lg bg-black hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-gray-200 text-white shadow-xs transition-all hover:scale-105 cursor-pointer disabled:opacity-50"
+                    >
+                      {isLoading ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin text-white dark:text-black" />
+                      ) : (
+                        <Send className="h-3.5 w-3.5" />
+                      )}
+                      <span className="sr-only">Subscribe</span>
+                    </Button>
+                  </div>
+                  <p className="text-[10px] text-gray-400 dark:text-gray-500 flex items-center gap-1">
+                    <Lock className="w-2.5 h-2.5 text-gray-400 shrink-0" /> Zero spam. 1-click unsubscribe.
+                  </p>
+                </form>
+              )}
             </div>
           </div>
 
@@ -373,7 +463,7 @@ function Footerdemo() {
 
           {/* Secure Payment Badges Pill */}
           <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-black/[0.03] dark:bg-white/[0.03] border border-black/[0.06] dark:border-white/10 text-[11px] font-medium text-gray-600 dark:text-gray-400">
-            <CreditCard className="w-3.5 h-3.5 text-indigo-500 shrink-0" />
+            <CreditCard className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
             <span>Razorpay Secured</span>
             <span>•</span>
             <span>UPI</span>

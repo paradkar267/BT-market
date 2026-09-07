@@ -889,3 +889,95 @@ export const sendGiftTemplateEmail = async (to, { customerName, template, note, 
     html: htmlContent
   });
 };
+
+export const sendVipWelcomeEmail = async (to, couponCode = 'VIP15', discountPercent = 15) => {
+  const baseUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+  const subject = `🎉 Welcome to BizLeap VIP Club — Your ${discountPercent}% OFF Code: ${couponCode}`;
+
+  const htmlContent = `
+  <!DOCTYPE html>
+  <html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to BizLeap VIP</title>
+  </head>
+  <body style="margin: 0; padding: 0; background-color: #0b0f17; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+    <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #0b0f17; padding: 30px 15px;">
+      <tr>
+        <td align="center">
+          <table width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: #111827; border-radius: 16px; border: 1px solid #1f2937; overflow: hidden; box-shadow: 0 20px 40px rgba(0,0,0,0.5);">
+            
+            <!-- Brand Header -->
+            <tr>
+              <td style="padding: 32px 32px 24px; text-align: center; border-bottom: 1px solid #1f2937;">
+                <h1 style="margin: 0; font-size: 26px; font-weight: 900; color: #ffffff; letter-spacing: -0.5px;">
+                  BIZLEAP
+                </h1>
+                <p style="margin: 6px 0 0; color: #10b981; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px;">
+                  VIP Creator Community
+                </p>
+              </td>
+            </tr>
+
+            <!-- Main Body -->
+            <tr>
+              <td style="padding: 32px;">
+                <h2 style="margin: 0 0 12px; font-size: 20px; font-weight: 800; color: #ffffff; text-align: center;">
+                  Welcome to the Inner Circle! 🚀
+                </h2>
+                <p style="margin: 0 0 24px; font-size: 14px; line-height: 1.6; color: #9ca3af; text-align: center;">
+                  You're officially on the priority alert list for new template drops, UI systems, and exclusive developer perks. Here is your welcome gift:
+                </p>
+
+                <!-- 15% OFF Coupon Voucher Box -->
+                <div style="background-color: #0f172a; border: 2px dashed #10b981; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 28px;">
+                  <span style="font-size: 12px; font-weight: 700; color: #34d399; text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 6px;">
+                    Exclusive Welcome Perk
+                  </span>
+                  <div style="font-size: 30px; font-weight: 900; color: #ffffff; letter-spacing: 2px; font-family: monospace; margin: 8px 0;">
+                    ${couponCode}
+                  </div>
+                  <p style="margin: 6px 0 0; font-size: 13px; color: #94a3b8;">
+                    Enjoy <strong style="color: #ffffff;">${discountPercent}% OFF</strong> on your next purchase across all templates and UI kits.
+                  </p>
+                </div>
+
+                <!-- Call to Action -->
+                <div style="text-align: center; margin-bottom: 28px;">
+                  <a href="${baseUrl}/templates" style="display: inline-block; background-color: #10b981; color: #ffffff; font-weight: 800; font-size: 14px; padding: 14px 32px; border-radius: 10px; text-decoration: none; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);">
+                    Explore Premium Templates &rarr;
+                  </a>
+                </div>
+
+                <p style="font-size: 12px; color: #6b7280; text-align: center; margin: 0; line-height: 1.5;">
+                  Zero spam guaranteed. You can unsubscribe anytime with one click.
+                </p>
+              </td>
+            </tr>
+
+            <!-- Footer -->
+            <tr>
+              <td style="background-color: #0f172a; padding: 20px 32px; text-align: center; border-top: 1px solid #1f2937;">
+                <p style="color: #64748b; font-size: 11px; margin: 0;">
+                  © ${new Date().getFullYear()} BizLeap Marketplace &bull; Empowering Creators Worldwide
+                </p>
+              </td>
+            </tr>
+
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+  </html>
+  `;
+
+  return transporter.sendMail({
+    from: `"Bizleap VIP Alerts" <${process.env.SMTP_FROM || process.env.SMTP_USER || 'bizleap1@gmail.com'}>`,
+    to: to,
+    subject: subject,
+    html: htmlContent
+  });
+};
+
